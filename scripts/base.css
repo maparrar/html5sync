@@ -1,0 +1,9 @@
+#debug{
+    background: black;
+    bottom: 0;
+    color: white;
+    font-size: 11px;
+    padding: 5px;
+    position: absolute;
+    right: 0;
+}
