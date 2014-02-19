@@ -1,23 +1,28 @@
 <html>
     <head>
         <title>html5sync</title>
+        <link rel="stylesheet" type="text/css" href="scripts/base.css">
+        
+        
         
         <script src="scripts/jquery-2.1.0.min.js"></script>
         
-        <link rel="stylesheet" type="text/css" href="scripts/base.css">
+        <script src="source/Database.js"></script>
+        
+        
         
         <script type="text/javascript">
             $( document ).ready(function(){
                 if(window.indexedDB === undefined) {
-                    console.log("Este navegador no soporta indexDB");
+                    console.log("Este navegador no soporta indexedDB");
                 }else{
-                    debug("Base de datos indexDB soportada");
+                    debug("Base de datos indexedDB soportada");
                     
                     
                     
                     
                     var db;
-                    var request = window.indexedDB.open("html5sync",9);
+                    var request = window.indexedDB.open("testing",1);
                     /*
                      * Evento del request para manejar los errores. Se dispara si
                      * por ejemplo, un usuario no permite que se usen bases de
@@ -72,7 +77,8 @@
                          *                              a property already exists, the value of that property 
                          *                              is used as key rather than generating a new key.
                          */
-                        var store = db.createObjectStore("music", {keyPath: "id"});
+//                        var store = db.createObjectStore("music", {keyPath: "id"});
+                        var store = db.createObjectStore("music", {autoIncrement : true});
                         
                         
                         /*
@@ -81,7 +87,7 @@
                         var songIndex = store.createIndex("by_song", "song", {unique: true});
                         var interpreterIndex = store.createIndex("by_interpreter", "interpreter", { unique: false });
                         var albumIndex = store.createIndex("by_album", "album", { unique: false });
-                        debug("Índices creados");
+                        debug("&Iacute;ndices creados");
                         
                         /*
                          * Este evento se ejecuta cuando se ha creado el almacén
@@ -95,11 +101,11 @@
                             var store = tx.objectStore("music");
                             
                             
-                            store.add({id: 1, interpreter: "Tom Yorke", song: "Analyse", album: "The eraser"});
-                            store.add({id: 2, interpreter: "Bob Marly", song: "One love", album: "Legend"});
-                            store.add({id: 3, interpreter: "Alice in Chains", song: "Angry Chair", album: "Unplugged"});
+                            store.add({interpreter: "Tom Yorke", song: "Analyse", album: "The eraser"});
+                            store.add({interpreter: "Bob Marly", song: "One love", album: "Legend"});
+                            store.add({interpreter: "Alice in Chains", song: "Angry Chair", album: "Unplugged"});
                             
-                            debug("Información de prueba inicial insertada");
+                            debug("Informaci&oacute;n de prueba inicial insertada");
                             
                         };
 
@@ -121,7 +127,7 @@
                         var tx = db.transaction(["music"], "readwrite");
                         // Do something when all the data is added to the database.
                         tx.oncomplete = function(e) {
-                            debug("Transacción finalizada");
+                            debug("Transacci&oacute;n finalizada");
                         };
 
                         tx.onerror = function(e) {
@@ -129,14 +135,18 @@
                         };
 
                         var store = tx.objectStore("music");
-                        store.put({id: 4, interpreter: "Fito Paez", song: "Circo Beat", album: "Circo Beat"});
-                        store.put({id: 5, interpreter: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"});
-//                        for (var i in customerData) {
-//                          var request = objectStore.add(customerData[i]);
-//                          request.onsuccess = function(event) {
-//                            // event.target.result == customerData[i].ssn;
-//                          };
-//                        }
+                        
+                        var objects=[
+                            {interpreter: "Fito Paez", song: "Circo Beat", album: "Circo Beat"},
+                            {interpreter: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"}
+                        ];
+                        
+                        for (var i in objects) {
+                            var request = store.add(objects[i]);
+                            request.onerror = function(e){
+                                debug("Error ingresando: "+JSON.stringify(objects[i])+" .::. "+request.error);
+                            };
+                        }
                     });
                     
                     
