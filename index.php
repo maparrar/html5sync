@@ -1,15 +1,3 @@
-<?php
-
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-
-echo("Pruebas");
-
-?>
 <html>
     <head>
         <title>html5sync</title>
@@ -128,6 +116,30 @@ echo("Pruebas");
                     
                     
                     
+                    
+                    $("#write").click(function(){
+                        var tx = db.transaction(["music"], "readwrite");
+                        // Do something when all the data is added to the database.
+                        tx.oncomplete = function(e) {
+                            debug("Transacción finalizada");
+                        };
+
+                        tx.onerror = function(e) {
+                          // Don't forget to handle errors!
+                        };
+
+                        var store = tx.objectStore("music");
+                        store.put({id: 4, interpreter: "Fito Paez", song: "Circo Beat", album: "Circo Beat"});
+                        store.put({id: 5, interpreter: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"});
+//                        for (var i in customerData) {
+//                          var request = objectStore.add(customerData[i]);
+//                          request.onsuccess = function(event) {
+//                            // event.target.result == customerData[i].ssn;
+//                          };
+//                        }
+                    });
+                    
+                    
                 }
 
 
@@ -135,34 +147,8 @@ echo("Pruebas");
 
 
 
-//                        // Populate with initial data.
-//                        store.put({id: 1, interpreter: "Tom Yorke", song: "Analyse", album: "The eraser"});
-//                        store.put({id: 2, interpreter: "Bob Marly", song: "One love", album: "Legend"});
-//                        store.put({id: 3, interpreter: "Alice in Chains", song: "Angry Chair", album: "Unplugged"});
-//                        
-//                        
-//                        
-//                        var tx = db.transaction("music", "readwrite");
-//                        var store = tx.objectStore("music");
-//    
 //                        store.put({id: 4, interpreter: "Fito Paez", song: "Circo Beat", album: "Circo Beat"});
 //                        store.put({id: 5, interpreter: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"});
-//    
-//                        tx.oncomplete = function() {
-//                          // All requests have succeeded and the transaction has committed.
-//                        };
-                
-                
-                
-                
-                
-                
-                
-                
-                
-
-
-
 
                 
 
@@ -190,6 +176,7 @@ echo("Pruebas");
         </script>
     </head>
     <body>
+        <button id="write">Escribir</button>
         <section id="debug"></section>
     </body>
 </html>
