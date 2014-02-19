@@ -19,4 +19,11 @@ IndexedDB:
 Changelog
 =========
 
-* v.0.0 - Exploración
+* v.0.0.1 - [2014-02-18]
+** Ejemplo de bases de datos indexedDB
+** Uso de versiones de bases de datos
+** Creación de almacenes de objetos
+** Eliminación de almacenes de objetos
+** Documentación del código
+
+* v.0.0.0 - [2014-02-18] - Exploración
