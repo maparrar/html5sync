@@ -20,7 +20,7 @@ Changelog
 =========
 
 * v.0.0.1 - [2014-02-18]
-** Ejemplo de bases de datos indexedDB
+* * Ejemplo de bases de datos indexedDB
 ** Uso de versiones de bases de datos
 ** Creación de almacenes de objetos
 ** Eliminación de almacenes de objetos
