@@ -1,155 +1,138 @@
 /*
- * Clase para el manejo de bases de datos
+ * Clase para el manejo de bases de datos [constructor pattern]
  * @param {object} params Objeto con los parámetros de la base de datos en el navegador:
  *      params={
- *          database: "html5db"         //Nombre de la base de datos
+ *          database: "html5db",         //Nombre de la base de datos
  *          stores: [
  *              {
  *                  name:"store1",
  *                  key:{keyPath: "key_name1"},
  *                  indexes:[           //Lista de índices del almacén, ver parámetros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
- *                      {"index_name_1", "key_name1", {unique: true}},
- *                      {"index_name_2", "key_name2", {unique: false}},
- *                      {"index_name_3", "key_name3", {unique: false}}
+ *                      {
+ *                          name:"index_name_1", 
+ *                          key:"key_name1", 
+ *                          params:{unique: true}
+ *                      },
+ *                      {
+ *                          name:"index_name_2",
+ *                          key:"key_name2",
+ *                          params:{unique: false}
+ *                      },
+ *                      {
+ *                          name:"index_name_3",
+ *                          key:"key_name3",
+ *                          params:{unique: false}
+ *                      }
  *                  ],
  *              },
  *              {
  *                  name:"store2",
  *                  key:{autoIncrement : true},
  *                  indexes:[           //Lista de índices del almacén
- *                      {"index_name_1", "key_name1", {unique: true}},
- *                      {"index_name_2", "key_name2", {unique: false}},
- *                      {"index_name_3", "key_name3", {unique: false}}
- *                  ],
- *              },
- *              {
- *                  name:"store3",
- *                  key:{autoIncrement : true},
- *                  indexes:[           //Lista de índices del almacén
- *                      {"index_name_1", "key_name1", {unique: true}},
- *                      {"index_name_2", "key_name2", {unique: false}},
- *                      {"index_name_3", "key_name3", {unique: false}}
+ *                      {
+ *                          name:"index_name_1", 
+ *                          key:"key_name1", 
+ *                          params:{unique: true}
+ *                      },
+ *                      {
+ *                          name:"index_name_2",
+ *                          key:"key_name2",
+ *                          params:{unique: false}
+ *                      },
+ *                      {
+ *                          name:"index_name_3",
+ *                          key:"key_name3",
+ *                          params:{unique: false}
+ *                      }
  *                  ],
  *              }
- *          ]      
+ *          ],
+ *          options:{
+ *              overwriteObjectStores:true,     //(default) Elimina los almacenes anteriores y los sobreescribe
+ *          }      
  *      }
  */
-function Database(params){
-    var self=this;
-    self.db;
-    self.request = window.indexedDB.open("testing",1);
-    
-    
-    //Variables por defecto
+var Database = function(params) {
+    var self = this;
+    self.version = 11;     //Versión de la Base de datos indexedDB
+    self.db;            //Base de datos indexedDB
+    self.request;       //Objeto que contiene la conexión a la base de datos
+
+    //Se mezclan los parámetros por defecto con los proporcionados por el usuario
+    //y se agregan a la variable self (this del objeto)
     var def = {
-        database: "html5sync",
+        database: "html5db",
+        options: {
+            overwriteObjectStores: true
+        }
     };
-    self = $.extend(def,params);
-    
-    console.debug(self);
-    
-    self.setEvents=function(){
-        
-    };
-    
-    
-    /*
-     * Evento del request para manejar los errores. Se dispara si
-     * por ejemplo, un usuario no permite que se usen bases de
-     * datos indexedDB en el navegador.
-     */
-    request.onerror = function(e) {
-        debug("No es posible conectar con la base de datos local");
-    };
-    /*
-     * Evento del request cuando es posible usar la base de datos
-     * indexedDB en el navegador.
-     */
-    request.onsuccess = function(e) {
-        debug("Request completo a la base de datos");
-        db = request.result;
-    };
+    self.params = $.extend(def, params);
 
     /*
-     * Evento del request que se dispara cuando la base de datos
-     * necesita ser modificada (la estructura de la base de datos).
-     * Si en la línea:
-     *      var request = window.indexedDB.open("html5sync",3);
-     * se cambia la versión, es decir el segundo parámetro de la
-     * función open() a 4, se dispara este evento.
-     * Si se hace un downgrade, se pone en 2, genera un error.
+     * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
-    request.onupgradeneeded = function(e) {
-        //Se crea o reemplaza la base de datos
-        db = e.target.result;
+    var Database = function() {
+        self.request = window.indexedDB.open(self.params.database, self.version);
+        debug("Iniciando acceso a la base de datos "+self.params.database);
 
+        //Asigna los eventos
+        events();
+    }();
+    /*
+     * Método privado que asigna funciones a los eventos
+     */
+    function events() {
         /*
-         * Crea un almacén de objetos que se puede definir de la
-         * siguiente manera:
-         * |Key Path    Key Generator 	Description
-         * |(keyPath)   (autoIncrement)
-         * |__________________________________________________________________________________
-         *  No          No              This object store can hold any kind of value, 
-         *                              even primitive values like numbers and strings. 
-         *                              You must supply a separate key argument whenever 
-         *                              you want to add a new value.
-         *  Yes     	No              This object store can only hold JavaScript objects. 
-         *                              The objects must have a property with the same name 
-         *                              as the key path.
-         *  No          Yes             This object store can hold any kind of value. The 
-         *                              key is generated for you automatically, or you can 
-         *                              supply a separate key argument if you want to use a 
-         *                              specific key.
-         *  Yes         Yes             This object store can only hold JavaScript objects. 
-         *                              Usually a key is generated and the value of the 
-         *                              generated key is stored in the object in a property 
-         *                              with the same name as the key path. However, if such 
-         *                              a property already exists, the value of that property 
-         *                              is used as key rather than generating a new key.
+         * Evento del request para manejar los errores. Se dispara si
+         * por ejemplo, un usuario no permite que se usen bases de
+         * datos indexedDB en el navegador.
          */
-//                        var store = db.createObjectStore("music", {keyPath: "id"});
-        var store = db.createObjectStore("music", {autoIncrement : true});
-
-
-        /*
-         * Se crea el conjunto de índices para la base de datos
-         */
-        var songIndex = store.createIndex("by_song", "song", {unique: true});
-        var interpreterIndex = store.createIndex("by_interpreter", "interpreter", { unique: false });
-        var albumIndex = store.createIndex("by_album", "album", { unique: false });
-        debug("&Iacute;ndices creados");
-
-        /*
-         * Este evento se ejecuta cuando se ha creado el almacén
-         * de objetos. Se usa para agregar de manera segura los 
-         * datos.
-         */
-        store.transaction.oncomplete = function(e) {
-            //Se crea una transacción para leer y escribir
-            var tx = db.transaction("music", "readwrite");
-            //Se obtiene el almacén de objetos
-            var store = tx.objectStore("music");
-
-
-            store.add({interpreter: "Tom Yorke", song: "Analyse", album: "The eraser"});
-            store.add({interpreter: "Bob Marly", song: "One love", album: "Legend"});
-            store.add({interpreter: "Alice in Chains", song: "Angry Chair", album: "Unplugged"});
-
-            debug("Informaci&oacute;n de prueba inicial insertada");
-
+        self.request.onerror = function(e) {
+            debug("No es posible conectar con la base de datos local");
         };
-
-
-
-        db.onerror = function(event) {
-            // Error en el acceso a la base de datos
-            debug("Error de base de datos: " + event.target.errorCode);
+        /*
+         * Evento del request cuando es posible usar la base de datos
+         * indexedDB en el navegador.
+         */
+        self.request.onsuccess = function(e) {
+            self.db = self.request.result;
+            debug("Se he accedido con &eacute;xito la base de datos: "+self.params.database);
+        };
+        /*
+         * Evento del request que se dispara cuando la base de datos
+         * necesita ser modificada (la estructura de la base de datos).
+         * Si en la línea:
+         *      var request = window.indexedDB.open("html5sync",3);
+         * se cambia la versión, es decir el segundo parámetro de la
+         * función open() a 4, se dispara este evento.
+         * Si se hace un downgrade, se pone en 2, genera un error.
+         */
+        self.request.onupgradeneeded = function(e) {
+            //Se crea o reemplaza la base de datos
+            self.db = e.target.result;
+            debug("Actualizando la estructura de la base de datos: "+self.params.database);
+            //Se crean loa almacenes de datos pasados en los parámetros
+            for (var i in self.params.stores) {
+                var storeParams = self.params.stores[i];
+                //Borra el almacén si existe
+                if (self.params.options.overwriteObjectStores) {
+                    deleteStore(storeParams.name);
+                }
+                var store = self.db.createObjectStore(storeParams.name, storeParams.key);
+                debug("... Se ha creado el almac&eacute;n de datos: " + storeParams.name);
+                //Se crea el conjunto de índices para cada almacén
+                for (var j in storeParams.indexes){
+                    var indexParams=storeParams.indexes[j];
+                    var index = store.createIndex(indexParams.name,indexParams.key,indexParams.params);
+                    debug("... ... Se ha creado el &iacute;ndice: " + indexParams.name);
+                }
+            }
         };
     };
-    
-    self.varA = 10;
-    self.varB = 20;
-    self.functionA = function (var1, var2) {
-        console.log(var1 + " " + var2);
-    };
+    /*
+     * Borra un almacén de objetos. ¡¡¡ Elimina todo el contenido !!! 
+     */
+    function deleteStore(name){
+        self.db.deleteObjectStore(name);
+    }
 };
