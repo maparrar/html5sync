@@ -45,6 +45,11 @@ indexedDB
 Changelog
 =========
 
+* v.0.0.2 - [2014-02-20]
+    * Método para eliminar base de datos
+    * Debug centralizado
+    * Mostrar el número de versión en el debug
+
 * v.0.0.1 - [2014-02-18]
     * Ejemplo de bases de datos indexedDB
     * Uso de versiones de bases de datos
@@ -53,3 +58,9 @@ Changelog
     * Documentación del código
 
 * v.0.0.0 - [2014-02-18] - Exploración
+
+Todo
+=========
+* 
+* Manejo de errores
+* Pruebas

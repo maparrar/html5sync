@@ -14,64 +14,50 @@
         <script type="text/javascript">
             $( document ).ready(function(){
                 
+                //Create the exist() function for any selector. i.e: $("selector").exist()
+                $.fn.exist=function(){return this.length>0;};
+                window.debugging=true;
                 window.debug=function(message){
-                    $("#debug").append(message+"<br>");
+                    if(window.debugging){
+                        if(!$("#html5sync_debug").exist()){
+                            $("body").prepend('<div id="html5sync_debug"></div>');
+                        }
+                        $("#html5sync_debug").append(message+"<br>");
+                        $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
+                    }
                 };
                 
                 
                 var params={
-                    database: "testingdb",         //Nombre de la base de datos
+                    database: "tiendamusical",         //Nombre de la base de datos
                     stores: [
                         {
-                            name:"store1",
-                            key:{keyPath: "key_name1"},
+                            name:"music",
+                            key:{autoIncrement:true},
                             indexes:[           //Lista de índices del almacén, ver parámetros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
                                 {
-                                    name:"index_name_1", 
-                                    key:"key_name1", 
-                                    params:{unique: true}
-                                },
-                                {
-                                    name:"index_name_2",
-                                    key:"key_name2",
+                                    name:"song", 
+                                    key:"song", 
                                     params:{unique: false}
                                 },
                                 {
-                                    name:"index_name_3",
-                                    key:"key_name3",
-                                    params:{unique: false}
-                                }
-                            ],
-                        },
-                        {
-                            name:"store2",
-                            key:{autoIncrement : true},
-                            indexes:[           //Lista de índices del almacén
-                                {
-                                    name:"index_name_1", 
-                                    key:"key_name1", 
-                                    params:{unique: true}
-                                },
-                                {
-                                    name:"index_name_2",
-                                    key:"key_name2",
+                                    name:"artist",
+                                    key:"artist",
                                     params:{unique: false}
                                 },
                                 {
-                                    name:"index_name_3",
-                                    key:"key_name3",
+                                    name:"album",
+                                    key:"album",
                                     params:{unique: false}
                                 }
-                            ],
+                            ]
                         }
                     ]      
-                }
-                
+                };
                 
                 
                 var database=new Database(params);
 //                database.init(params);
-                
                 
                 
                 
@@ -251,6 +237,5 @@
     </head>
     <body>
         <button id="write">Escribir</button>
-        <section id="debug"></section>
     </body>
 </html>

@@ -44,17 +44,17 @@
  *                          key:"key_name3",
  *                          params:{unique: false}
  *                      }
- *                  ],
+ *                  ]
  *              }
  *          ],
  *          options:{
  *              overwriteObjectStores:true,     //(default) Elimina los almacenes anteriores y los sobreescribe
  *          }      
- *      }
+ *      };
  */
 var Database = function(params) {
     var self = this;
-    self.version = 11;     //Versión de la Base de datos indexedDB
+    self.version = 4;  //Versión de la Base de datos indexedDB
     self.db;            //Base de datos indexedDB
     self.request;       //Objeto que contiene la conexión a la base de datos
 
@@ -73,7 +73,7 @@ var Database = function(params) {
      */
     var Database = function() {
         self.request = window.indexedDB.open(self.params.database, self.version);
-        debug("Iniciando acceso a la base de datos "+self.params.database);
+        debug("Iniciando acceso a la base de datos: "+self.params.database+" - versi&oacute;n: "+self.version);
 
         //Asigna los eventos
         events();
@@ -111,7 +111,7 @@ var Database = function(params) {
             //Se crea o reemplaza la base de datos
             self.db = e.target.result;
             debug("Actualizando la estructura de la base de datos: "+self.params.database);
-            //Se crean loa almacenes de datos pasados en los parámetros
+            //Se crean los almacenes de datos pasados en los parámetros
             for (var i in self.params.stores) {
                 var storeParams = self.params.stores[i];
                 //Borra el almacén si existe
@@ -128,11 +128,30 @@ var Database = function(params) {
                 }
             }
         };
-    };
+    };    
     /*
      * Borra un almacén de objetos. ¡¡¡ Elimina todo el contenido !!! 
+     * @param {string} name Nombre del almacén de objetos
      */
     function deleteStore(name){
-        self.db.deleteObjectStore(name);
-    }
+        try{
+            self.db.deleteObjectStore(name);
+            debug("... Se elimin&oacute; con &eacute;xito el almac&eacute;n: "+name);
+        }catch(e){
+            debug("... No hay versi&oacute;n anterior del almac&eacute;n: "+name);
+        }
+    };
+    /*
+     * Borra una base de datos indexedDB ¡¡¡ Elimina todo el contenido !!! 
+     * @param {string} name Nombre de la base de datos
+     */
+    self.deleteDatabase=function (name){
+        var request=window.indexedDB.deleteDatabase(name);
+        request.onsuccess = function () {
+            debug("Base de datos eliminada: "+name);
+        };
+        request.onerror = function () {
+            debug("No se puede borrar la base de datos: "+name);
+        };
+    };
 };
