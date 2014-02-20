@@ -1,7 +1,55 @@
-function Database(){
+/*
+ * Clase para el manejo de bases de datos
+ * @param {object} params Objeto con los parámetros de la base de datos en el navegador:
+ *      params={
+ *          database: "html5db"         //Nombre de la base de datos
+ *          stores: [
+ *              {
+ *                  name:"store1",
+ *                  key:{keyPath: "key_name1"},
+ *                  indexes:[           //Lista de índices del almacén, ver parámetros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
+ *                      {"index_name_1", "key_name1", {unique: true}},
+ *                      {"index_name_2", "key_name2", {unique: false}},
+ *                      {"index_name_3", "key_name3", {unique: false}}
+ *                  ],
+ *              },
+ *              {
+ *                  name:"store2",
+ *                  key:{autoIncrement : true},
+ *                  indexes:[           //Lista de índices del almacén
+ *                      {"index_name_1", "key_name1", {unique: true}},
+ *                      {"index_name_2", "key_name2", {unique: false}},
+ *                      {"index_name_3", "key_name3", {unique: false}}
+ *                  ],
+ *              },
+ *              {
+ *                  name:"store3",
+ *                  key:{autoIncrement : true},
+ *                  indexes:[           //Lista de índices del almacén
+ *                      {"index_name_1", "key_name1", {unique: true}},
+ *                      {"index_name_2", "key_name2", {unique: false}},
+ *                      {"index_name_3", "key_name3", {unique: false}}
+ *                  ],
+ *              }
+ *          ]      
+ *      }
+ */
+function Database(params){
     var self=this;
     self.db;
     self.request = window.indexedDB.open("testing",1);
+    
+    
+    //Variables por defecto
+    var def = {
+        server: "http://localhost/wiki/",
+        minHeight: 100,
+        minWidth: 100,
+        mw_body: $(".mw-body")      //Cuerpo de la página de mediawiki
+    };
+    var opts = $.extend(def,params);
+    
+    
     /*
      * Evento del request para manejar los errores. Se dispara si
      * por ejemplo, un usuario no permite que se usen bases de
