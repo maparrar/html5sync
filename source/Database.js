@@ -42,12 +42,15 @@ function Database(params){
     
     //Variables por defecto
     var def = {
-        server: "http://localhost/wiki/",
-        minHeight: 100,
-        minWidth: 100,
-        mw_body: $(".mw-body")      //Cuerpo de la página de mediawiki
+        database: "html5sync",
     };
-    var opts = $.extend(def,params);
+    self = $.extend(def,params);
+    
+    console.debug(self);
+    
+    self.setEvents=function(){
+        
+    };
     
     
     /*
