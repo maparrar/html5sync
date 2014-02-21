@@ -1,3 +1,11 @@
+<!--
+/*
+ * html5sync Plugin v.0.0.2 (https://github.com/maparrar/html5sync)
+ * Feb 2014
+ * - maparrar: http://maparrar.github.io
+ * - jomejia: https://github.com/jomejia
+ */
+ -->
 <!doctype html>
 <html>
     <head>
