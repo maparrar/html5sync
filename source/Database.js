@@ -1,4 +1,4 @@
-/*
+/**
  * Clase para el manejo de bases de datos [constructor pattern]
  * @param {object} params Objeto con los parámetros de la base de datos en el navegador:
  *      params={
@@ -53,21 +53,16 @@
  *      };
  *  @param {function} callback Función que garantiza que en su contexto ya se ha cargado la base de datos
  */
-var Database = function(params,callback) {
-    
-//    console.debug(callback);
-    
+var Database = function(params,callback){
     /**************************************************************************/
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
     var self = this;
-    self.version = 8;       //Versión de la Base de datos indexedDB
+    self.version = 14;       //Versión de la Base de datos indexedDB
     self.db;                //Base de datos indexedDB
     self.request;           //Objeto que contiene la conexión a la base de datos
     self.callback=callback; //Función que garantiza que en su contexto ya se ha cargado la base de datos
     
-    
-
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
     /**************************************************************************/
@@ -80,13 +75,13 @@ var Database = function(params,callback) {
         }
     };
     self.params = $.extend(def, params);
-    /*
+    /**
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
     var Database = function() {
         if(window.indexedDB !== undefined) {
             self.request = window.indexedDB.open(self.params.database, self.version);
-            debug("Iniciando acceso a la base de datos: "+self.params.database+" - versi&oacute;n: "+self.version);
+            debug("Iniciando acceso a la base de datos: "+self.params.database+" - versión: "+self.version);
             //Asigna los eventos
             events();
         }else{
@@ -97,7 +92,7 @@ var Database = function(params,callback) {
     /**************************************************************************/
     /**************************** PRIVATE METHODS *****************************/
     /**************************************************************************/
-    /*
+    /**
      * Método privado que asigna funciones a los eventos
      */
     function events() {
@@ -116,7 +111,7 @@ var Database = function(params,callback) {
         self.request.onsuccess = function(e) {
             self.db = self.request.result;
             self.callback();
-            debug("Se he accedido con &eacute;xito la base de datos: "+self.params.database);
+            debug("Se he accedido con éxito la base de datos: "+self.params.database);
         };
         /*
          * Evento del request que se dispara cuando la base de datos
@@ -139,70 +134,102 @@ var Database = function(params,callback) {
                     deleteStore(storeParams.name);
                 }
                 var store = self.db.createObjectStore(storeParams.name, storeParams.key);
-                debug("... Se ha creado el almac&eacute;n de datos: " + storeParams.name);
+                debug("... Se ha creado el almacén de datos: " + storeParams.name);
                 //Se crea el conjunto de índices para cada almacén
                 for (var j in storeParams.indexes){
                     var indexParams=storeParams.indexes[j];
                     var index = store.createIndex(indexParams.name,indexParams.key,indexParams.params);
-                    
-                    console.debug(index);
-                    
-                    debug("... ... Se ha creado el &iacute;ndice: " + indexParams.name);
+                    debug("... ... Se ha creado el índice: " + indexParams.name);
                 }
             }
         };
     };
-    /*
+    /**
      * Borra un almacén de objetos. ¡¡¡ Elimina todo el contenido !!! 
      * @param {string} name Nombre del almacén de objetos
      */
     function deleteStore(name){
         try{
             self.db.deleteObjectStore(name);
-            debug("... Se elimin&oacute; con &eacute;xito el almac&eacute;n: "+name);
+            debug("... Se eliminó con éxito el almacén: "+name);
         }catch(e){
-            debug("... No hay versi&oacute;n anterior del almac&eacute;n: "+name);
+            debug("... No hay versión anterior del almacén: "+name);
         }
     };
     
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/
-    /*
+    /**
      * Inserta objetos en un almacén. Recibe un objeto o un array de objetos
-     * @param {string} store Nombre del almacén de datos donde se quiere insertar la información
-     * @param {object[]/object} data Objeto o array de objetos
+     * @param {string} storeName Nombre del almacén de datos donde se quiere insertar la información
+     * @param {object[]} data Objeto o array de objetos
      */
     self.add=function(storeName,data){
-        debug("Iniciando transacci&oacute;n: add");
+        debug("Iniciando transacción: add");
         var tx = self.db.transaction([storeName], "readwrite");
-        var store = tx.objectStore(storeName);        
+        var store = tx.objectStore(storeName);
         //Evento que se dispara cuando se finaliza la transacción con éxito
         tx.oncomplete = function(e) {
-            debug("... Transacci&oacute;n finalizada: add");
+            debug("... Transacción finalizada: add");
         };
         //Evento que maneja los errores en la transacción
         tx.onerror = function(e) {
-            debug("... Error en la transacci&oacute;n: add"+JSON.stringify(e));
+            debug("... ... Error: Uno o más objetos violan la unicidad de alguno de los índices. No se agregarán más objetos.");
         };
-        
-        if(Object.prototype.toString.call(data)==="[object Array]"){
-            for (var i in data) {
-                var request = store.add(data[i]);
-                debug("... ... Agregando: "+JSON.stringify(data[i]));
-                request.onerror = function(e){
-                    debug("... ... Error agregando: "+JSON.stringify(data[i])+" .::. "+request.error);
-                };
-            }
-        }else{
-            var request = store.add(data);
-            debug("... ... Agregando: "+JSON.stringify(data));
-            request.onerror = function(e){
-                debug("... ... Error agregando: "+JSON.stringify(data)+" .::. "+request.error);
-            };
+        //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un for
+        if(Object.prototype.toString.call(data)!=="[object Array]"){
+            data=new Array(data);
+        }
+        for (var i in data) {
+            var request = store.add(data[i]);
+            debug("... ... Agregando: "+JSON.stringify(data[i]));
         }
     };
-    /*
+    /**
+     * Retorna un conjunto de objetos de la base de datos
+     * @param {string} storeName Nombre del almacén de datos donde se quiere insertar la información
+     * @param {mixed} key
+     * @param {function} callback Función a la que se retornan los resultados
+     */
+    self.get=function(storeName,key,callback){
+        debug("Iniciando consulta");
+        var tx = self.db.transaction([storeName]);
+        var store = tx.objectStore(storeName);
+        var range=IDBKeyRange.only(parseInt(key));
+        var output=new Array();
+        store.openCursor(range).onsuccess = function(event) {
+            var cursor = event.target.result;
+            if (cursor) {
+                output.push(cursor.value);
+                cursor.continue();
+            }else{
+                callback(output);
+                debug("... Consulta finalizada");
+            }
+        };
+    };
+    /**
+     * Elimina objetos de la base de datos a partir de su clave y el almacén
+     * @param {string} storeName Nombre del almacén de datos
+     * @param {mixed} key 
+     * @returns {undefined}
+     */
+    self.delete=function(storeName,key){
+        var request = self.db.transaction([storeName],"readwrite")
+                .objectStore(storeName)
+                .delete(key);
+        
+        
+        
+        request.onsuccess = function(event) {
+            debug("... ... Objeto eliminado: "+key);
+        };
+        request.onerror = function(event) {
+            debug("... ... No se pudo eliminar el objeto: "+key);
+        };
+    };
+    /**
      * Borra una base de datos indexedDB ¡¡¡ Elimina todo el contenido !!! 
      * @param {string} name Nombre de la base de datos
      */
