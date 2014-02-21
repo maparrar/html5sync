@@ -67,8 +67,6 @@ Changelog
 
 Todo
 =========
-* Crear encabezados de archivos
-* Poner licencia
 * Manejo de errores
 * Pruebas
 
