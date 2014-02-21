@@ -49,6 +49,7 @@ Changelog
     * Método para eliminar base de datos
     * Debug centralizado
     * Mostrar el número de versión en el debug
+    * Método add de Database
 
 * v.0.0.1 - [2014-02-18]
     * Ejemplo de bases de datos indexedDB
@@ -61,6 +62,7 @@ Changelog
 
 Todo
 =========
-* 
+* Crear encabezados de archivos
+* Poner licencia
 * Manejo de errores
 * Pruebas

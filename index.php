@@ -36,13 +36,13 @@
                             key:{autoIncrement:true},
                             indexes:[           //Lista de índices del almacén, ver parámetros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
                                 {
-                                    name:"song", 
-                                    key:"song", 
+                                    name:"artist",
+                                    key:"artist",
                                     params:{unique: false}
                                 },
                                 {
-                                    name:"artist",
-                                    key:"artist",
+                                    name:"song", 
+                                    key:"song", 
                                     params:{unique: false}
                                 },
                                 {
@@ -56,8 +56,17 @@
                 };
                 
                 
-                var database=new Database(params);
-//                database.init(params);
+                var data=[
+                    {artist: "Tom Yorke", song: "Analyse", album: "The eraser"},
+                    {artist: "Bob Marly", song: "One love", album: "Legend"},
+                    {artist: "Alice in Chains", song: "Angry Chair", album: "Unplugged"},
+                    {artist: "Fito Paez", song: "Circo Beat", album: "Circo Beat"},
+                    {artist: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"}
+                ];
+                
+                var database=new Database(params,function(){
+                    database.add("music",data);
+                });
                 
                 
                 

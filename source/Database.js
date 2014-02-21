@@ -51,13 +51,26 @@
  *              overwriteObjectStores:true,     //(default) Elimina los almacenes anteriores y los sobreescribe
  *          }      
  *      };
+ *  @param {function} callback Función que garantiza que en su contexto ya se ha cargado la base de datos
  */
-var Database = function(params) {
+var Database = function(params,callback) {
+    
+//    console.debug(callback);
+    
+    /**************************************************************************/
+    /******************************* ATTRIBUTES *******************************/
+    /**************************************************************************/
     var self = this;
-    self.version = 4;  //Versión de la Base de datos indexedDB
-    self.db;            //Base de datos indexedDB
-    self.request;       //Objeto que contiene la conexión a la base de datos
+    self.version = 8;       //Versión de la Base de datos indexedDB
+    self.db;                //Base de datos indexedDB
+    self.request;           //Objeto que contiene la conexión a la base de datos
+    self.callback=callback; //Función que garantiza que en su contexto ya se ha cargado la base de datos
+    
+    
 
+    /**************************************************************************/
+    /********************* CONFIGURATION AND CONSTRUCTOR **********************/
+    /**************************************************************************/
     //Se mezclan los parámetros por defecto con los proporcionados por el usuario
     //y se agregan a la variable self (this del objeto)
     var def = {
@@ -67,17 +80,23 @@ var Database = function(params) {
         }
     };
     self.params = $.extend(def, params);
-
     /*
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
     var Database = function() {
-        self.request = window.indexedDB.open(self.params.database, self.version);
-        debug("Iniciando acceso a la base de datos: "+self.params.database+" - versi&oacute;n: "+self.version);
-
-        //Asigna los eventos
-        events();
+        if(window.indexedDB !== undefined) {
+            self.request = window.indexedDB.open(self.params.database, self.version);
+            debug("Iniciando acceso a la base de datos: "+self.params.database+" - versi&oacute;n: "+self.version);
+            //Asigna los eventos
+            events();
+        }else{
+            debug("Este navegador no soporta indexedDB");
+        }
     }();
+    
+    /**************************************************************************/
+    /**************************** PRIVATE METHODS *****************************/
+    /**************************************************************************/
     /*
      * Método privado que asigna funciones a los eventos
      */
@@ -96,6 +115,7 @@ var Database = function(params) {
          */
         self.request.onsuccess = function(e) {
             self.db = self.request.result;
+            self.callback();
             debug("Se he accedido con &eacute;xito la base de datos: "+self.params.database);
         };
         /*
@@ -124,11 +144,14 @@ var Database = function(params) {
                 for (var j in storeParams.indexes){
                     var indexParams=storeParams.indexes[j];
                     var index = store.createIndex(indexParams.name,indexParams.key,indexParams.params);
+                    
+                    console.debug(index);
+                    
                     debug("... ... Se ha creado el &iacute;ndice: " + indexParams.name);
                 }
             }
         };
-    };    
+    };
     /*
      * Borra un almacén de objetos. ¡¡¡ Elimina todo el contenido !!! 
      * @param {string} name Nombre del almacén de objetos
@@ -139,6 +162,44 @@ var Database = function(params) {
             debug("... Se elimin&oacute; con &eacute;xito el almac&eacute;n: "+name);
         }catch(e){
             debug("... No hay versi&oacute;n anterior del almac&eacute;n: "+name);
+        }
+    };
+    
+    /**************************************************************************/
+    /***************************** PUBLIC METHODS *****************************/
+    /**************************************************************************/
+    /*
+     * Inserta objetos en un almacén. Recibe un objeto o un array de objetos
+     * @param {string} store Nombre del almacén de datos donde se quiere insertar la información
+     * @param {object[]/object} data Objeto o array de objetos
+     */
+    self.add=function(storeName,data){
+        debug("Iniciando transacci&oacute;n: add");
+        var tx = self.db.transaction([storeName], "readwrite");
+        var store = tx.objectStore(storeName);        
+        //Evento que se dispara cuando se finaliza la transacción con éxito
+        tx.oncomplete = function(e) {
+            debug("... Transacci&oacute;n finalizada: add");
+        };
+        //Evento que maneja los errores en la transacción
+        tx.onerror = function(e) {
+            debug("... Error en la transacci&oacute;n: add"+JSON.stringify(e));
+        };
+        
+        if(Object.prototype.toString.call(data)==="[object Array]"){
+            for (var i in data) {
+                var request = store.add(data[i]);
+                debug("... ... Agregando: "+JSON.stringify(data[i]));
+                request.onerror = function(e){
+                    debug("... ... Error agregando: "+JSON.stringify(data[i])+" .::. "+request.error);
+                };
+            }
+        }else{
+            var request = store.add(data);
+            debug("... ... Agregando: "+JSON.stringify(data));
+            request.onerror = function(e){
+                debug("... ... Error agregando: "+JSON.stringify(data)+" .::. "+request.error);
+            };
         }
     };
     /*
