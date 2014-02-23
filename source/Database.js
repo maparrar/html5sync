@@ -64,7 +64,6 @@ var Database = function(params,callback){
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
     var self = this;
-    self.version = 14;       //Versión de la Base de datos indexedDB
     self.db;                //Base de datos indexedDB
     self.request;           //Objeto que contiene la conexión a la base de datos
     self.callback=callback; //Función que garantiza que en su contexto ya se ha cargado la base de datos
@@ -76,6 +75,7 @@ var Database = function(params,callback){
     //y se agregan a la variable self (this del objeto)
     var def = {
         database: "html5db",
+        version: 1,
         options: {
             overwriteObjectStores: true
         }
@@ -86,12 +86,13 @@ var Database = function(params,callback){
      */
     var Database = function() {
         if(window.indexedDB !== undefined) {
+            self.version = self.params.version; //Versión de la Base de datos indexedDB
             self.request = window.indexedDB.open(self.params.database, self.version);
             debug("Iniciando acceso a la base de datos: "+self.params.database+" - versión: "+self.version);
             //Asigna los eventos
             events();
         }else{
-            debug("Este navegador no soporta indexedDB");
+            self.callback(new Error("This browser does not support indexedDB"));
         }
     }();
     
@@ -108,7 +109,7 @@ var Database = function(params,callback){
          * datos indexedDB en el navegador.
          */
         self.request.onerror = function(e) {
-            debug("No es posible conectar con la base de datos local");
+            self.callback(new Error("Unable to connect to the local database"));
         };
         /*
          * Evento del request cuando es posible usar la base de datos
@@ -116,7 +117,7 @@ var Database = function(params,callback){
          */
         self.request.onsuccess = function(e) {
             self.db = self.request.result;
-            self.callback();
+            self.callback(false);
             debug("Se he accedido con éxito la base de datos: "+self.params.database);
         };
         /*
@@ -170,18 +171,15 @@ var Database = function(params,callback){
      * Inserta objetos en un almacén. Recibe un objeto o un array de objetos
      * @param {string} storeName Nombre del almacén de datos donde se quiere insertar la información
      * @param {object[]} data Objeto o array de objetos
+     * @param {function} callback Función a la que se retornan los resultados
      */
-    self.add=function(storeName,data){
-        debug("Iniciando transacción: add");
-        var tx = self.db.transaction([storeName], "readwrite");
+    self.add=function(storeName,data,callback){
+        debug("add() - Transacción iniciada");
+        var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         //Evento que se dispara cuando se finaliza la transacción con éxito
         tx.oncomplete = function(e) {
-            debug("... Transacción finalizada: add");
-        };
-        //Evento que maneja los errores en la transacción
-        tx.onerror = function(e) {
-            debug("... ... Error: Uno o más objetos violan la unicidad de alguno de los índices. No se agregarán más objetos.");
+            debug("... add() - Transacción finalizada");
         };
         //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un for
         if(Object.prototype.toString.call(data)!=="[object Array]"){
@@ -189,7 +187,14 @@ var Database = function(params,callback){
         }
         for (var i in data) {
             var request = store.add(data[i]);
-            debug("... ... Agregando: "+JSON.stringify(data[i]));
+            debug("... add() - Agregando: "+JSON.stringify(data[i]));
+            request.onerror = function(e) {
+                debug("... add() ... Error: Uno o más objetos violan la unicidad de alguno de los índices. No se agregarán más objetos.");
+                if(callback)callback(e.target.error);
+            };
+            request.onsuccess = function(e) {
+                if(callback)callback(false);
+            };
         }
     };
     /**
@@ -199,40 +204,77 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.get=function(storeName,key,callback){
-        debug("Iniciando consulta");
+        debug("get() - Transacción iniciada");
         var tx = self.db.transaction([storeName]);
         var store = tx.objectStore(storeName);
-        var range=IDBKeyRange.only(parseInt(key));
+        var range=IDBKeyRange.only(key);
         var output=new Array();
-        store.openCursor(range).onsuccess = function(event) {
-            var cursor = event.target.result;
+        store.openCursor(range).onerror=function(e){
+            debug("... get() ... No existe el objeto de clave '"+key+"' en la base de datos.");
+            if(callback)callback(e.target.error);
+        };
+        store.openCursor(range).onsuccess = function(e) {
+            var cursor = e.target.result;
             if (cursor) {
                 output.push(cursor.value);
                 cursor.continue();
             }else{
-                callback(output);
-                debug("... Consulta finalizada");
+                debug("... get() - Transacción finalizada");
+                if(callback)callback(false,output);
             }
+        };
+    };
+    /**
+     * Actualiza un objero de la base de datos a partir del almacén y la clave.
+     * Si dentro del objeto pasado como parámetro se actualiza key, y esta no 
+     * existe, se crea un nuevo objeto.
+     * @param {string} storeName Nombre del almacén de datos
+     * @param {mixed} key Clave del objeto
+     * @param {object} object Objeto con las actualizaciones
+     * @param {function} callback Función a la que se retornan los resultados
+     */
+    self.update=function(storeName,key,object,callback){
+        debug("upd() - Transacción iniciada");
+        var tx = self.db.transaction([storeName],"readwrite");
+        var store = tx.objectStore(storeName);
+        var request = store.get(key);
+        request.onerror = function(e) {
+            debug("... upd() ... No se pudo actualizar el objeto: "+key);
+            if(callback)callback(e.target.error);
+        };
+        request.onsuccess = function(e) {
+            // Retorna la versión anterior del objeto y lo actualiza con el nuevo
+            var older = request.result;
+            var newer=$.extend(older,object);
+            // Vuelve a insertar el objeto en la base de datos
+            var requestUpdate = store.put(newer);
+            requestUpdate.onerror = function(e) {
+                debug("... upd() ... No se pudo actualizar el objeto: "+key);
+                if(callback)callback(e.target.error);
+            };
+            requestUpdate.onsuccess = function(e) {
+                debug("... upd() ... Transacción finalizada");
+                if(callback)callback(false,newer);
+            };
         };
     };
     /**
      * Elimina objetos de la base de datos a partir de su clave y el almacén
      * @param {string} storeName Nombre del almacén de datos
      * @param {mixed} key 
-     * @returns {undefined}
+     * @param {function} callback Función a la que se retornan los resultados
      */
-    self.delete=function(storeName,key){
-        var request = self.db.transaction([storeName],"readwrite")
-                .objectStore(storeName)
-                .delete(key);
-        
-        
-        
-        request.onsuccess = function(event) {
-            debug("... ... Objeto eliminado: "+key);
+    self.delete=function(storeName,key,callback){
+        debug("del() - Transacción iniciada");
+        var tx = self.db.transaction([storeName],"readwrite");
+        var store = tx.objectStore(storeName);
+        var request = store.delete(key);
+        request.onerror = function(e) {
+            debug("... del() ... No se pudo eliminar el objeto: "+key);
+            if(callback)callback(e.target.error);
         };
-        request.onerror = function(event) {
-            debug("... ... No se pudo eliminar el objeto: "+key);
+        request.onsuccess = function(e) {
+            debug("... del() ... Transacción finalizada");
         };
     };
     /**

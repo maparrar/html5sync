@@ -22,39 +22,30 @@ indexedDB
 =========
 
 * ObjectStore
-    Crea un almacén de objetos que se puede definir de la siguiente manera:
-    |Key Path    Key Generator 	Description
-    |(keyPath)   (autoIncrement)
-    |__________________________________________________________________________________
-     No          No              This object store can hold any kind of value, 
-                                 even primitive values like numbers and strings. 
-                                 You must supply a separate key argument whenever 
-                                 you want to add a new value.
-     Yes     	No                 This object store can only hold JavaScript objects. 
-                                 The objects must have a property with the same name 
-                                 as the key path.
-     No          Yes             This object store can hold any kind of value. The 
-                                 key is generated for you automatically, or you can 
-                                 supply a separate key argument if you want to use a 
-                                 specific key.
-     Yes         Yes             This object store can only hold JavaScript objects. 
-                                 Usually a key is generated and the value of the 
-                                 generated key is stored in the object in a property 
-                                 with the same name as the key path. However, if such 
-                                 a property already exists, the value of that property 
-                                 is used as key rather than generating a new key.
 
+    Crea un almacén de objetos que se puede definir de la siguiente manera (tomado de: https://developer.mozilla.org/en-US/docs/IndexedDB/Using_IndexedDB#Structuring_the_database):
+    * Key Path (keyPath): NO - Key Generator (autoIncrement): NO
+        This object store can hold any kind of value, even primitive values like numbers and strings. You must supply a separate key argument whenever you want to add a new value.
+    * Key Path (keyPath): YES - Key Generator (autoIncrement): NO
+        This object store can only hold JavaScript objects. The objects must have a property with the same name as the key path.
+    * Key Path (keyPath): NO - Key Generator (autoIncrement): YES
+        This object store can hold any kind of value. The key is generated for you automatically, or you can supply a separate key argument if you want to use a specific key.
+    * Key Path (keyPath): YES - Key Generator (autoIncrement): YES
+        This object store can only hold JavaScript objects. Usually a key is generated and the value of the generated key is stored in the object in a property with the same name as the key path. However, if such a property already exists, the value of that property is used as key rather than generating a new key.
 
 Changelog
 =========
 
-* v.0.0.2 - [2014-02-20]
+* v.0.0.2 - [2014-02-22]
     * Método para eliminar base de datos
     * Debug centralizado
     * Mostrar el número de versión en el debug
     * Método add de Database
     * Método delete de Database
     * Método get de Database
+    * Método update de Database
+    * Manejo de errores en funciones asíncronas
+    * Estándarización en el CRUD de Database
 
 * v.0.0.1 - [2014-02-18]
     * Ejemplo de bases de datos indexedDB
@@ -67,9 +58,8 @@ Changelog
 
 Todo
 =========
-* Manejo de errores
 * Pruebas
-
+* Indicador de "procesando"
 
 
 Licencia MIT

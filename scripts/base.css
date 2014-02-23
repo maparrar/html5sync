@@ -1,3 +1,6 @@
+body{
+    font-size: 0.8em;
+}
 #html5sync_debug{
     background: black;
     bottom: 10px;
@@ -5,7 +8,7 @@
     font-size: 11px;
     max-height: 300px;
     max-width: 700px;
-    overflow: scroll;
+    overflow: auto;
     padding: 5px;
     position: absolute;
     right: 10px;

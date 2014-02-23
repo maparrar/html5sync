@@ -28,15 +28,15 @@
                         $("#html5sync_debug").append(message+"<br>");
                         $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
                     }
-                };                
-                
+                };
                 //Lista de parámetros que define la configuración de la base de datos
                 var params={
-                    database: "tiendamusical",         //Nombre de la base de datos
+                    database: "tiendamusical",  //Nombre de la base de datos
+                    version: 19,                //Versión de la base de datos
                     stores: [
                         {
                             name:"music",
-                            key:{autoIncrement:true},
+                            key:{keyPath:"song"},
                             indexes:[           //Lista de índices del almacén, ver parámetros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
                                 {
                                     name:"artist",
@@ -56,36 +56,63 @@
                             ]
                         }
                     ]      
-                };
-                var data=[
-                    {artist: "Tom Yorke", song: "Analyse", album: "The eraser"},
-                    {artist: "Bob Marly", song: "One love", album: "Legend"},
-                    {artist: "Alice in Chains", song: "Angry Chair", album: "Unplugged"},
-                    {artist: "Fito Paez", song: "Circo Beat", album: "Circo Beat"},
-                    {artist: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"}
-                ];
-                var database=new Database(params,function(){
-                    database.add("music",data);
-                });
-                
-                
-                
-                $("#add").click(function(){
-                    var nuevo={
-                        artist:$("#artist").val(),
-                        song:$("#song").val(),
-                        album:$("#album").val()
-                    };
-                    database.add("music",nuevo);
-                });
-                $("#delete").click(function(){
-                    database.delete("music",$("#key").val());
-                });
-                $("#get").click(function(){
-                    var key=parseInt($("#keyGet").val());
-                    if(!isNaN(key)){
-                        database.get("music",key,function(data){
-                            console.debug(data);
+                };                
+                var database=new Database(params,function(err){
+                    if(err){
+                        console.debug(err);
+                    }else{
+                        //Todo se debe hacer dentro del contexto de la creación de la base de datos
+                        $("#addDefault").click(function(){
+                            var data=[
+                                {artist: "Tom Yorke", song: "Analyse", album: "The eraser"},
+                                {artist: "Bob Marly", song: "One love", album: "Legend"},
+                                {artist: "Alice in Chains", song: "Angry Chair", album: "Unplugged"},
+                                {artist: "Fito Paez", song: "Circo Beat", album: "Circo Beat"},
+                                {artist: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"}
+                            ];
+                            database.add("music",data,function(err){
+                                if(err){console.debug(err);}
+                            });
+                        });
+                        $("#add").click(function(){
+                            var nuevo={
+                                artist:$("#artist").val(),
+                                song:$("#song").val(),
+                                album:$("#album").val()
+                            };
+                            database.add("music",nuevo,function(err){
+                                if(err){console.debug(err);}
+                            });
+                        });
+                        $("#get").click(function(){
+                            var key=$("#keyGet").val();
+                            database.get("music",key,function(err,data){
+                                if(err){
+                                    console.debug(err);
+                                }else{
+                                    if(data.length>0){
+                                        $("#ukey").val(key);
+                                        $("#uartist").val(data[0].artist);
+                                        $("#usong").val(data[0].song);
+                                        $("#ualbum").val(data[0].album);
+                                    }
+                                }
+                            });
+                        });
+                        $("#update").click(function(){
+                            var object={
+                                artist:$("#uartist").val(),
+                                song:$("#usong").val(),
+                                album:$("#ualbum").val()
+                            };
+                            database.update("music",$("#ukey").val(),object,function(err){
+                                if(err){console.debug(err);}
+                            });
+                        });
+                        $("#delete").click(function(){
+                            database.delete("music",$("#key").val(),function(err){
+                                if(err){console.debug(err);}
+                            });
                         });
                     }
                 });
@@ -93,15 +120,40 @@
         </script>
     </head>
     <body>
+        <h3>Agregar el siguiente conjunto de datos predefinidos a la base de datos</h3>
+        var data=[<br>
+        {artist: "Tom Yorke", song: "Analyse", album: "The eraser"},<br>
+        {artist: "Bob Marly", song: "One love", album: "Legend"},<br>
+        {artist: "Alice in Chains", song: "Angry Chair", album: "Unplugged"},<br>
+        {artist: "Fito Paez", song: "Circo Beat", album: "Circo Beat"},<br>
+        {artist: "Urge Overkill", song: "Girl you'll be a woman soon", album: "Stull"}<br>
+        ];<br>
+        <button id="addDefault">Agregar predefinidos</button>
+        <br><hr>
+        
+        <h3>Agregar un registro a la base de datos</h3>
         <input type="text" id="artist" placeholder="Artista"/>
         <input type="text" id="song" placeholder="Canción"/>
         <input type="text" id="album" placeholder="Álbum"/>
         <button id="add">Agregar</button>
-        <br>
+        <br><hr>
+        
+        <h3>Eliminar un registro de la base de datos</h3>
         <input type="text" id="key" placeholder="Clave del objeto a eliminar"/>
         <button id="delete">Eliminar</button>
-        <br>
+        <br><hr>
+        
+        <h3>Retornar un registro de la base de datos</h3>
         <input type="text" id="keyGet" placeholder="Clave del objeto a obtener"/>
         <button id="get">Retornar</button>
+        <br><hr>
+        
+        <h3>Actualizar un registro de la base de datos</h3>
+        <input type="text" id="ukey" placeholder="Clave del objeto a actualizar"/>
+        <input type="text" id="uartist" placeholder="Artista"/>
+        <input type="text" id="usong" placeholder="Canción"/>
+        <input type="text" id="ualbum" placeholder="Álbum"/>
+        <button id="update">Actualizar</button>
+        <br><hr>
     </body>
 </html>
