@@ -38,6 +38,7 @@ Changelog
 
 * v.0.0.3 - [2014-02-23]
     * Creación de la clase Sync para sincronización
+    * Verifica el estado de la conexión con el servidor
 
 * v.0.0.2 - [2014-02-22]
     * Método para eliminar base de datos
