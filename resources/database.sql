@@ -2,13 +2,11 @@ SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
 
-CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci ;
-USE `mydb` ;
 
 -- -----------------------------------------------------
--- Table `mydb`.`Artist`
+-- Table `Artist`
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `mydb`.`Artist` (
+CREATE  TABLE IF NOT EXISTS `Artist` (
   `id` INT NOT NULL ,
   `name` VARCHAR(45) NULL ,
   PRIMARY KEY (`id`) )
@@ -16,9 +14,9 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`Album`
+-- Table `Album`
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `mydb`.`Album` (
+CREATE  TABLE IF NOT EXISTS `Album` (
   `id` INT NOT NULL ,
   `name` VARCHAR(45) NULL ,
   `artist` INT NOT NULL ,
@@ -26,16 +24,16 @@ CREATE  TABLE IF NOT EXISTS `mydb`.`Album` (
   INDEX `fk_Album_Artist` (`artist` ASC) ,
   CONSTRAINT `fk_Album_Artist`
     FOREIGN KEY (`artist` )
-    REFERENCES `mydb`.`Artist` (`id` )
+    REFERENCES `Artist` (`id` )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`Song`
+-- Table `Song`
 -- -----------------------------------------------------
-CREATE  TABLE IF NOT EXISTS `mydb`.`Song` (
+CREATE  TABLE IF NOT EXISTS `Song` (
   `id` INT NOT NULL ,
   `name` VARCHAR(45) NULL ,
   `album` INT NOT NULL ,
@@ -43,7 +41,7 @@ CREATE  TABLE IF NOT EXISTS `mydb`.`Song` (
   INDEX `fk_Song_Album1` (`album` ASC) ,
   CONSTRAINT `fk_Song_Album1`
     FOREIGN KEY (`album` )
-    REFERENCES `mydb`.`Album` (`id` )
+    REFERENCES `Album` (`id` )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
