@@ -31,7 +31,7 @@ var Sync = function(params,callback){
      */
     var Sync = function() {
         self.state=false;
-        $("body").prepend('<div id="html5sync_state"><div id="text">State: </div><div id="state">checking</div></div>');
+        $("body").prepend('<div id="html5sync_state"><div id="state">checking...</div></div>');
         self.stateLabel=$("#html5sync_state");
         //Verifica el estado de la conexión
         checkState();
@@ -41,24 +41,42 @@ var Sync = function(params,callback){
     /**************************** PRIVATE METHODS *****************************/
     /**************************************************************************/
     /**
-     * Verifica si la conexión está activa y actualiza el indicador de estado
+     * Verifica si la conexión con el servidor está activa y actualiza el 
+     * indicador de estado.
      */
     function checkState(){
         setInterval(function(){
-            if(navigator.onLine){
-                self.state=true;
-                if(self.params.showState){
-                    self.stateLabel.removeClass("offline").addClass("online");
-                    self.stateLabel.find("#state").text("On line");
-                }
-            }else{
-                self.state=false;
-                if(self.params.showState){
-                    self.stateLabel.removeClass("online").addClass("offline");
-                    self.stateLabel.find("#state").text("Off line");
-                }
+            try{
+                $.ajax({
+                    url: "server/ajax/checkState.php"
+                }).done(function(response) {
+                    setState(Boolean(JSON.parse(response).state));
+                }).fail(function(){
+                    setState(false);
+                });
+            }catch(e){
+                setState(false); 
             }
         },self.params.stateTimer);
+    };
+    /**
+     * Establece el estado de la conexión con el servidor
+     * @param {bool} state Estado de la conexión
+     */
+    function setState(state){
+        if(state){
+            self.state=true;
+            if(self.params.showState){
+                self.stateLabel.removeClass("offline").addClass("online");
+                self.stateLabel.find("#state").text("on line");
+            }
+        }else{
+            self.state=false;
+            if(self.params.showState){
+                self.stateLabel.removeClass("online").addClass("offline");
+                self.stateLabel.find("#state").text("off line");
+            }
+        }
     };
     
     /**************************************************************************/
