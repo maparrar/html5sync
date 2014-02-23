@@ -18,7 +18,7 @@ IndexedDB:
 * Conceptos básicos: https://developer.mozilla.org/en-US/docs/IndexedDB/Basic_Concepts_Behind_IndexedDB
 * Usando IndexedDB: https://developer.mozilla.org/en-US/docs/IndexedDB/Using_IndexedDB
 
-indexedDB
+Cliente
 =========
 
 * ObjectStore
@@ -32,6 +32,12 @@ indexedDB
         This object store can hold any kind of value. The key is generated for you automatically, or you can supply a separate key argument if you want to use a specific key.
     * Key Path (keyPath): YES - Key Generator (autoIncrement): YES
         This object store can only hold JavaScript objects. Usually a key is generated and the value of the generated key is stored in the object in a property with the same name as the key path. However, if such a property already exists, the value of that property is used as key rather than generating a new key.
+
+Servidor
+=========
+* Se debe permitir el acceso a html5sync a la base de datos. Para usar el ejemplo ver el script en: resources/database.sql
+    * Configurar el usuario para que html5sync pueda acceder a la base de datos:
+        mysql> GRANT ALL PRIVILEGES ON your_database.* TO 'html5sync'@'localhost' IDENTIFIED BY 'your_password';
 
 Changelog
 =========
