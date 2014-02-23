@@ -64,15 +64,12 @@ var Sync = function(params,callback){
      * @param {bool} state Estado de la conexión
      */
     function setState(state){
-        if(state){
-            self.state=true;
-            if(self.params.showState){
+        self.state=true;
+        if(self.params.showState){
+            if(state){
                 self.stateLabel.removeClass("offline").addClass("online");
                 self.stateLabel.find("#state").text("on line");
-            }
-        }else{
-            self.state=false;
-            if(self.params.showState){
+            }else{
                 self.stateLabel.removeClass("online").addClass("offline");
                 self.stateLabel.find("#state").text("off line");
             }
