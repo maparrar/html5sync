@@ -13,3 +13,25 @@ body{
     position: absolute;
     right: 10px;
 }
+#html5sync_state{
+    background: grey;
+    color: white;
+    padding: 3px;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 100px;
+}
+#html5sync_state.offline{
+    background: red;
+}
+#html5sync_state.online{
+    background: green;
+}
+#html5sync_state div{
+    float: left;
+    margin-left: 5px;
+}
+#html5sync_state #state{
+    
+}

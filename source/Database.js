@@ -57,7 +57,7 @@
  *              overwriteObjectStores:true,     //(default) Elimina los almacenes anteriores y los sobreescribe
  *          }      
  *      };
- *  @param {function} callback Función que garantiza que en su contexto ya se ha cargado la base de datos
+ * @param {function} callback Función que garantiza que en su contexto ya se ha cargado la base de datos
  */
 var Database = function(params,callback){
     /**************************************************************************/

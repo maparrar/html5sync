@@ -13,6 +13,7 @@
         <meta charset="utf-8"/>
         <link rel="stylesheet" type="text/css" href="scripts/base.css">
         <script src="scripts/jquery-2.1.0.min.js"></script>
+        <script src="source/Sync.js"></script>
         <script src="source/Database.js"></script>
         <script type="text/javascript">
             $( document ).ready(function(){
@@ -115,6 +116,14 @@
                             });
                         });
                     }
+                });
+                
+                
+                
+                var sync=new Sync({
+                    showState:true
+                },function(err){
+                    
                 });
             });
         </script>
