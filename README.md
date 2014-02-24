@@ -39,8 +39,28 @@ Servidor
     * Configurar el usuario para que html5sync pueda acceder a la base de datos:
         mysql> GRANT ALL PRIVILEGES ON your_database.* TO 'html5sync'@'localhost' IDENTIFIED BY 'your_password';
 
+Sync
+=========
+Estrategias de sincronización de la base de datos:
+* Bloqueo: Se manejan dos estados para una tabla que dependen de las cuatro operaciones CRUD que el usuario vaya a realizar sobre ella.
+    * Create: No requiere bloqueo
+      Cada que sincronicen las bases de datos de cliente y servidor, se insertan los registros en orden de creación
+    * Read: No requiere bloqueo
+      Las consultas se hacen sobre la base de datos y no afectan a otros usuarios
+    * Update: Requiere bloqueo
+      Actualizar los datos de un registro puede modificar el estado de partida de otro usuario. Se requiere que cuando un usuario tome los datos, la tabla se bloquee y se libera cuando el usuario se vuelva a conectar.
+    * Delete: Requiere bloqueo
+      Eliminar un registro puede modificar el estado de partida de otro usuario. Se requiere que cuando un usuario tome los datos, la tabla se bloquee y se libera cuando el usuario se vuelva a conectar.   
+
+
+NOTAS:
+- Se debe tomar el timestamp del servidor cada que se conecte para sincronizar las actualizaciones
+
 Changelog
 =========
+
+* v.0.0.4 - [2014-02-24]
+    * 
 
 * v.0.0.3 - [2014-02-23]
     * Creación de la clase Sync para sincronización
@@ -71,11 +91,13 @@ Todo
 =========
 * Pruebas
 * Indicador de "procesando"
+* Base de datos en el servidor
+    * creación del archivo config.json donde se almacena el estado de la base de datos
 
 
 Licencia MIT
 =========
-The MIT License (MIT) Copyright (c) 2013
+The MIT License (MIT) Copyright (c) 2014
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
