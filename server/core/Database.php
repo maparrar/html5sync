@@ -23,12 +23,6 @@ class Database{
      */
     protected $driver;
     /** 
-     * Si es una base de datos persistente 
-     * 
-     * @var bool
-     */
-    protected $persistent;
-    /** 
      * Host donde está alojada la base de datos 
      * 
      * @var string
@@ -44,14 +38,12 @@ class Database{
     * Constructor
     * @param string $name Nombre de la base de datos        
     * @param string $driver Tipo de conexión: mysql, oracle, ...        
-    * @param bool $persistent Si es una base de datos persistente        
     * @param string $host Host donde está alojada la base de datos        
     * @param Connection[] $connections Array de conexiones a la base de datos: read, write, delete, all        
     */
-    function __construct($name="",$driver="",$persistent=true,$host="",$connections=array()){        
+    function __construct($name="",$driver="",$host="",$connections=array()){        
         $this->name=$name;
         $this->driver=$driver;
-        $this->persistent=$persistent;
         $this->host=$host;
         $this->connections=$connections;
     }
@@ -71,14 +63,6 @@ class Database{
     */
     public function setDriver($value) {
         $this->driver=$value;
-    }
-    /**
-    * Setter persistent
-    * @param bool $value Si es una base de datos persistente
-    * @return void
-    */
-    public function setPersistent($value) {
-        $this->persistent=$value;
     }
     /**
     * Setter host
@@ -110,13 +94,6 @@ class Database{
     */
     public function getDriver() {
         return $this->driver;
-    }
-    /**
-    * Getter: persistent
-    * @return bool
-    */
-    public function getPersistent() {
-        return $this->persistent;
     }
     /**
     * Getter: host
@@ -172,8 +149,7 @@ class Database{
                 ':host='.$this->host.
                 ';dbname='.$this->name,
                 $conection->getLogin(),
-                $conection->getPassword(),
-                array(PDO::ATTR_PERSISTENT => $this->persistent)
+                $conection->getPassword()
             );
         } catch (PDOException $e) {
             error_log("Error!: " . $e->getMessage());

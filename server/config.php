@@ -12,11 +12,15 @@ return array(
     /**
      * Configuración de la Base de datos a usar
      */
-    $database = array(
-        "database" => "musical",
+    "database" => array(
+        "name" => "musical",
         "driver" => "mysql",
         "host" => "localhost",
         "user" => "html5sync",
         "password" => "H5FAHM98hBS8"
+    ),
+    "test" => array(
+        "test1" => 1,
+        "test2" => 2
     )
 );

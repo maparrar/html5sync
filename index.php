@@ -6,6 +6,33 @@
  * - jomejia: https://github.com/jomejia
  */
  -->
+ 
+ <?php
+    include_once 'server/core/Connection.php';
+    include_once 'server/core/Database.php';
+    
+    
+    
+    //Se leen las variables de configuración
+    $config=require_once 'server/config.php';
+    
+    print_r();
+    
+    $db=new Database(
+                $config["database"]["name"],
+                $config["database"]["driver"],
+                $config["database"]["host"], 
+                (new Connection(
+                        "all",
+                        ["database"]["user"],
+                        ["database"]["password"]
+                    )
+                )
+            );
+    
+    
+ ?>
+ 
 <!doctype html>
 <html>
     <head>
