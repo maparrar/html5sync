@@ -16,7 +16,7 @@ return array(
         "name" => "musical",
         "driver" => "mysql",
         "host" => "localhost",
-        "user" => "html5sync",
+        "login" => "html5sync",
         "password" => "H5FAHM98hBS8"
     ),
     "test" => array(

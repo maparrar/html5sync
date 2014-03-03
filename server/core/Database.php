@@ -45,7 +45,11 @@ class Database{
         $this->name=$name;
         $this->driver=$driver;
         $this->host=$host;
-        $this->connections=$connections;
+        if(is_array($connections)){
+            $this->connections=$connections;
+        }else{
+            $this->connections=array($connections);
+        }
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
