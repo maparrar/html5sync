@@ -17,19 +17,39 @@
     $config=require_once 'server/config.php';
     
     
-    
+    //Se crea una instancia de la base de datos con la conexión (read+write)
     $db=new Database(
-                $config["database"]["name"],
-                $config["database"]["driver"],
-                $config["database"]["host"], 
-                new Connection(
-                    "all",
-                    $config["database"]["login"],
-                    $config["database"]["password"]
-                )
-            );
+            $config["database"]["name"],
+            $config["database"]["driver"],
+            $config["database"]["host"], 
+            new Connection(
+                "all",
+                $config["database"]["login"],
+                $config["database"]["password"]
+            )
+        );
+    //Se conecta con la base de datos
+    $handler=$db->connect();
     
-    $db->connect();
+    $stmt = $handler->prepare("SELECT * FROM Album");
+    $stmt->bindParam(':id',$id);
+    if ($stmt->execute()) {
+        if($stmt->rowCount()>0){
+            $row=$stmt->fetch();
+            
+            print_r($row);
+            
+//            $album=new Album();
+//            $album->setId(intval($row["id"]));
+//            $album->setName($row["name"]);
+//            $album->setArtist(intval($row["artist"]));
+//            $response=$album;
+        }
+    }else{
+        $error=$stmt->errorInfo();
+        error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+    }
+//    return $response;
     
     
  ?>
