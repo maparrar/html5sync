@@ -20,6 +20,7 @@
     
     //Se leen las variables de configuración
     $config=require_once 'server/config.php';
+    $tables=$config["tables"];
     
     
     //Se crea una instancia de la base de datos con la conexión (read+write)
@@ -34,12 +35,24 @@
             )
         );
     
-    
+    //Se crea el objeto para manejar tablas con PDO
     $dao=new DaoTable($db);
     
-    $table=$dao->loadTable("Album");
+    //TODO: Filtrar los tipos de datos
     
-    print_r($table->getPk());
+    
+    //Se lee cada tabla
+    foreach ($tables as $tabledata) {
+        $table=$dao->loadTable($tabledata["name"],$tabledata["mode"]);
+        
+        
+        print_r($table->jsonEncode());
+    }
+    
+    
+//    $table=$dao->loadTable("Album");
+//    
+//    print_r($table->getPk());
     
     //Se conecta con la base de datos
 //    $handler=$db->connect();

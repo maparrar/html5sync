@@ -20,7 +20,13 @@ return array(
         "password" => "H5FAHM98hBS8"
     ),
     "tables" => array(
-        "Artist" => 1,
-        "test2" => 2
+        array(
+            "name" => "Artist",
+            "mode" => "lock"
+        ),
+        array(
+            "name" => "Album",
+            "mode" => "unlock"
+        )
     )
 );

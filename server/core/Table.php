@@ -1,6 +1,7 @@
 <?php
 /** Table File
 * @package html5sync @subpackage core */
+require_once 'Object.php';
 /**
 * Table Class
 *
@@ -9,7 +10,7 @@
 * @package html5sync
 * @subpackage core
 */
-class Table{
+class Table extends Object{
     /** 
      * Nombre de la tabla 
      * 

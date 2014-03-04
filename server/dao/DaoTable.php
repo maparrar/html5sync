@@ -30,37 +30,12 @@ class DaoTable{
     
     
     
-    function loadTable($tableName){
-        $response=false;
-        
+    function loadTable($tableName,$mode){
         
         $table=new Table($tableName);
+        $table->setMode($mode);
         $table->setFields($this->loadFields($tableName));
         
-        
-        
-//        $handler=$this->db->connect("all");
-//        $stmt = $handler->prepare("SELECT COLUMN_NAME,DATA_TYPE,COLUMN_KEY FROM information_schema.columns WHERE table_name = :name");
-//        $stmt->bindParam(':name',$table);
-//        if ($stmt->execute()) {
-//            if($stmt->rowCount()>0){
-//                $row=$stmt->fetch();
-//                
-//                print_r($row);
-//                
-////                $table=new Table();
-////                $table->setId(intval($row["id"]));
-////                $table->setName($row["name"]);
-////                $table->setMode($row["mode"]);
-////                $table->setFields($row["fields"]);
-////                $table->setData($row["data"]);
-////                $table->setPk($row["pk"]);
-////                $response=$table;
-//            }
-//        }else{
-//            $error=$stmt->errorInfo();
-//            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
-//        }
         return $table;
     }
     

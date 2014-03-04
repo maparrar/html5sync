@@ -1,6 +1,7 @@
 <?php
 /** Field File
 * @package html5sync @subpackage core */
+require_once 'Object.php';
 /**
 * Field Class
 *
@@ -9,7 +10,7 @@
 * @package html5sync
 * @subpackage core
 */
-class Field{
+class Field extends Object{
     /** 
      * Field Name 
      * 
