@@ -48,36 +48,6 @@
         
         print_r($table->jsonEncode());
     }
-    
-    
-//    $table=$dao->loadTable("Album");
-//    
-//    print_r($table->getPk());
-    
-    //Se conecta con la base de datos
-//    $handler=$db->connect();
-    
-//    $stmt = $handler->prepare("SELECT * FROM Album");
-//    $stmt->bindParam(':id',$id);
-//    if ($stmt->execute()) {
-//        if($stmt->rowCount()>0){
-//            $row=$stmt->fetch();
-//            
-//            print_r($row);
-//            
-////            $album=new Album();
-////            $album->setId(intval($row["id"]));
-////            $album->setName($row["name"]);
-////            $album->setArtist(intval($row["artist"]));
-////            $response=$album;
-//        }
-//    }else{
-//        $error=$stmt->errorInfo();
-//        error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
-//    }
-//    return $response;
-    
-    
  ?>
  
 <!doctype html>
