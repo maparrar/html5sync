@@ -9,7 +9,7 @@
  * @param {object} params Objeto con los parámetros de la sincronización
  * @param {function} callback Función a la que se retornan los resultados
  */
-var Sync = function(params,callback){
+var Html5Sync = function(params,callback){
     /**************************************************************************/
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
@@ -21,6 +21,7 @@ var Sync = function(params,callback){
     //Se mezclan los parámetros por defecto con los proporcionados por el usuario
     //y se agregan a la variable self (this del objeto)
     var def = {
+        html5syncFolder:"html5sync/",
         stateTimer: 5000,
         showState:false
     };
@@ -28,7 +29,7 @@ var Sync = function(params,callback){
     /**
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
-    var Sync = function() {
+    var Html5Sync = function() {
         self.state=false;
         $("body").prepend('<div id="html5sync_state"><div id="state">checking...</div></div>');
         self.stateLabel=$("#html5sync_state");
@@ -47,7 +48,7 @@ var Sync = function(params,callback){
         setInterval(function(){
             try{
                 $.ajax({
-                    url: "server/ajax/checkState.php"
+                    url: self.params.html5syncFolder+"server/ajax/checkState.php"
                 }).done(function(response) {
                     setState(Boolean(JSON.parse(response).state));
                 }).fail(function(){

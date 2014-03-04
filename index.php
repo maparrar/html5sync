@@ -8,18 +8,18 @@
  -->
  
  <?php
-    include_once 'server/core/Connection.php';
-    include_once 'server/core/Database.php';
-    include_once 'server/core/Field.php';
-    include_once 'server/core/Table.php';
+    include_once 'html5sync/server/core/Connection.php';
+    include_once 'html5sync/server/core/Database.php';
+    include_once 'html5sync/server/core/Field.php';
+    include_once 'html5sync/server/core/Table.php';
     
-    include_once 'server/dao/DaoTable.php';
+    include_once 'html5sync/server/dao/DaoTable.php';
     
     
     
     
     //Se leen las variables de configuración
-    $config=require_once 'server/config.php';
+    $config=require_once 'html5sync/server/config.php';
     $tables=$config["tables"];
     
     
@@ -55,10 +55,10 @@
     <head>
         <title>html5sync</title>
         <meta charset="utf-8"/>
-        <link rel="stylesheet" type="text/css" href="client/base.css">
-        <script src="client/jquery-2.1.0.min.js"></script>
-        <script src="source/Sync.js"></script>
-        <script src="source/Database.js"></script>
+        <link rel="stylesheet" type="text/css" href="html5sync/client/css/base.css">
+        <script src="html5sync/client/jquery/jquery-2.1.0.min.js"></script>
+        <script src="html5sync/client/core/Html5Sync.js"></script>
+        <script src="html5sync/client/core/Database.js"></script>
         <script type="text/javascript">
             $( document ).ready(function(){
                 
@@ -164,7 +164,7 @@
                 
                 
                 
-                var sync=new Sync({
+                var html5Sync=new Html5Sync({
                     showState:true
                 },function(err){
                     
