@@ -59,8 +59,11 @@ NOTAS:
 Changelog
 =========
 
-* v.0.0.4 - [2014-02-24]
-    * 
+* v.0.0.4 - [2014-03-03]
+    * Creación de las clases de carga de tablas genéricas
+    * Carga de tablas desde configuración
+    * Parametrización de la librería
+    * Conversión de tablas a JSON
 
 * v.0.0.3 - [2014-02-23]
     * Creación de la clase Sync para sincronización
@@ -93,6 +96,9 @@ Todo
 * Indicador de "procesando"
 * Base de datos en el servidor
     * creación del archivo config.json donde se almacena el estado de la base de datos
+* Crear restricciones sobre las tablas
+* Verificar condiciones de fallo (tablas que no existan)
+
 
 
 Licencia MIT
