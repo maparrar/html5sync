@@ -35,6 +35,9 @@ var Html5Sync = function(params,callback){
         self.stateLabel=$("#html5sync_state");
         //Verifica el estado de la conexión
         checkState();
+        
+        //Hace la carga inicial de datos
+        loadData();
     }();
     
     /**************************************************************************/
@@ -75,7 +78,25 @@ var Html5Sync = function(params,callback){
             }
         }
     };
-    
+    /**
+     * Carga los datos de las tablas permitidas. Toda la información de carga
+     * está especificada en el archivo de configuración:
+     * html5sync/server/config.php
+     */
+    function loadData(){
+        try{
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/loadData.php"
+            }).done(function(response) {
+                console.debug(response);
+//                setState(Boolean(JSON.parse(response).state));
+            }).fail(function(){
+//                setState(false);
+            });
+        }catch(e){
+            setState(false); 
+        }
+    };
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/
