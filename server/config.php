@@ -19,8 +19,8 @@ return array(
         "login" => "html5sync",
         "password" => "H5FAHM98hBS8"
     ),
-    "test" => array(
-        "test1" => 1,
+    "tables" => array(
+        "Artist" => 1,
         "test2" => 2
     )
 );
