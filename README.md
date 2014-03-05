@@ -39,6 +39,11 @@ Servidor
     * Configurar el usuario para que html5sync pueda acceder a la base de datos:
         mysql> GRANT ALL PRIVILEGES ON your_database.* TO 'html5sync'@'localhost' IDENTIFIED BY 'your_password';
 
+* Se requiere la librería para SQLite
+    * sudo apt-get install libsqlite3-0 libsqlite3-dev
+    * sudo apt-get install php5-sqlite
+    * sudo service apache2 restart
+
 Sync
 =========
 Estrategias de sincronización de la base de datos:

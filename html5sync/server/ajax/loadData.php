@@ -9,13 +9,59 @@ include_once '../dao/DaoTable.php';
 
 
 try{
-    $db = new PDO('sqlite:testing.sqlite');
-    //create the database
-    $db->exec("CREATE TABLE Dogs (Id INTEGER PRIMARY KEY, Breed TEXT, Name TEXT, Age INTEGER)");
+    $sqlite=new PDO('sqlite:../sqlite/database.sqlite');
+    
+    // Create table messages
+    $sqlite->exec("CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY, 
+                    title TEXT, 
+                    message TEXT, 
+                    time INTEGER)");
+ 
+    
+    // Array with some test data to insert to database             
+    $messages = array(
+                  array('title' => 'Hello!',
+                        'message' => 'Just testing...',
+                        'time' => 1327301464),
+                  array('title' => 'Hello again!',
+                        'message' => 'More testing...',
+                        'time' => 1339428612),
+                  array('title' => 'Hi!',
+                        'message' => 'SQLite3 is cool...',
+                        'time' => 1327214268)
+                );
+ 
+ 
+    /**************************************
+    * Play with databases and tables      *
+    **************************************/
+ 
+    // Prepare INSERT statement to SQLite3 file db
+    $insert = "INSERT INTO messages (title, message, time) 
+                VALUES (:title, :message, :time)";
+    $stmt = $sqlite->prepare($insert);
+ 
+    // Bind parameters to statement variables
+    $stmt->bindParam(':title', $title);
+    $stmt->bindParam(':message', $message);
+    $stmt->bindParam(':time', $time);
+ 
+    // Loop thru all messages and execute prepared insert statement
+    foreach ($messages as $m) {
+      // Set values to bound variables
+      $title = $m['title'];
+      $message = $m['message'];
+      $time = $m['time'];
+ 
+      // Execute statement
+      $stmt->execute();
+    }
+    
+//    $db->exec("CREATE TABLE Dogs (Id INTEGER PRIMARY KEY, Breed TEXT, Name TEXT, Age INTEGER)");
 }catch(PDOException $e){
     
 }
-
 
 
 
