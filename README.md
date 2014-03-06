@@ -64,6 +64,10 @@ NOTAS:
 Changelog
 =========
 
+* v.0.0.5 - [2014-03-05]
+    * Creación de la clase de la base de datos de estado con PDO
+    * Pruebas con SQLite para almacenar el estado de la librería
+
 * v.0.0.4 - [2014-03-03]
     * Creación de las clases de carga de tablas genéricas
     * Carga de tablas desde configuración
@@ -103,6 +107,7 @@ Todo
     * creación del archivo config.json donde se almacena el estado de la base de datos
 * Crear restricciones sobre las tablas
 * Verificar condiciones de fallo (tablas que no existan)
+* Implemetar seguridad en la base de datos de estado SQLite
 
 
 

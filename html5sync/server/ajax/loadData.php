@@ -9,14 +9,7 @@ include_once '../dao/DaoTable.php';
 
 
 try{
-    $sqlite=new PDO('sqlite:../sqlite/database.sqlite');
     
-    // Create table messages
-    $sqlite->exec("CREATE TABLE IF NOT EXISTS messages (
-                    id INTEGER PRIMARY KEY, 
-                    title TEXT, 
-                    message TEXT, 
-                    time INTEGER)");
  
     
     // Array with some test data to insert to database             

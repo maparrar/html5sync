@@ -1,164 +1,75 @@
 <?php
-/** Database File
+/** StateDB File
 * @package core @subpackage  */
 /**
-* Database Class
+* StateDB Class
+* Clase para manejo de la base de datos de estado en SQLite. Esta base de datos
+* mantiene la relación entre los usuarios y las tablas de la base de datos de la
+* aplicación.
 *
-* @author https://github.com/maparrar/maqinato
+* @author https://github.com/maparrar/html5sync
 * @author maparrar <maparrar@gmail.com>
 * @package core
 * @subpackage 
 */
-class Database{
+class StateDB{
     /** 
-     * Nombre de la base de datos 
+     * Ruta y nombre de la base de datos
      * 
      * @var string
      */
-    protected $name;
-    /** 
-     * Tipo de conexión: mysql, oracle, ... 
-     * 
-     * @var string
-     */
-    protected $driver;
-    /** 
-     * Host donde está alojada la base de datos 
-     * 
-     * @var string
-     */
-    protected $host;
-    /** 
-     * Array de conexiones a la base de datos: read, write, delete, all 
-     * 
-     * @var Connection[]
-     */
-    protected $connections;
+    protected $path;
     /**
     * Constructor
-    * @param string $name Nombre de la base de datos        
-    * @param string $driver Tipo de conexión: mysql, oracle, ...        
-    * @param string $host Host donde está alojada la base de datos        
-    * @param Connection[] $connections Array de conexiones a la base de datos: read, write, delete, all        
+    * @param string $path Ruta y nombre de la base de datos
     */
-    function __construct($name="",$driver="",$host="",$connections=array()){        
-        $this->name=$name;
-        $this->driver=$driver;
-        $this->host=$host;
-        if(is_array($connections)){
-            $this->connections=$connections;
-        }else{
-            $this->connections=array($connections);
-        }
+    function __construct($path="../sqlite/database.sqlite"){        
+        $this->path=$path;
+        $this->createDB($this->path);
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
-    * Setter name
-    * @param string $value Nombre de la base de datos
+    * Setter path
+    * @param string $value Ruta y nombre de la base de datos
     * @return void
     */
-    public function setName($value) {
-        $this->name=$value;
-    }
-    /**
-    * Setter driver
-    * @param string $value Tipo de conexión: mysql, oracle, ...
-    * @return void
-    */
-    public function setDriver($value) {
-        $this->driver=$value;
-    }
-    /**
-    * Setter host
-    * @param string $value Host donde está alojada la base de datos
-    * @return void
-    */
-    public function setHost($value) {
-        $this->host=$value;
-    }
-    /**
-    * Setter connections
-    * @param Connection[] $value Array de conexiones a la base de datos: read, write, delete, all
-    * @return void
-    */
-    public function setConnections($value) {
-        $this->connections=$value;
+    public function setPath($value) {
+        $this->path=$value;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
-    * Getter: name
+    * Getter: path
     * @return string
     */
-    public function getName() {
-        return $this->name;
-    }
-    /**
-    * Getter: driver
-    * @return string
-    */
-    public function getDriver() {
-        return $this->driver;
-    }
-    /**
-    * Getter: host
-    * @return string
-    */
-    public function getHost() {
-        return $this->host;
-    }
-    /**
-    * Getter: connections
-    * @return Connection[]
-    */
-    public function getConnections() {
-        return $this->connections;
+    public function getPath() {
+        return $this->path;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    
     /**
-     * Agrega una conexión a la base de datos
-     * @param string $name Nombre de la conexión: read, write, delete, all
-     * @param string $login Login de acceso a la base de datos para la conexión
-     * @param string $password Password de acceso a la base de datos para la conexión
+     * Verifica si la base de datos existe. Si no existe retorna false
+     * @param type $path Ruta de la base de datos
+     * @return boolean True si la base de datos existe, false en otro caso
      */
-    public function addConnection($name,$login,$password){
-        $this->connections[]=new Connection($name,$login,$password);
+    private function existDB($path){
+        return file_exists($path);
     }
+    
     /**
-    * Retorna una conexión dado su nombre
-    * @param string $name Nombre de la conexión que se quiere retornar: read, write, delete, all
-    * @return Connection Conexión a partir del nombre
-    */
-    private function connection($name){
-        $response=false;
-        foreach ($this->connections as $connection) {
-            if($connection->getName()===$name){
-                $response=$connection;
-                break;
-            }
-        }
-        return $response;
-    }
-    /**
-     * Conecta con una base de datos, si hay algún error ejecuta die() para terminar
-     * cualquier proceso.
-     * @param string $connectionName Nombre la conexión a usar: read, write, delete, all
-     * @return PDO Object databse handler
+     * Crea la estructura de la base de datos de estado
+     * @param type $path Ruta de la base de datos
      */
-    function connect($connectionName="all"){
-        $handler=false;
-        $conection=$this->connection($connectionName);
-        try {
-            $handler = new PDO(
-                $this->driver.
-                ':host='.$this->host.
-                ';dbname='.$this->name,
-                $conection->getLogin(),
-                $conection->getPassword()
-            );
-        } catch (PDOException $e) {
-            error_log("Error!: " . $e->getMessage());
-            die();
+    private function createDB($path){
+        try{
+            $sqlite=new PDO('sqlite:'.$path);
+            // Crea las tablas
+            $sqlite->exec("CREATE TABLE IF NOT EXISTS tables (
+                            id INTEGER PRIMARY KEY, 
+                            title TEXT, 
+                            message TEXT, 
+                            time INTEGER)");
+        } catch (Exception $ex) {
+            error_log($ex->getMessage());
         }
-        return $handler;
     }
 }
