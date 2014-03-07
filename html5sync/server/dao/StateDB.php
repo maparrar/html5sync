@@ -113,10 +113,13 @@ class StateDB{
                 $this->tableCreate($table->getName());
             }
         }
-        //Verifica si el usuario existe, sino, lo agrega
+        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial de las tablas
         if(!$this->userExists($userId)){
             $this->userCreate($userId);
             $this->updateState($userId,$tables,1);
+        }else{
+            //Compara las tablas de la última versión existente con las de entrada
+            
         }
         
         
@@ -183,6 +186,24 @@ class StateDB{
         }
         return $exist;
     }
+    /**
+     * Retorna el número de la última versión para el usuario
+     * @param int $userId Identificador del usuario
+     * @return int Última versión delusuario
+     */
+    private function userLastVersion($userId){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
+        $stmt->bindParam(':id',$userId);
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            $response=intval($row["versionDB"]);
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $response;
+    }
     /**************************************************************************/
     /*****************************   T A B L E S  *****************************/
     /**************************************************************************/
@@ -244,6 +265,9 @@ class StateDB{
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
         return $exist;
+    }
+    private function tablesComparer($userId,$tables){
+        
     }
     /**************************************************************************/
     /***********************   T A B L E    S T A T E  ************************/

@@ -86,9 +86,10 @@ NOTAS:
 Changelog
 =========
 
-* v.0.0.5 - [2014-03-05]
+* v.0.0.5 - [2014-03-07]
     * Creación de la clase de la base de datos de estado con PDO
     * Pruebas con SQLite para almacenar el estado de la librería
+    * Clase para manejar el estado
 
 * v.0.0.4 - [2014-03-03]
     * Creación de las clases de carga de tablas genéricas
@@ -131,6 +132,7 @@ Todo
 * Verificar condiciones de fallo (tablas que no existan)
 * Implemetar seguridad en la base de datos de estado SQLite
 * Conectar con SQLite por medio de la clase Database
+* Usar un Hash para almacenar una representación del estado
 
 
 
