@@ -93,16 +93,22 @@ $dao=new DaoTable($db);
 //Se lee cada tabla y se convierte a JSON para ser enviada
 $tables=array();
 $json="";
+$state="";
 foreach ($tablesData as $tableData) {
     $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
+    //Se guarda la estructura de cada tabla seraliazada para comparar el estado con el anterior
+    $state.=$table->jsonEncode();
+    //Se llenan las tablas con datos y se convierten a JSON
+    $table->setData($dao->loadData($table));
     array_push($tables, $table);
     $json.=$table->jsonEncode();
 }
 
-//Se verifica si hubo cambios en alguna de las tablas para el usuario desde la última conexión
+//Se verifica si hubo cambios en alguna de las tablas para el usuario desde la 
+//última conexión usando una función de Hash
 $stateDB=new StateDB();
-$userId=132;
-$version=$stateDB->checkChanges($userId, $tables);
+$userId=103;
+$version=$stateDB->version($userId,$state);
 if($version){
     
 }

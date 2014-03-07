@@ -58,7 +58,6 @@ class StateDB{
     private function existDB($path){
         return file_exists($path);
     }
-    
     /**
      * Crea la estructura de la base de datos de estado
      * @param type $path Ruta de la base de datos
@@ -69,25 +68,8 @@ class StateDB{
             $query="
                 CREATE TABLE IF NOT EXISTS `User` (
                     `id` INTEGER NOT NULL PRIMARY KEY,
-                    `versionDB` INTEGER
-                );
-                CREATE TABLE IF NOT EXISTS `Table` (
-                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    `name` TEXT
-                );
-                CREATE TABLE IF NOT EXISTS `TableState` (
-                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    `date` TEXT,
-                    `versionDB` INTEGER,
-                    `table` INTEGER NOT NULL,
-                    `user` INTEGER NOT NULL
-                );
-                CREATE TABLE IF NOT EXISTS `Field` (
-                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    `name` TEXT,
-                    `type` TEXT,
-                    `key` TEXT,
-                    `tableState` INTEGER NOT NULL
+                    `version` INTEGER NOT NULL,
+                    `state` TEXT
                 );
             ";
             // Crea las tablas
@@ -96,49 +78,28 @@ class StateDB{
             error_log($ex->getMessage());
         }
     }
-    
     /**
-     * Verifica para cada usuario si de la lista de tablas al menos una ha cambiado
-     * su estructura. Si ha cambiado, retorna el nuevo número de versión. Si no
-     * ha cambiado, retorna false.
+     * Verifica para cada usuario si la estructura de las tablas ha cambiado por
+     * medio de una función de hash. Si ha cambiado, actualiza el número de 
+     * versión. Si no ha cambiado, retorna el mismo número de versión.
      * @param int $userId Id del usuario
-     * @param Table[] $tables Lista de tablas del usuario
-     * @return mixed El número de la versión si hubo algún cambio en la estructura 
-     * de la base de datos, false en otro caso.
+     * @param string $state Estructura de las tablas en JSON
+     * @return int El número de la versión de la base de datos
      */
-    function checkChanges($userId,$tables){
-        //Agrega las tablas no existentes a la base de datos de estado
-        foreach ($tables as $table) {
-            if(!$this->tableExists($table->getName())){
-                $this->tableCreate($table->getName());
+    function version($userId,$state){
+        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
+        if(!$this->userExists($userId)){
+            $this->userCreate($userId,md5($state));
+        }else{
+            //Retorna el último estado
+            $oldState=$this->getState($userId);
+            $newState=md5($state);
+            if($newState!=$oldState){
+                $this->updateState($userId,$newState);
             }
         }
-        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial de las tablas
-        if(!$this->userExists($userId)){
-            $this->userCreate($userId);
-            $this->updateState($userId,$tables,1);
-        }else{
-            //Compara las tablas de la última versión existente con las de entrada
-            
-        }
-        
-        
-        
-        
-        return false;
-    }
-    
-    /**
-     * Actualiza el estado de las tablas para un usuario insertándolas en TableState
-     * @param int $userId Identificador del usuario
-     * @param Table $tables Lista de tablas
-     * @param int $version Número de versión de la base de datos a la que corresponde el estado de las tablas
-     * @return boolean True si se pudieron insertar, false en otro caso
-     */
-    private function updateState($userId,$tables,$version){
-        foreach ($tables as $table) {
-            $this->tableStateCreate($userId,$table,$version);
-        }
+        //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
+        return  $this->getVersion($userId);
     }
     /**************************************************************************/
     /******************************   U S E R S  ******************************/
@@ -146,15 +107,22 @@ class StateDB{
     /**
      * Inserta un usuario en la tabla de User
      * @param int $userId Identificador del usuario
+     * @param string $hashState Hash de las tablas para el usuario
      * @return boolean True si se pudo insertar el usuario, false en otro caso
      */
-    private function userCreate($userId){
+    private function userCreate($userId,$hashState){
         $created=false;
         if(!$this->userExists($userId)){
-            $stmt = $this->handler->prepare("INSERT INTO User (`id`,`versionDB`) VALUES (:id,:versionDB)");
-            $startingVersion=1;
+            $stmt = $this->handler->prepare("
+                INSERT INTO User 
+                    (`id`,`version`,`state`) 
+                VALUES 
+                    (:id,:version,:state)
+            ");
+            $version=1;
             $stmt->bindParam(':id',$userId);
-            $stmt->bindParam(':versionDB',$startingVersion);
+            $stmt->bindParam(':version',$version);
+            $stmt->bindParam(':state',$hashState);
             if(!$stmt->execute()){
                 $error=$stmt->errorInfo();
                 error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
@@ -187,55 +155,17 @@ class StateDB{
         return $exist;
     }
     /**
-     * Retorna el número de la última versión para el usuario
+     * Retorna el número de la versión para el usuario
      * @param int $userId Identificador del usuario
-     * @return int Última versión delusuario
+     * @return int Versión la base de datos para el usuario
      */
-    private function userLastVersion($userId){
+    private function getVersion($userId){
         $response=false;
-        $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
+        $stmt = $this->handler->prepare("SELECT `version` FROM `User` WHERE `id`= :id");
         $stmt->bindParam(':id',$userId);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
-            $response=intval($row["versionDB"]);
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
-        }
-        return $response;
-    }
-    /**************************************************************************/
-    /*****************************   T A B L E S  *****************************/
-    /**************************************************************************/
-    /**
-     * Inserta una tabla en la base de datos de estado
-     * @param string $tableName Nombre de la tabla
-     * @return boolean True si se pudo insertar, false en otro caso
-     */
-    private function tableCreate($tableName){
-        $created=false;
-        if(!$this->tableExists($tableName)){
-            $stmt = $this->handler->prepare("INSERT INTO `Table` (`name`) VALUES (:name)");
-            $stmt->bindParam(':name',$tableName);
-            if(!$stmt->execute()){
-                $error=$stmt->errorInfo();
-                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-            }
-        }
-        return $created;
-    }
-    /**
-     * Retorna el id de una tabla a partir de su nombre
-     * @param string $tableName Nombre de la tabla
-     * @return int Identificador de la tabla
-     */
-    function tableRead($tableName){
-        $response=false;
-        $stmt = $this->handler->prepare("SELECT `id` FROM `Table` WHERE `name`= :name");
-        $stmt->bindParam(':name',$tableName);
-        if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $response=intval($row["id"]);
+            $response=intval($row["version"]);
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
@@ -243,96 +173,45 @@ class StateDB{
         return $response;
     }
     /**
-     * Verifica si una tabla existe en la base de datos de estado
-     * @param string $tableName Nombre de la tabla
-     * @return boolean True si la tabla existe, false en otro caso
+     * Actualiza el estado para el usuario, aumenta en uno el número de la versión.
+     * @param int $userId Identificador del usuario
+     * @param string $hashState Hash de las tablas para el usuario
+     * @return boolean True si pudo actualizar los datos. False en otro caso
      */
-    private function tableExists($tableName){
-        $exist=false;
-        $stmt = $this->handler->prepare("SELECT name FROM `Table` WHERE `name`=:name");
-        $stmt->bindParam(':name',$tableName);
-        if ($stmt->execute()) {
-            $list=$stmt->fetch();
-            if($list){
-                if($list["name"]===$tableName){
-                    $exist=true;
-                }else{
-                    $exist=false;
-                }
-            }
+    private function updateState($userId,$hashState){
+        $updated=false;
+        $stmt = $this->handler->prepare("UPDATE User SET 
+            `version`=:version,
+            `state`=:state 
+            WHERE id=:id");
+        $version=$this->getVersion($userId)+1;
+        $stmt->bindParam(':id',$userId);
+        $stmt->bindParam(':version',$version);
+        $stmt->bindParam(':state',$hashState);
+        if($stmt->execute()){
+            $updated=true;
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
-        return $exist;
+        return $updated;
     }
-    private function tablesComparer($userId,$tables){
-        
-    }
-    /**************************************************************************/
-    /***********************   T A B L E    S T A T E  ************************/
-    /**************************************************************************/
     /**
-     * Inserta un estado de una tabla en la base de datos
+     * Retorna el número de la versión para el usuario
      * @param int $userId Identificador del usuario
-     * @param Table $table Objeto de tipo Table
-     * @param int $version Número de versión de la base de datos a la que corresponde el estado de la tabla
-     * @return boolean True si se pudo insertar, false en otro caso
+     * @return int Versión la base de datos para el usuario
      */
-    private function tableStateCreate($userId,$table,$version){
-        $created=false;
-        if($this->tableExists($table->getName())){
-            $stmt = $this->handler->prepare("
-                INSERT INTO `TableState` 
-                    (`date`,`versionDB`,`table`,`user`) 
-                VALUES 
-                    (:date,:versionDB,:table,:user)
-            ");
-            $date=date('Y-m-d H:i:s');
-            $stmt->bindParam(':date',$date);
-            $stmt->bindParam(':versionDB',$version);
-            $stmt->bindParam(':table',$this->tableRead($table->getName()));
-            $stmt->bindParam(':user',$userId);
-            if(!$stmt->execute()){
-                $error=$stmt->errorInfo();
-                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-            }else{
-                $fields=$table->getFields();
-                $tableStateId=intval($this->handler->lastInsertID());
-                foreach ($fields as $field) {
-                    $this->fieldCreate($tableStateId,$field);
-                }
-            }
+    private function getState($userId){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `state` FROM `User` WHERE `id`= :id");
+        $stmt->bindParam(':id',$userId);
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            $response=$row["state"];
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
-        return $created;
-    }
-    /**************************************************************************/
-    /*****************************   F I E L D S  *****************************/
-    /**************************************************************************/
-    /**
-     * Inserta una campo en la base de datos de estado
-     * @param string $tableStateId Identificador de la tabla de estado
-     * @param Field $field Objeto de tipo campo
-     * @return boolean True si se pudo insertar, false en otro caso
-     */
-    private function fieldCreate($tableStateId,$field){
-        $created=false;
-        if(!$this->tableExists($tableName)){
-            $stmt = $this->handler->prepare("
-                INSERT INTO `Field` 
-                    (`name`,`type`,`key`,`tableState`) 
-                VALUES 
-                    (:name,:type,:key,:tableState)
-            ");
-            $stmt->bindParam(':name',$field->getName());
-            $stmt->bindParam(':type',$field->getType());
-            $stmt->bindParam(':key',$field->getKey());
-            $stmt->bindParam(':tableState',intval($tableStateId));
-            if(!$stmt->execute()){
-                $error=$stmt->errorInfo();
-                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-            }
-        }
-        return $created;
+        return $response;
     }
 }

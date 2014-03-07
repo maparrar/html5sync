@@ -37,7 +37,6 @@ class DaoTable{
         $table=new Table($tableName);
         $table->setMode($mode);
         $table->setFields($this->loadFields($table));
-        $table->setData($this->loadData($table));
         return $table;
     }
     
@@ -68,7 +67,7 @@ class DaoTable{
      * @param Table $table Tabla con nombre y lista de campos
      * @return array[] Array de arrays con los registros de la tabla
      */
-    private function loadData($table){
+    function loadData($table){
         $list=array();
         $fieldString="";
         $handler=$this->db->connect("all");
