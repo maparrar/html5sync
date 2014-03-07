@@ -35,8 +35,11 @@ Cliente
 * Proceso de actualización de datos
     * 1. El navegador solicita la actualización
     * 2. El servidor retorna las tablas en JSON
-    * 3. Para cada tabla -> Almacén de Objetos hacer
-        * 3.1 Verificar 
+    * 3. Verificar si cambió la versión de la base de datos
+        * 3.1 Si cambió, actualiza la estructura de IndexedDB, pasa a 4
+        * 3.2 No cambió, pasa a 4
+    * 4. Para cada tabla -> Almacén de Objetos hacer
+        * 4.1 Almacenar los datosde la tabla en el almacén
 
 Servidor
 =========
@@ -58,10 +61,10 @@ Servidor
                 * 3.1.1.1 Si cambió, aumenta en uno el número de la versión y pasa a 3.2
                 * 3.1.1.2 No cambió, deja el mismo número de versión y pasa a 3.2
             * 3.1.2 No existe, inserta el primer estado de la tabla para el usuario, pasa a 3.2
-        * 3.2 Almacena la tabla con la versión en el array de envío
+        * 3.2 Almacena la tabla en el array de envío
         * 3.3 Carga los datos de la tabla
     * 4. Convierte las tablas y sus datos a JSON
-    * 4. Envía la lista de tablas (en JSON) con sus versiones al navegador
+    * 5. Envía la lista de tablas (en JSON) con sus versiones al navegador
 
 Sync
 =========
@@ -127,6 +130,7 @@ Todo
 * Crear restricciones sobre las tablas
 * Verificar condiciones de fallo (tablas que no existan)
 * Implemetar seguridad en la base de datos de estado SQLite
+* Conectar con SQLite por medio de la clase Database
 
 
 

@@ -3,8 +3,8 @@ include_once '../core/Connection.php';
 include_once '../core/Database.php';
 include_once '../core/Field.php';
 include_once '../core/Table.php';
-include_once '../core/StateDB.php';
 include_once '../dao/DaoTable.php';
+include_once '../dao/StateDB.php';
 
 
 
@@ -58,7 +58,8 @@ include_once '../dao/DaoTable.php';
 //}
 
 
-$stateDB=new StateDB();
+
+
 
 
 
@@ -72,7 +73,7 @@ $stateDB=new StateDB();
 
 //Se leen las variables de configuración
 $config=require_once '../config.php';
-$tables=$config["tables"];
+$tablesData=$config["tables"];
 
 //Se crea una instancia de la base de datos con la conexión (read+write)
 $db=new Database(
@@ -89,10 +90,21 @@ $db=new Database(
 //Se crea el objeto para manejar tablas con PDO
 $dao=new DaoTable($db);
 
-//Se lee cada tabla
+//Se lee cada tabla y se convierte a JSON para ser enviada
+$tables=array();
 $json="";
-foreach ($tables as $tabledata) {
-    $table=$dao->loadTable($tabledata["name"],$tabledata["mode"]);
+foreach ($tablesData as $tableData) {
+    $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
+    array_push($tables, $table);
     $json.=$table->jsonEncode();
 }
+
+//Se verifica si hubo cambios en alguna de las tablas para el usuario desde la última conexión
+$stateDB=new StateDB();
+$userId=132;
+$version=$stateDB->checkChanges($userId, $tables);
+if($version){
+    
+}
+
 echo $json;
