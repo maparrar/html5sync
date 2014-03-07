@@ -86,7 +86,10 @@ NOTAS:
 Changelog
 =========
 
-* v.0.0.5 - [2014-03-07]
+* v.0.0.6 - [2014-03-07]
+    * Optimización del sistema de comparación de estados por medio de Hash
+
+* v.0.0.5 - [2014-03-06]
     * Creación de la clase de la base de datos de estado con PDO
     * Pruebas con SQLite para almacenar el estado de la librería
     * Clase para manejar el estado
