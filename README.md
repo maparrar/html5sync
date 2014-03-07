@@ -22,7 +22,6 @@ Cliente
 =========
 
 * ObjectStore
-
     Crea un almacén de objetos que se puede definir de la siguiente manera (tomado de: https://developer.mozilla.org/en-US/docs/IndexedDB/Using_IndexedDB#Structuring_the_database):
     * Key Path (keyPath): NO - Key Generator (autoIncrement): NO
         This object store can hold any kind of value, even primitive values like numbers and strings. You must supply a separate key argument whenever you want to add a new value.
@@ -32,6 +31,12 @@ Cliente
         This object store can hold any kind of value. The key is generated for you automatically, or you can supply a separate key argument if you want to use a specific key.
     * Key Path (keyPath): YES - Key Generator (autoIncrement): YES
         This object store can only hold JavaScript objects. Usually a key is generated and the value of the generated key is stored in the object in a property with the same name as the key path. However, if such a property already exists, the value of that property is used as key rather than generating a new key.
+
+* Proceso de actualización de datos
+    * 1. El navegador solicita la actualización
+    * 2. El servidor retorna las tablas en JSON
+    * 3. Para cada tabla -> Almacén de Objetos hacer
+        * 3.1 Verificar 
 
 Servidor
 =========
@@ -43,6 +48,20 @@ Servidor
     * sudo apt-get install libsqlite3-0 libsqlite3-dev
     * sudo apt-get install php5-sqlite
     * sudo service apache2 restart
+
+* Proceso de actualización de datos
+    * 1. El navegador solicita actualización
+    * 2. El servidor carga la lista de tablas a sincronizar del archivo config.php
+    * 3. Para cada tabla hacer
+        * 3.1 Buscar en SQLite si existe un estado de esa tabla para el usuario
+            * 3.1.1 Si existe, compara el último estado almacenado con el estado actual de la tabla
+                * 3.1.1.1 Si cambió, aumenta en uno el número de la versión y pasa a 3.2
+                * 3.1.1.2 No cambió, deja el mismo número de versión y pasa a 3.2
+            * 3.1.2 No existe, inserta el primer estado de la tabla para el usuario, pasa a 3.2
+        * 3.2 Almacena la tabla con la versión en el array de envío
+        * 3.3 Carga los datos de la tabla
+    * 4. Convierte las tablas y sus datos a JSON
+    * 4. Envía la lista de tablas (en JSON) con sus versiones al navegador
 
 Sync
 =========

@@ -10,6 +10,7 @@
  <?php
  
  
+ 
 // $sqlite=new SQLite3("state");
 //    
 //    print_r($sqlite);

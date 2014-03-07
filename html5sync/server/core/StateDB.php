@@ -23,7 +23,7 @@ class StateDB{
     * Constructor
     * @param string $path Ruta y nombre de la base de datos
     */
-    function __construct($path="../sqlite/database.sqlite"){        
+    function __construct($path="../sqlite/html5sync.sqlite"){        
         $this->path=$path;
         $this->createDB($this->path);
     }
@@ -62,12 +62,31 @@ class StateDB{
     private function createDB($path){
         try{
             $sqlite=new PDO('sqlite:'.$path);
+            $query="
+                CREATE TABLE IF NOT EXISTS `User` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `versionDB` INTEGER
+                );
+                CREATE TABLE IF NOT EXISTS `Table` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `name` TEXT
+                );
+                CREATE TABLE IF NOT EXISTS `TableState` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `date` TEXT,
+                    `table` INTEGER NOT NULL,
+                    `user` INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS `Field` (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `name` TEXT,
+                    `type` TEXT,
+                    `key` TEXT,
+                    `tableState` INTEGER NOT NULL
+                );
+            ";
             // Crea las tablas
-            $sqlite->exec("CREATE TABLE IF NOT EXISTS tables (
-                            id INTEGER PRIMARY KEY, 
-                            title TEXT, 
-                            message TEXT, 
-                            time INTEGER)");
+            $sqlite->exec($query);
         } catch (Exception $ex) {
             error_log($ex->getMessage());
         }
