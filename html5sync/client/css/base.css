@@ -74,3 +74,103 @@ body{
     color:#ffffff;
     text-shadow:0px 1px 0px #5b8a3c;
 }
+
+
+/*********************************** LOADER ***********************************/
+
+#html5sync_loading{
+    width:50px;
+    height:4px;
+    overflow:hidden;
+    background-color:#FFFFFF;
+    -moz-border-radius:2px;
+    -webkit-border-radius:2px;
+    -ms-border-radius:2px;
+    -o-border-radius:2px;
+    border-radius:2px;
+}
+.html5sync_stop_loading{
+    background-color:#72b352 !important;
+}
+.html5sync_loading{
+    background-color:#72b352;
+    margin-top:0;
+    margin-left:-50px;
+    -moz-animation-name:bounce_html5sync_loading;
+    -moz-animation-duration:1.8s;
+    -moz-animation-iteration-count:infinite;
+    -moz-animation-timing-function:linear;
+    -webkit-animation-name:bounce_html5sync_loading;
+    -webkit-animation-duration:1.8s;
+    -webkit-animation-iteration-count:infinite;
+    -webkit-animation-timing-function:linear;
+    -ms-animation-name:bounce_html5sync_loading;
+    -ms-animation-duration:1.8s;
+    -ms-animation-iteration-count:infinite;
+    -ms-animation-timing-function:linear;
+    -o-animation-name:bounce_html5sync_loading;
+    -o-animation-duration:1.8s;
+    -o-animation-iteration-count:infinite;
+    -o-animation-timing-function:linear;
+    animation-name:bounce_html5sync_loading;
+    animation-duration:1.8s;
+    animation-iteration-count:infinite;
+    animation-timing-function:linear;
+    width:50px;
+    height:4px;
+}
+
+@-moz-keyframes bounce_html5sync_loading{
+0%{
+margin-left:-50px;
+}
+
+100%{
+margin-left:50px;
+}
+
+}
+
+@-webkit-keyframes bounce_html5sync_loading{
+0%{
+margin-left:-50px;
+}
+
+100%{
+margin-left:50px;
+}
+
+}
+
+@-ms-keyframes bounce_html5sync_loading{
+0%{
+margin-left:-50px;
+}
+
+100%{
+margin-left:50px;
+}
+
+}
+
+@-o-keyframes bounce_html5sync_loading{
+0%{
+margin-left:-50px;
+}
+
+100%{
+margin-left:50px;
+}
+
+}
+
+@keyframes bounce_html5sync_loading{
+0%{
+margin-left:-50px;
+}
+
+100%{
+margin-left:50px;
+}
+
+}

@@ -31,8 +31,9 @@ var Html5Sync = function(params,callback){
      */
     var Html5Sync = function() {
         self.state=false;
-        $("body").prepend('<div id="html5sync_state"><div id="state">checking...</div></div>');
+        $("body").prepend('<div id="html5sync"><div id="html5sync_state"><div id="state">checking</div><div id="html5sync_loading"><div class="html5sync_loading"></div></div></div></div>');
         self.stateLabel=$("#html5sync_state");
+        self.loadingLabel=$("#html5sync_loading");
         //Verifica el estado de la conexión
         checkState();
         
@@ -85,18 +86,30 @@ var Html5Sync = function(params,callback){
      */
     function loadData(){
         try{
+            showLoading(true);
             $.ajax({
                 url: self.params.html5syncFolder+"server/ajax/loadData.php"
             }).done(function(response) {
                 console.debug(response);
-//                setState(Boolean(JSON.parse(response).state));
+                showLoading(false);
             }).fail(function(){
-//                setState(false);
+                showLoading(false);
             });
         }catch(e){
             setState(false); 
         }
     };
+    /**
+     * Muestra u oculta el loader de la librería
+     * @param {boolean} state Estado en que se quiere poner la imagen del loader
+     */
+    function showLoading(state){
+        if(state){
+            self.loadingLabel.removeClass("html5sync_stop_loading");
+        }else{
+            self.loadingLabel.addClass("html5sync_stop_loading");
+        }
+    }
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/
@@ -109,4 +122,7 @@ var Html5Sync = function(params,callback){
     self.publicFunction=function(storeName,data,callback){
         
     };
+    
+    
+    
 };
