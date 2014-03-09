@@ -104,9 +104,10 @@ NOTAS:
 Changelog
 =========
 
-* v.0.0.6 - [2014-03-07]
+* v.0.0.6 - [2014-03-08]
     * Optimización del sistema de comparación de estados por medio de Hash
     * Pruebas con grandes cantidades de datos
+    * Uso de App Cache para cargar la aplicación cuando esté fuera de línea
 
 * v.0.0.5 - [2014-03-06]
     * Creación de la clase de la base de datos de estado con PDO
