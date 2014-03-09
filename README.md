@@ -52,7 +52,7 @@ Servidor
     * sudo apt-get install php5-sqlite
     * sudo service apache2 restart
 
-* Se requiere activar el caché para la aplicación en HTML5
+* Se requiere activar el caché para la aplicación en HTML5 (ver más http://diveintohtml5.info/offline.html)
     Para que la aplicación esté disponible fuera de línea, es necesario activar el uso del caché de la aplicación. Los pasos para que funcione son:
     * Indicar en el archivo .htaccess (en el caso de Apache) del servidor que se debe cargar el archivo en el formato MIME adecuado
         <code>AddType text/cache-manifest .manifest</code>
@@ -97,9 +97,6 @@ Estrategias de sincronización de la base de datos:
     * Delete: Requiere bloqueo
       Eliminar un registro puede modificar el estado de partida de otro usuario. Se requiere que cuando un usuario tome los datos, la tabla se bloquee y se libera cuando el usuario se vuelva a conectar.   
 
-
-NOTAS:
-- Se debe tomar el timestamp del servidor cada que se conecte para sincronizar las actualizaciones
 
 Changelog
 =========
@@ -147,10 +144,6 @@ Changelog
 
 Todo
 =========
-* Pruebas
-* Indicador de "procesando"
-* Base de datos en el servidor
-    * creación del archivo config.json donde se almacena el estado de la base de datos
 * Crear restricciones sobre las tablas
 * Verificar condiciones de fallo (tablas que no existan)
 * Implemetar seguridad en la base de datos de estado SQLite
