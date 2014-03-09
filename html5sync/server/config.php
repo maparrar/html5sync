@@ -13,7 +13,8 @@ return array(
      * Configuración de la Base de datos a usar
      */
     "database" => array(
-        "name" => "musical",
+//        "name" => "musical",
+        "name" => "employees",
         "driver" => "mysql",
         "host" => "localhost",
         "login" => "html5sync",
@@ -21,11 +22,11 @@ return array(
     ),
     "tables" => array(
         array(
-            "name" => "Artist",
+            "name" => "employees",
             "mode" => "lock"
         ),
         array(
-            "name" => "Album",
+            "name" => "departments",
             "mode" => "unlock"
         )
     )

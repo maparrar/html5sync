@@ -88,6 +88,7 @@ Changelog
 
 * v.0.0.6 - [2014-03-07]
     * Optimización del sistema de comparación de estados por medio de Hash
+    * Pruebas con grandes cantidades de datos
 
 * v.0.0.5 - [2014-03-06]
     * Creación de la clase de la base de datos de estado con PDO
@@ -136,6 +137,9 @@ Todo
 * Implemetar seguridad en la base de datos de estado SQLite
 * Conectar con SQLite por medio de la clase Database
 * Usar un Hash para almacenar una representación del estado
+
+* Crear un paginador en PHP para manejar grandes cantidades de datos
+* Limitar la carga de un script con AJAX cuando se ya se haya solicitado y no se haya terminado
 
 
 

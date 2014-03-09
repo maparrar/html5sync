@@ -21,6 +21,7 @@ var Html5Sync = function(params,callback){
     //Se mezclan los parámetros por defecto con los proporcionados por el usuario
     //y se agregan a la variable self (this del objeto)
     var def = {
+        debugging:false,
         html5syncFolder:"html5sync/",
         stateTimer: 5000,
         showState:false
@@ -30,20 +31,60 @@ var Html5Sync = function(params,callback){
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
     var Html5Sync = function() {
-        self.state=false;
-        $("body").prepend('<div id="html5sync"><div id="html5sync_state"><div id="state">checking</div><div id="html5sync_loading"><div class="html5sync_loading"></div></div></div></div>');
-        self.stateLabel=$("#html5sync_state");
-        self.loadingLabel=$("#html5sync_loading");
+        //Estructura el código HTML5
+        setStructure();
+        
         //Verifica el estado de la conexión
         checkState();
         
         //Hace la carga inicial de datos
         loadData();
+        
+        
+        $("#checkChanges").click(function(){
+            checkChanges();
+        });
+        $("#loadData").click(function(){
+            loadData();
+        });
     }();
     
     /**************************************************************************/
     /**************************** PRIVATE METHODS *****************************/
     /**************************************************************************/
+    /**
+     * Crea la estructura de la aplicación en HTML5. Define si se muestra el área
+     * de debugging y/o de estado.
+     */
+    function setStructure(){
+        //Create the exist() function for any selector. i.e: $("selector").exist()
+        $.fn.exist=function(){return this.length>0;};
+        //Starts without connection
+        self.state=false;
+        var state='';
+        if(self.params.showState){
+            state='<div id="html5sync_state">'+
+                        '<div id="state">checking</div>'+
+                        '<div class="html5sync_spinner"></div>'+
+                    '</div>';
+        }
+        $("body").prepend(
+                '<div id="html5sync_info">'+
+                    state+
+                '</div>'
+            );
+        self.stateLabel=$("#html5sync_state");
+        self.loadingLabel=$(".html5sync_spinner");
+        window.debug=function(message){
+            if(self.params.debugging){
+                if(!$("#html5sync_debug").exist()){
+                    $("body").prepend('<div id="html5sync_debug"></div>');
+                }
+                $("#html5sync_debug").append(message+"<br>");
+                $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
+            }
+        };
+    };
     /**
      * Verifica si la conexión con el servidor está activa y actualiza el 
      * indicador de estado.
@@ -90,7 +131,7 @@ var Html5Sync = function(params,callback){
             $.ajax({
                 url: self.params.html5syncFolder+"server/ajax/loadData.php"
             }).done(function(response) {
-                console.debug(response);
+//                console.debug(response);
                 showLoading(false);
             }).fail(function(){
                 showLoading(false);
@@ -99,15 +140,43 @@ var Html5Sync = function(params,callback){
             setState(false); 
         }
     };
+    
+    
+    
+    
+    /**
+     * Pruebas para detectar cambios en tablas grandes
+     * está especificada en el archivo de configuración:
+     * html5sync/server/config.php
+     */
+    function checkChanges(){
+        try{
+            showLoading(true);
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/checkChanges.php"
+            }).done(function(response) {
+//                console.debug(response);
+                showLoading(false);
+            }).fail(function(){
+                showLoading(false);
+            });
+        }catch(e){
+            setState(false); 
+        }
+    };
+    
+    
+    
+    
     /**
      * Muestra u oculta el loader de la librería
      * @param {boolean} state Estado en que se quiere poner la imagen del loader
      */
     function showLoading(state){
         if(state){
-            self.loadingLabel.removeClass("html5sync_stop_loading");
+            self.loadingLabel.show();
         }else{
-            self.loadingLabel.addClass("html5sync_stop_loading");
+            self.loadingLabel.hide();
         }
     }
     /**************************************************************************/

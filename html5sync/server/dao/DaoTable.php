@@ -76,7 +76,7 @@ class DaoTable{
         }
         //Remove the last comma
         $fieldString=substr($fieldString,0,-1);
-        $stmt = $handler->prepare("SELECT ".$fieldString." FROM ".$table->getName());
+        $stmt = $handler->prepare("SELECT ".$fieldString." FROM ".$table->getName()." LIMIT 50000");
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
                 $register=array();
@@ -85,6 +85,32 @@ class DaoTable{
                 }
                 array_push($list,$register);
             }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $list;
+    }
+    
+    
+    /**
+     * Verifica si hubo cambios en una lista de tablas para un usuario
+     * @param string[] $tables Nombre de las tablas que se quieren verificar
+     * @return boolean True si se detectaron cambios, False en otro caso
+     */
+    function checkChanges($table){
+        $list=array();
+        $handler=$this->db->connect("all");
+        $stmt = $handler->prepare("SELECT * FROM ".$table->getName()." LIMIT 10000");
+        if ($stmt->execute()) {
+            print_r($table->getName()."\n");
+            print_r(md5(serialize($stmt->fetchAll())));
+            print_r("\n");
+            
+//            while ($row = $stmt->fetch()){
+//                $field=new Field($row["name"],$row["type"],$row["key"]);
+//                array_push($list,$field);
+//            }
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);

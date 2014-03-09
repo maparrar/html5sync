@@ -31,21 +31,21 @@ $jsonTables="";
 $state="";
 foreach ($tablesData as $tableData) {
     $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
-    //Se guarda la estructura de cada tabla seraliazada para comparar el estado con el anterior
-    $state.=$table->jsonEncode();
+//    //Se guarda la estructura de cada tabla seraliazada para comparar el estado con el anterior
+//    $state.=$table->jsonEncode();
     //Se llenan las tablas con datos y se convierten a JSON
-    $table->setData($dao->loadData($table));
-    array_push($tables, $table);
-    $jsonTables.=$table->jsonEncode().",";
+    $dao->checkChanges($table);
+//    array_push($tables, $table);
+//    $jsonTables.=$table->jsonEncode().",";
 }
 //Remove the last comma
-$jsonTables=substr($jsonTables,0,-1);
+//$jsonTables=substr($jsonTables,0,-1);
 
 //Se verifica si hubo cambios en alguna de las tablas para el usuario desde la 
 //última conexión usando una función de Hash
-$stateDB=new StateDB();
-$userId=103;
-$version=$stateDB->version($userId,$state);
+//$stateDB=new StateDB();
+//$userId=103;
+//$version=$stateDB->version($userId,$state);
 //Se construye la respuesta en JSON
-$json='{"userId":'.$userId.',"version":'.$version.',"tables":['.$jsonTables.']}';
-echo $json;
+//$json='{"userId":'.$userId.',"version":'.$version.',"tables":['.$jsonTables.']}';
+//echo $json;

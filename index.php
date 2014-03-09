@@ -69,19 +69,14 @@
         <script src="html5sync/client/core/Database.js"></script>
         <script type="text/javascript">
             $( document ).ready(function(){
+                var html5Sync=new Html5Sync({
+                    debugging:true,
+                    showState:true
+                },function(err){
+                    console.debug(err);
+                });
                 
-                //Create the exist() function for any selector. i.e: $("selector").exist()
-                $.fn.exist=function(){return this.length>0;};
-                window.debugging=true;
-                window.debug=function(message){
-                    if(window.debugging){
-                        if(!$("#html5sync_debug").exist()){
-                            $("body").prepend('<div id="html5sync_debug"></div>');
-                        }
-                        $("#html5sync_debug").append(message+"<br>");
-                        $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
-                    }
-                };
+                
                 //Lista de parámetros que define la configuración de la base de datos
                 var params={
                     database: "tiendamusical",  //Nombre de la base de datos
@@ -172,15 +167,16 @@
                 
                 
                 
-                var html5Sync=new Html5Sync({
-                    showState:true
-                },function(err){
-                    
-                });
+                
             });
         </script>
     </head>
     <body>
+        
+        <input type="button" id="checkChanges" value="verificar cambios"/>
+        <input type="button" id="loadData" value="cargar datos"/>
+        
+        
         <h3>Agregar el siguiente conjunto de datos predefinidos a la base de datos</h3>
         var data=[<br>
         {artist: "Tom Yorke", song: "Analyse", album: "The eraser"},<br>

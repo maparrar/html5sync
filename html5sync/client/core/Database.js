@@ -225,7 +225,7 @@ var Database = function(params,callback){
         };
     };
     /**
-     * Actualiza un objero de la base de datos a partir del almacén y la clave.
+     * Actualiza un objeto de la base de datos a partir del almacén y la clave.
      * Si dentro del objeto pasado como parámetro se actualiza key, y esta no 
      * existe, se crea un nuevo objeto.
      * @param {string} storeName Nombre del almacén de datos
