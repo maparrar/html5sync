@@ -90,6 +90,13 @@ var Html5Sync = function(params,callback){
      * indicador de estado.
      */
     function checkState(){
+        $.ajax({
+            url: self.params.html5syncFolder+"server/ajax/checkState.php"
+        }).done(function(response) {
+            setState(Boolean(JSON.parse(response).state));
+        }).fail(function(){
+            setState(false);
+        });
         setInterval(function(){
             try{
                 $.ajax({

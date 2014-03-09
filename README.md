@@ -52,6 +52,24 @@ Servidor
     * sudo apt-get install php5-sqlite
     * sudo service apache2 restart
 
+* Se requiere activar el caché para la aplicación en HTML5
+    Para que la aplicación esté disponible fuera de línea, es necesario activar el uso del caché de la aplicación. Los pasos para que funcione son:
+    * Indicar en el archivo .htaccess (en el caso de Apache) del servidor que se debe cargar el archivo en el formato MIME adecuado
+        <code>AddType text/cache-manifest .manifest</code>
+    * En cada página que requiera sincronización de la información incluir App Cache en la etiqueta <html>
+        <code><html manifest="cache.manifest" type="text/cache-manifest"></code>
+    * Crear un archivo .manifest para indicar qué debe estar displonible fuera de línea. En el ejemplo disponible con esta librería se incluye en la raíz del proyecto, en este caso debe ser similar a:
+        <code>
+            CACHE MANIFEST
+            html5sync/client/core/Database.js
+            html5sync/client/css/base.css
+            html5sync/client/jquery/jquery-2.1.0.min.js
+            NETWORK:
+            *
+            FALLBACK:
+        </code>
+    * Agregar en el archivo cache.manifest todos los recursos que se requieran fuera de línea
+
 * Proceso de actualización de datos
     * 1. El navegador solicita actualización
     * 2. El servidor carga la lista de tablas a sincronizar del archivo config.php

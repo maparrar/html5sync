@@ -59,7 +59,7 @@
  ?>
  
 <!doctype html>
-<html>
+<html manifest="cache.manifest" type="text/cache-manifest">
     <head>
         <title>html5sync</title>
         <meta charset="utf-8"/>
