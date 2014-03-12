@@ -74,7 +74,7 @@ class DaoTable{
                 AND pgc.relname = '".$table->getName()."' 
                 ORDER BY a.attnum;";
         }elseif($dbDriver==="mysql"){
-            $sql='SELECT COLUMN_NAME AS `name`,DATA_TYPE AS `type`,COLUMN_KEY AS `key` FROM information_schema.columns WHERE TABLE_NAME = '.$table->getName();
+            $sql='SELECT COLUMN_NAME AS `name`,DATA_TYPE AS `type`,COLUMN_KEY AS `key` FROM information_schema.columns WHERE TABLE_NAME = "'.$table->getName().'"';
         }
         $stmt = $handler->prepare($sql);
         if ($stmt->execute()) {
@@ -157,18 +157,19 @@ class DaoTable{
     }
     /**
      * Agrega una columna que será alimentada con la fecha de actualización o insersión
-     * por medio de un Trigger.
+     * por medio de un Trigger. Además crea una columna para almacenar el tipo
+     * de transacción
      * @param string $dbDriver Driver de la conexión a la base de datos
      * @param Table $table Tabla con nombre en la base de datos
      */
     private function addColumn($dbDriver,$table){
         $handler=$this->db->connect("all");
         if($dbDriver==="pgsql"){
-            $sql='ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update timestamp DEFAULT NULL';
+            $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update timestamp DEFAULT NULL');
         }elseif($dbDriver==="mysql"){
-            $sql='ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update datetime DEFAULT NULL';
+            $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update datetime DEFAULT NULL');
         }
-        $handler->query($sql);
+        $handler->query("ALTER TABLE ".$table->getName()." ADD COLUMN html5sync_transaction VARCHAR(6) DEFAULT NULL");
     }
     /**
      * Función que crea un Trigger en la base de datos para almacenar la última
@@ -179,11 +180,13 @@ class DaoTable{
     private function addTrigger($dbDriver,$table){
         $handler=$this->db->connect("all");
         if($dbDriver==="pgsql"){
-            $handler->query('CREATE OR REPLACE FUNCTION html5sync_proc_'.$table->getName().'() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); RETURN NEW; END; $$ LANGUAGE plpgsql;');
-            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT OR UPDATE ON '.$table->getName().' FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_'.$table->getName().'();');
+            $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_insert_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'insert'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
+            $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_update_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'update'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
+            $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_insert_".$table->getName()."();");
+            $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_update_".$table->getName()."();");
         }elseif($dbDriver==="mysql"){
-            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(); END;');
-            $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(); END;');
+            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "insert"; END;');
+            $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "update"; END;');
         }
     }
 }
