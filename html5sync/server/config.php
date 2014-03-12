@@ -10,24 +10,64 @@
  */
 return array(
     /**
+     * Parámetros de html5sync.
+     *  - updateMode: Indica la forma en que se detectan los cambios en los datos
+     *                de una tabla para ser sincronizada. Existen dos modos:
+     *      - updatedColumn: Implica que html5sync debe tener permiso para crear
+     *                       una columna adicional en cada tabla a sincronizar. 
+     *                       Esta columna contiene la fecha de la última actualización
+     *                       de cada registro. Además html5sync debe poder crear
+     *                       un trigger en la base de datos para actualizar dicha
+     *                       columna. Este método implica además que cuando se 
+     *                       insertan registros en las tablas afectadas, se definan
+     *                       de manera explícita las columnas:
+     *                       INSERT INTO table_a (filed1,field2) VALUES (value1,value2)
+     *                       para que se inserte automáticamente la fecha de actualización
+     *      - hashUpdate:    Se usa una función hash para convertir el contenido
+     *                       de la tabla en una cadena que se compara con un estado
+     *                       anterior. Este procedimiento no es invasivo en la base
+     *                       de datos, pero puede requerir mucho tiempo si se trata
+     *                       de muchos registros.
+     */
+    "parameters" => array(
+        "updateMode" => "updatedColumn"
+    ),
+    /**
      * Configuración de la Base de datos a usar
      */
     "database" => array(
-//        "name" => "musical",
         "name" => "employees",
         "driver" => "mysql",
         "host" => "localhost",
         "login" => "html5sync",
         "password" => "H5FAHM98hBS8"
     ),
+    /**
+     * Lista de tablas que se sincronizarán. Para cada tabla se permiten los siguientes
+     * atributos:
+     *  - name (string): Nombre de la tabla en la base de datos
+     *  - mode (string): Puede ser "lock" o "unlock".
+     *      - lock: La tabla se bloquea mientras el usuario la 
+     */
     "tables" => array(
         array(
             "name" => "employees",
-            "mode" => "lock"
+            "mode" => "lock",
+            "roles"=> array(
+                "role1",
+                "role2"
+            ),
+            "users"=> array(
+                101,
+                102
+            )
         ),
         array(
             "name" => "departments",
-            "mode" => "unlock"
+            "mode" => "unlock",
+            "roles"=> array(
+                "role1"
+            )
         )
     )
 );

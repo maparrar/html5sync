@@ -101,6 +101,11 @@ Estrategias de sincronización de la base de datos:
 Changelog
 =========
 
+* v.0.0.7 - [2014-03-11]
+    * Creación del "updateMode" tipo "updatedColumn"
+    * Creación automática de la columna de actualización
+    * Creación de trigger para actualizar la columna
+
 * v.0.0.6 - [2014-03-08]
     * Optimización del sistema de comparación de estados por medio de Hash
     * Pruebas con grandes cantidades de datos
@@ -152,6 +157,10 @@ Todo
 
 * Crear un paginador en PHP para manejar grandes cantidades de datos
 * Limitar la carga de un script con AJAX cuando se ya se haya solicitado y no se haya terminado
+
+* Parametrizar los tiempos de sincronización desde PHP
+
+* Incluir en el README la documentación de config.php
 
 
 

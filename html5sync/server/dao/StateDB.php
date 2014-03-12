@@ -69,7 +69,8 @@ class StateDB{
                 CREATE TABLE IF NOT EXISTS `User` (
                     `id` INTEGER NOT NULL PRIMARY KEY,
                     `version` INTEGER NOT NULL,
-                    `state` TEXT
+                    `state` TEXT,
+                    `role` TEXT
                 );
             ";
             // Crea las tablas

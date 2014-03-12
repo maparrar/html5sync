@@ -117,4 +117,34 @@ class DaoTable{
         }
         return $list;
     }
+    
+    
+    
+    /**
+     * Crea 
+     */
+    function setUpdatedColumnMode($dbDriver,$table){
+        $this->addColumn($dbDriver,$table);
+//        $this->addProcedure($dbDriver,$table);
+        $this->addTrigger($dbDriver,$table);
+    }
+    
+    private function addColumn($dbDriver,$table){
+        $handler=$this->db->connect("all");
+        if($dbDriver==="pgsql"){
+            $sql='ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update timestamp DEFAULT NULL';
+        }elseif($dbDriver==="mysql"){
+            $sql='ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update datetime DEFAULT NULL';
+        }
+        $handler->query($sql);
+    }
+    private function addTrigger($dbDriver,$table){
+        $handler=$this->db->connect("all");
+        if($dbDriver==="pgsql"){
+//            $sql='';
+        }elseif($dbDriver==="mysql"){
+            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(); END;');
+            $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(); END;');
+        }
+    }
 }
