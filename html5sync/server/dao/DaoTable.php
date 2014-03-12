@@ -122,7 +122,7 @@ class DaoTable{
     
     /**
      * Verifica si hubo cambios en una lista de tablas para un usuario
-     * @param string[] $tables Nombre de las tablas que se quieren verificar
+     * @param string[] $table Nombre de la tabla que se quiere verificar
      * @return boolean True si se detectaron cambios, False en otro caso
      */
     function checkChanges($table){
@@ -144,17 +144,23 @@ class DaoTable{
         }
         return $list;
     }
-    
-    
-    
     /**
-     * Crea 
+     * Define el modo UpdatedColumn. Inserta una columna donde se lleva la cuenta
+     * de las insersiones y/o actualizaciones en una tabla. Crea un Trigger que
+     * realiza el proceso.
+     * @param string $dbDriver Driver de la conexión a la base de datos
+     * @param Table $table Tabla con nombre en la base de datos
      */
     function setUpdatedColumnMode($dbDriver,$table){
         $this->addColumn($dbDriver,$table);
         $this->addTrigger($dbDriver,$table);
     }
-    
+    /**
+     * Agrega una columna que será alimentada con la fecha de actualización o insersión
+     * por medio de un Trigger.
+     * @param string $dbDriver Driver de la conexión a la base de datos
+     * @param Table $table Tabla con nombre en la base de datos
+     */
     private function addColumn($dbDriver,$table){
         $handler=$this->db->connect("all");
         if($dbDriver==="pgsql"){
@@ -164,6 +170,12 @@ class DaoTable{
         }
         $handler->query($sql);
     }
+    /**
+     * Función que crea un Trigger en la base de datos para almacenar la última
+     * actualización y/o insersión en la tabla.
+     * @param string $dbDriver Driver de la conexión a la base de datos
+     * @param Table $table Tabla con nombre en la base de datos
+     */
     private function addTrigger($dbDriver,$table){
         $handler=$this->db->connect("all");
         if($dbDriver==="pgsql"){

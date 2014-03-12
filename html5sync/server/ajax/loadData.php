@@ -26,28 +26,17 @@ $db=new Database(
 //Se crea el objeto para manejar tablas con PDO
 $dao=new DaoTable($db);
 
-
-
-
 //Se lee cada tabla y se convierte a JSON para ser enviada
 $tables=array();
 $jsonTables="";
 $state="";
 foreach ($tablesData as $tableData) {
     $table=$dao->loadTable($db->getDriver(),$tableData["name"],$tableData["mode"]);
-    
-    
     //Se usa el tipo de actualización seleccionada
     if($parameters["updateMode"]==="updatedColumn"){
         //Si la columna de actualización no existe, se crea
         $dao->setUpdatedColumnMode($db->getDriver(),$table);
     }
-    
-    
-
-    
-    
-    
     //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
     $state.=$table->jsonEncode();
     //Se llenan las tablas con datos y se convierten a JSON
