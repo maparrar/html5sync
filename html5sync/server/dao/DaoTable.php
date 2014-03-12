@@ -29,27 +29,54 @@ class DaoTable{
     }
     /**
      * Carga una tabla de la base de datos
+     * @param string $dbDriver Driver de la conexión a la base de datos
      * @param string $tableName Nombre de la tabla que se quiere cargar
      * @param string $mode Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete)
      * @return Table
      */
-    function loadTable($tableName,$mode){
+    function loadTable($dbDriver,$tableName,$mode){
         $table=new Table($tableName);
         $table->setMode($mode);
-        $table->setFields($this->loadFields($table));
+        $table->setFields($this->loadFields($dbDriver,$table));
         return $table;
     }
     
     /**
      * Retorna la lista de campos de una Tabla
+     * @param string $dbDriver Driver de la conexión a la base de datos
      * @param Table $table Tabla con nombre en la base de datos
      * @return Field[] Lista de campos de la tabla
      */
-    private function loadFields($table){
+    private function loadFields($dbDriver,$table){
         $list=array();
         $handler=$this->db->connect("all");
-        $stmt = $handler->prepare("SELECT COLUMN_NAME AS `name`,DATA_TYPE AS `type`,COLUMN_KEY AS `key` FROM information_schema.columns WHERE TABLE_NAME = :table");
-        $stmt->bindParam(':table',$table->getName());
+        if($dbDriver==="pgsql"){
+            $sql="
+                SELECT DISTINCT
+                    a.attnum as num,
+                    a.attname as name,
+                    format_type(a.atttypid, a.atttypmod) as type,
+                    a.attnotnull as notnull, 
+                    com.description as comment,
+                    coalesce(i.indisprimary,false) as key,
+                    def.adsrc as default
+                FROM pg_attribute a 
+                JOIN pg_class pgc ON pgc.oid = a.attrelid
+                LEFT JOIN pg_index i ON 
+                    (pgc.oid = i.indrelid AND i.indkey[0] = a.attnum)
+                LEFT JOIN pg_description com on 
+                    (pgc.oid = com.objoid AND a.attnum = com.objsubid)
+                LEFT JOIN pg_attrdef def ON 
+                    (a.attrelid = def.adrelid AND a.attnum = def.adnum)
+                WHERE a.attnum > 0 AND pgc.oid = a.attrelid
+                AND pg_table_is_visible(pgc.oid)
+                AND NOT a.attisdropped
+                AND pgc.relname = '".$table->getName()."' 
+                ORDER BY a.attnum;";
+        }elseif($dbDriver==="mysql"){
+            $sql='SELECT COLUMN_NAME AS `name`,DATA_TYPE AS `type`,COLUMN_KEY AS `key` FROM information_schema.columns WHERE TABLE_NAME = '.$table->getName();
+        }
+        $stmt = $handler->prepare($sql);
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
                 $field=new Field($row["name"],$row["type"],$row["key"]);
@@ -57,7 +84,7 @@ class DaoTable{
             }
         }else{
             $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
         return $list;
     }
@@ -87,7 +114,7 @@ class DaoTable{
             }
         }else{
             $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
         return $list;
     }
@@ -113,7 +140,7 @@ class DaoTable{
 //            }
         }else{
             $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
         return $list;
     }
@@ -125,7 +152,6 @@ class DaoTable{
      */
     function setUpdatedColumnMode($dbDriver,$table){
         $this->addColumn($dbDriver,$table);
-//        $this->addProcedure($dbDriver,$table);
         $this->addTrigger($dbDriver,$table);
     }
     
@@ -141,7 +167,8 @@ class DaoTable{
     private function addTrigger($dbDriver,$table){
         $handler=$this->db->connect("all");
         if($dbDriver==="pgsql"){
-//            $sql='';
+            $handler->query('CREATE OR REPLACE FUNCTION html5sync_proc_'.$table->getName().'() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); RETURN NEW; END; $$ LANGUAGE plpgsql;');
+            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT OR UPDATE ON '.$table->getName().' FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_'.$table->getName().'();');
         }elseif($dbDriver==="mysql"){
             $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(); END;');
             $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(); END;');

@@ -34,7 +34,7 @@ $tables=array();
 $jsonTables="";
 $state="";
 foreach ($tablesData as $tableData) {
-    $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
+    $table=$dao->loadTable($db->getDriver(),$tableData["name"],$tableData["mode"]);
     
     
     //Se usa el tipo de actualización seleccionada
@@ -48,7 +48,7 @@ foreach ($tablesData as $tableData) {
     
     
     
-    //Se guarda la estructura de cada tabla seraliazada para comparar el estado con el anterior
+    //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
     $state.=$table->jsonEncode();
     //Se llenan las tablas con datos y se convierten a JSON
     $table->setData($dao->loadData($table));
