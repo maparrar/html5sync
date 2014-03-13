@@ -33,12 +33,14 @@ return array(
      *                       verifica si existe o no conexión con el servidor.
      *                       Además verifica si hubo cambios en la base de datos
      *                       para las tablas seleccionadas para los usuarios.
+     *  - timezone:          Zona por defecto, para manejo de la función date en PHP
      */
     "parameters" => array(
         "updateMode"=> "updatedColumn",
         "browser"   => array(
             "syncTimer"    => 10000
-        )
+        ),
+        "timezone" => "America/Bogota"
     ),
     /**
      * Configuración de la Base de datos a usar
@@ -66,7 +68,7 @@ return array(
                 "role2"
             ),
             "users"=> array(
-                101,
+                123,
                 102
             )
         ),
@@ -74,7 +76,7 @@ return array(
             "name" => "departments",
             "mode" => "unlock",
             "roles"=> array(
-                "role1"
+                "contabilidad"
             )
         )
     )
