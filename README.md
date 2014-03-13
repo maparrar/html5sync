@@ -70,6 +70,25 @@ Servidor
         </code>
     * Agregar en el archivo cache.manifest todos los recursos que se requieran fuera de línea
 
+* Detección de cambios y soncronización de las tablas
+    El sistena permite dos modos de detección de cambios en los datos de una tabla, que se establecen en la variable updateMode de config.php:
+        - updatedColumn: Implica que html5sync debe tener permiso para crear
+                         una columna adicional en cada tabla a sincronizar. 
+                         Esta columna contiene la fecha de la última actualización
+                         de cada registro. Además html5sync debe poder crear
+                         un trigger en la base de datos para actualizar dicha
+                         columna. Este método implica además que cuando se 
+                         insertan registros en las tablas afectadas, se definan
+                         de manera explícita las columnas:
+                         INSERT INTO table_a (filed1,field2) VALUES (value1,value2)
+                         para que se inserte automáticamente la fecha de actualización
+        - hashUpdate:    Se usa una función hash para convertir el contenido
+                         de la tabla en una cadena que se compara con un estado
+                         anterior. Este procedimiento no es invasivo en la base
+                         de datos, pero puede requerir mucho tiempo si se trata
+                         de muchos registros. [en construcción]
+    Además de sincronizar las tablas, también se requiere acctualizar la estructura de las tablas cuando hayan cambios. Para esto se usa una función de hash sobre la concatenación de la estructura de todas las tablas para un usuario, así, si alguna cambia, se actualiza toda la estructura.
+
 * Proceso de actualización de datos
     * 1. El navegador solicita actualización
     * 2. El servidor carga la lista de tablas a sincronizar del archivo config.php

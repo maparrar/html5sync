@@ -6,7 +6,7 @@ include_once '../core/Table.php';
 include_once '../dao/DaoTable.php';
 include_once '../dao/StateDB.php';
 
-
+//Se establece timezone
 date_default_timezone_set("America/Bogota");
 
 
@@ -36,9 +36,7 @@ $db=new Database(
 //Se crea el objeto para manejar tablas con PDO
 $dao=new DaoTable($db);
 
-//Se lee cada tabla y se convierte a JSON para ser enviada
-$tables=array();
-$jsonTables="";
+//Se lee cada tabla
 $state="";
 foreach ($tablesData as $tableData) {
     $table=$dao->loadTable($db->getDriver(),$tableData["name"],$tableData["mode"]);

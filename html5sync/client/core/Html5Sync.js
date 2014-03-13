@@ -37,10 +37,6 @@ var Html5Sync = function(params,callback){
         //Inicia el proceso de sincronización
         startSync();
         
-        //Hace la carga inicial de datos
-//        loadData();
-        
-        
         $("#checkChanges").click(function(){
             checkChanges();
         });
@@ -56,6 +52,7 @@ var Html5Sync = function(params,callback){
      * Inicia el proceso de sincronización.
      */
     function startSync(){
+        showLoading(false);
         sync();
         setInterval(function(){
             try{
@@ -160,21 +157,21 @@ var Html5Sync = function(params,callback){
      * está especificada en el archivo de configuración:
      * html5sync/server/config.php
      */
-    function checkChanges(){
-        try{
-            showLoading(true);
-            $.ajax({
-                url: self.params.html5syncFolder+"server/ajax/checkChanges.php"
-            }).done(function(response) {
-//                console.debug(response);
-                showLoading(false);
-            }).fail(function(){
-                showLoading(false);
-            });
-        }catch(e){
-            setState(false); 
-        }
-    };
+//    function checkChanges(){
+//        try{
+//            showLoading(true);
+//            $.ajax({
+//                url: self.params.html5syncFolder+"server/ajax/checkChanges.php"
+//            }).done(function(response) {
+////                console.debug(response);
+//                showLoading(false);
+//            }).fail(function(){
+//                showLoading(false);
+//            });
+//        }catch(e){
+//            setState(false); 
+//        }
+//    };
     
     
     
