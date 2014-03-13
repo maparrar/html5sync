@@ -124,6 +124,8 @@ Changelog
     * Creación del "updateMode" tipo "updatedColumn"
     * Creación automática de la columna de actualización
     * Creación de trigger para actualizar la columna
+    * Creción de las clases Html5Sync y User
+    * Se detecta si un usuario puede o no cargar una tabla por id de usuario o por rol
 
 * v.0.0.6 - [2014-03-08]
     * Optimización del sistema de comparación de estados por medio de Hash
@@ -168,19 +170,12 @@ Changelog
 
 Todo
 =========
-* Crear restricciones sobre las tablas
 * Verificar condiciones de fallo (tablas que no existan)
 * Implemetar seguridad en la base de datos de estado SQLite
-* Conectar con SQLite por medio de la clase Database
-* Usar un Hash para almacenar una representación del estado
-
 * Crear un paginador en PHP para manejar grandes cantidades de datos
 * Limitar la carga de un script con AJAX cuando se ya se haya solicitado y no se haya terminado
-
 * Parametrizar los tiempos de sincronización desde PHP
-
 * Incluir en el README la documentación de config.php
-
 
 
 Licencia MIT
