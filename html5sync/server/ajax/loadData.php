@@ -51,7 +51,7 @@ $jsonTables=substr($jsonTables,0,-1);
 //última conexión usando una función de Hash
 $stateDB=new StateDB();
 $userId=103;
-$version=$stateDB->version($userId,$state);
+$version=$stateDB->version($state,$userId);
 //Se construye la respuesta en JSON
 $json='{"userId":'.$userId.',"version":'.$version.',"tables":['.$jsonTables.']}';
 echo $json;

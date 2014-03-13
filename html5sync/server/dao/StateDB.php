@@ -68,8 +68,9 @@ class StateDB{
             $query="
                 CREATE TABLE IF NOT EXISTS `User` (
                     `id` INTEGER NOT NULL PRIMARY KEY,
-                    `version` INTEGER NOT NULL,
-                    `state` TEXT,
+                    `versionDB` INTEGER NOT NULL,
+                    `hashTable` TEXT,
+                    `lastUpdate` TEXT,
                     `role` TEXT
                 );
             ";
@@ -83,20 +84,21 @@ class StateDB{
      * Verifica para cada usuario si la estructura de las tablas ha cambiado por
      * medio de una función de hash. Si ha cambiado, actualiza el número de 
      * versión. Si no ha cambiado, retorna el mismo número de versión.
-     * @param int $userId Id del usuario
      * @param string $state Estructura de las tablas en JSON
+     * @param int $userId Id del usuario
+     * @param string $role Rol del usuario en caso de que sea nuevo
      * @return int El número de la versión de la base de datos
      */
-    function version($userId,$state){
+    function version($state,$userId,$role=""){
         //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
         if(!$this->userExists($userId)){
-            $this->userCreate($userId,md5($state));
+            $this->userCreate(md5($state),$userId,$role);
         }else{
             //Retorna el último estado
-            $oldState=$this->getState($userId);
+            $oldState=$this->getHashTable($userId);
             $newState=md5($state);
             if($newState!=$oldState){
-                $this->updateState($userId,$newState);
+                $this->updateHashTable($newState,$userId);
             }
         }
         //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
@@ -107,23 +109,25 @@ class StateDB{
     /**************************************************************************/
     /**
      * Inserta un usuario en la tabla de User
+     * @param string $hashTable Hash de la estructura de la tabla para el usuario
      * @param int $userId Identificador del usuario
-     * @param string $hashState Hash de las tablas para el usuario
+     * @param string $role Rol del usuario en caso de que sea nuevo
      * @return boolean True si se pudo insertar el usuario, false en otro caso
      */
-    private function userCreate($userId,$hashState){
+    private function userCreate($hashTable,$userId,$role=""){
         $created=false;
         if(!$this->userExists($userId)){
             $stmt = $this->handler->prepare("
-                INSERT INTO User 
-                    (`id`,`version`,`state`) 
-                VALUES 
-                    (:id,:version,:state)
+                INSERT INTO User (`id`,`versionDB`,`hashTable`,`lastUpdate`,`role`) 
+                VALUES           (:id,:versionDB,:hashTable,:lastUpdate,:role)
             ");
             $version=1;
+            $date=date('Y-m-d H:i:s');
             $stmt->bindParam(':id',$userId);
-            $stmt->bindParam(':version',$version);
-            $stmt->bindParam(':state',$hashState);
+            $stmt->bindParam(':versionDB',$version);
+            $stmt->bindParam(':hashTable',$hashTable);
+            $stmt->bindParam(':lastUpdate',$date);
+            $stmt->bindParam(':role',$role);
             if(!$stmt->execute()){
                 $error=$stmt->errorInfo();
                 error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
@@ -162,11 +166,11 @@ class StateDB{
      */
     private function getVersion($userId){
         $response=false;
-        $stmt = $this->handler->prepare("SELECT `version` FROM `User` WHERE `id`= :id");
+        $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
         $stmt->bindParam(':id',$userId);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
-            $response=intval($row["version"]);
+            $response=intval($row["versionDB"]);
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
@@ -175,20 +179,20 @@ class StateDB{
     }
     /**
      * Actualiza el estado para el usuario, aumenta en uno el número de la versión.
+     * @param string $hashTable Hash de las tablas para el usuario
      * @param int $userId Identificador del usuario
-     * @param string $hashState Hash de las tablas para el usuario
      * @return boolean True si pudo actualizar los datos. False en otro caso
      */
-    private function updateState($userId,$hashState){
+    private function updateHashTable($hashTable,$userId){
         $updated=false;
         $stmt = $this->handler->prepare("UPDATE User SET 
-            `version`=:version,
-            `state`=:state 
+            `versionDB`=:versionDB,
+            `hashTable`=:hashTable 
             WHERE id=:id");
         $version=$this->getVersion($userId)+1;
         $stmt->bindParam(':id',$userId);
-        $stmt->bindParam(':version',$version);
-        $stmt->bindParam(':state',$hashState);
+        $stmt->bindParam(':versionDB',$version);
+        $stmt->bindParam(':hashTable',$hashTable);
         if($stmt->execute()){
             $updated=true;
         }else{
@@ -202,13 +206,13 @@ class StateDB{
      * @param int $userId Identificador del usuario
      * @return int Versión la base de datos para el usuario
      */
-    private function getState($userId){
+    private function getHashTable($userId){
         $response=false;
-        $stmt = $this->handler->prepare("SELECT `state` FROM `User` WHERE `id`= :id");
+        $stmt = $this->handler->prepare("SELECT `hashTable` FROM `User` WHERE `id`= :id");
         $stmt->bindParam(':id',$userId);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
-            $response=$row["state"];
+            $response=$row["hashTable"];
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);

@@ -125,7 +125,7 @@ class DaoTable{
      * @param string[] $table Nombre de la tabla que se quiere verificar
      * @return boolean True si se detectaron cambios, False en otro caso
      */
-    function checkChanges($table){
+    function checkDataChanges($table){
         $list=array();
         $handler=$this->db->connect("all");
         $stmt = $handler->prepare("SELECT * FROM ".$table->getName()." LIMIT 10000");

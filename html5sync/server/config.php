@@ -27,10 +27,18 @@ return array(
      *                       de la tabla en una cadena que se compara con un estado
      *                       anterior. Este procedimiento no es invasivo en la base
      *                       de datos, pero puede requerir mucho tiempo si se trata
-     *                       de muchos registros.
+     *                       de muchos registros. [en construcción]
+     *  - browser: Parámetros del navegador:
+     *      - syncTimer:     (milisegundos) Intervalo de tiempo en el que el navegador
+     *                       verifica si existe o no conexión con el servidor.
+     *                       Además verifica si hubo cambios en la base de datos
+     *                       para las tablas seleccionadas para los usuarios.
      */
     "parameters" => array(
-        "updateMode" => "updatedColumn"
+        "updateMode"=> "updatedColumn",
+        "browser"   => array(
+            "syncTimer"    => 10000
+        )
     ),
     /**
      * Configuración de la Base de datos a usar

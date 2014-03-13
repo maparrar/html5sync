@@ -23,7 +23,7 @@ var Html5Sync = function(params,callback){
     var def = {
         debugging:false,
         html5syncFolder:"html5sync/",
-        stateTimer: 5000,
+        stateTimer: 10000,
         showState:false
     };
     self.params = $.extend(def, params);
@@ -34,11 +34,11 @@ var Html5Sync = function(params,callback){
         //Estructura el código HTML5
         setStructure();
         
-        //Verifica el estado de la conexión
-        checkState();
+        //Inicia el proceso de sincronización
+        startSync();
         
         //Hace la carga inicial de datos
-        loadData();
+//        loadData();
         
         
         $("#checkChanges").click(function(){
@@ -53,6 +53,49 @@ var Html5Sync = function(params,callback){
     /**************************** PRIVATE METHODS *****************************/
     /**************************************************************************/
     /**
+     * Inicia el proceso de sincronización.
+     */
+    function startSync(){
+        sync();
+        setInterval(function(){
+            try{
+                sync();
+            }catch(e){
+                setState(false); 
+            }
+        },self.params.stateTimer);
+    };
+    /**
+     * Verifica si la conexión con el servidor está activa y actualiza el 
+     * indicador de estado. Verifica si hay cambios en las tablas para el usuario,
+     * si los hay, retorna los cambios.
+     */
+    function sync(){
+        $.ajax({
+            url: self.params.html5syncFolder+"server/ajax/sync.php"
+        }).done(function(response) {
+            setState(Boolean(JSON.parse(response).state));
+        }).fail(function(){
+            setState(false);
+        });
+    };
+    /**
+     * Establece el estado de la conexión con el servidor
+     * @param {bool} state Estado de la conexión
+     */
+    function setState(state){
+        self.state=true;
+        if(self.params.showState){
+            if(state){
+                self.stateLabel.removeClass("offline").addClass("online");
+                self.stateLabel.find("#state").text("on line");
+            }else{
+                self.stateLabel.removeClass("online").addClass("offline");
+                self.stateLabel.find("#state").text("off line");
+            }
+        }
+    };
+    /**
      * Crea la estructura de la aplicación en HTML5. Define si se muestra el área
      * de debugging y/o de estado.
      */
@@ -64,8 +107,9 @@ var Html5Sync = function(params,callback){
         var state='';
         if(self.params.showState){
             state='<div id="html5sync_state">'+
-                        '<div id="state">checking</div>'+
                         '<div class="html5sync_spinner"></div>'+
+                        '<div id="state">checking</div>'+
+                        
                     '</div>';
         }
         $("body").prepend(
@@ -85,48 +129,8 @@ var Html5Sync = function(params,callback){
             }
         };
     };
-    /**
-     * Verifica si la conexión con el servidor está activa y actualiza el 
-     * indicador de estado.
-     */
-    function checkState(){
-        $.ajax({
-            url: self.params.html5syncFolder+"server/ajax/checkState.php"
-        }).done(function(response) {
-            setState(Boolean(JSON.parse(response).state));
-        }).fail(function(){
-            setState(false);
-        });
-        setInterval(function(){
-            try{
-                $.ajax({
-                    url: self.params.html5syncFolder+"server/ajax/checkState.php"
-                }).done(function(response) {
-                    setState(Boolean(JSON.parse(response).state));
-                }).fail(function(){
-                    setState(false);
-                });
-            }catch(e){
-                setState(false); 
-            }
-        },self.params.stateTimer);
-    };
-    /**
-     * Establece el estado de la conexión con el servidor
-     * @param {bool} state Estado de la conexión
-     */
-    function setState(state){
-        self.state=true;
-        if(self.params.showState){
-            if(state){
-                self.stateLabel.removeClass("offline").addClass("online");
-                self.stateLabel.find("#state").text("on line");
-            }else{
-                self.stateLabel.removeClass("online").addClass("offline");
-                self.stateLabel.find("#state").text("off line");
-            }
-        }
-    };
+    
+    
     /**
      * Carga los datos de las tablas permitidas. Toda la información de carga
      * está especificada en el archivo de configuración:

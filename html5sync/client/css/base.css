@@ -75,7 +75,7 @@
 }
 #html5sync_state #state{
     float: left;
-    margin: 6px 12px;
+    margin: 6px 10px;
 }
 /*********************************** LOADER ***********************************/
 .html5sync_spinner {
@@ -90,7 +90,7 @@
     display: block;
     float: left;
     height: 15px;
-    margin: 4px 10px 0 0;
+    margin: 4px 0px 0 5px;
     position: relative;
     width: 15px;
  }
