@@ -126,6 +126,9 @@ Changelog
     * Creación de trigger para actualizar la columna
     * Creción de las clases Html5Sync y User
     * Se detecta si un usuario puede o no cargar una tabla por id de usuario o por rol
+    * Detección de cambios en la estructura y en los datos en cada sync de ajax
+    * Primera versiónd de la documentación (html5sync/docs/html/)
+    * Acumulación de ajax pendientes para mostrara el cargador
 
 * v.0.0.6 - [2014-03-08]
     * Optimización del sistema de comparación de estados por medio de Hash

@@ -91,13 +91,15 @@ class StateDB{
         $changed=false;
         //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
         if(!$this->userExists($user)){
-            $this->userCreate(md5($state),$user);
-        }
-        //Retorna el último estado
-        $oldState=$this->getHashTable($user);
-        $newState=md5($state);
-        if($newState!=$oldState){
+            $this->userCreate(md5("emptystructure"),$user);
             $changed=true;
+        }else{
+            //Retorna el último estado
+            $oldState=$this->getHashTable($user);
+            $newState=md5($state);
+            if($newState!=$oldState){
+                $changed=true;
+            }
         }
         return  $changed;
     }
@@ -119,15 +121,6 @@ class StateDB{
         }
         return $response;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
     /**
      * Verifica para cada usuario si la estructura de las tablas ha cambiado por
      * medio de una función de hash. Si ha cambiado, actualiza el número de 
@@ -137,17 +130,17 @@ class StateDB{
      * @return int El número de la versión de la base de datos
      */
     function version($state,$user){
-//        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
-//        if($this->userExists($user->getId())){
-//            //Retorna el último estado
-//            $oldState=$this->getHashTable($user);
-//            $newState=md5($state);
-//            if($newState!=$oldState){
-//                $this->updateHashTable($newState,$user);
-//            }
-//        }
-//        //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
-//        return  $this->getVersion($user);
+        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
+        if($this->userExists($user)){
+            //Retorna el último estado
+            $oldState=$this->getHashTable($user);
+            $newState=md5($state);
+            if($newState!=$oldState){
+                $this->updateHashTable($newState,$user);
+            }
+        }
+        //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
+        return  $this->getVersion($user);
     }
     /**************************************************************************/
     /******************************   U S E R S  ******************************/
@@ -233,7 +226,7 @@ class StateDB{
             `versionDB`=:versionDB,
             `hashTable`=:hashTable 
             WHERE id=:id");
-        $version=$this->getVersion($user->getId())+1;
+        $version=$this->getVersion($user)+1;
         $stmt->bindParam(':id',$user->getId());
         $stmt->bindParam(':versionDB',$version);
         $stmt->bindParam(':hashTable',$hashTable);

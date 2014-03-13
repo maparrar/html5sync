@@ -172,8 +172,6 @@ class Html5Sync{
     private function loadConfiguration(){
         //Se leen las variables de configuración
         $this->config=require_once '../config.php';
-        
-        
         $this->parameters=$this->config["parameters"];
     }
     /**
@@ -245,12 +243,23 @@ class Html5Sync{
      * Retorna la lista de tablas en formato JSON
      * @return string Las tablas del usuario en formato JSON
      */
-    private function getTablesInJson(){
-        $json="";
+    function getTablesInJson(){
+        $json='[';
         foreach ($this->tables as $table) {
             //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
-            $json.=$table->jsonEncode();
+            $json.=$table->jsonEncode().",";
         }
+        //Remove the last comma
+        $json=substr($json,0,-1);
+        $json.="]";
         return $json;
+    }
+    /**
+     * Retorna la versión de la base de datos almacenada para el usuario
+     * @return int Número de versión
+     */
+    function getVersion(){
+        $state=$this->getTablesInJson();
+        return $this->stateDB->version($state,$this->user);
     }
 }

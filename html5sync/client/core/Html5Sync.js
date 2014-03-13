@@ -15,6 +15,7 @@ var Html5Sync = function(params,callback){
     /**************************************************************************/
     var self = this;
     self.state;         //{bool} Estado de la conexión con el servidor.
+    self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
     /**************************************************************************/
@@ -46,7 +47,7 @@ var Html5Sync = function(params,callback){
     }();
     
     /**************************************************************************/
-    /**************************** PRIVATE METHODS *****************************/
+    /****************************** SYNC METHODS ******************************/
     /**************************************************************************/
     /**
      * Inicia el proceso de sincronización.
@@ -68,14 +69,95 @@ var Html5Sync = function(params,callback){
      * si los hay, retorna los cambios.
      */
     function sync(){
+        showLoading(true);
         $.ajax({
             url: self.params.html5syncFolder+"server/ajax/sync.php"
         }).done(function(response) {
-            setState(Boolean(JSON.parse(response).state));
+            var data=JSON.parse(response);
+            var state=(data.state==="true")?true:false;
+            var changesInStructure=(data.changesInStructure==="true")?true:false;
+            var changesInData=(data.changesInData==="true")?true:false;
+            //Marca como conectado
+            setState(state);
+            //Si hay cambios en la estructura o en los datos se deben recargar
+            if(changesInStructure){
+                updateStructure();
+            }else{
+                if(changesInData){
+                    updateData();
+                }
+            }
+            showLoading(false);
+        }).fail(function(){
+            setState(false);
+            showLoading(false);
+        });
+    };
+    
+    /**
+     * Carga de nuevo la estructura de la base de datos por medio de ajax
+     */
+    function updateStructure(){
+        debug("..::DB INFO::.. Se detectaron cambios en la estructura de las tablas de la BD. Actualizando...");
+        $.ajax({
+            url: self.params.html5syncFolder+"server/ajax/updateStructure.php"
+        }).done(function(response) {
+//            var data=JSON.parse(response);
+//            var state=(data.state==="true")?true:false;
+//            var changesInStructure=(data.changesInStructure==="true")?true:false;
+//            var changesInData=(data.changesInData==="true")?true:false;
+//            //Marca como conectado
+//            setState(state);
+//            //Si hay cambios en la estructura o en los datos se deben recargar
+//            if(changesInStructure){
+//                updateStructure();
+//            }
+//            if(changesInData){
+//                updateData();
+//            }
+            //Actualiza los datos luego de actualizar la estructura
+            updateData();
         }).fail(function(){
             setState(false);
         });
+    }
+    function updateData(){
+        debug("..::DB INFO::.. Se detectaron cambios en los datos de la BD. Actualizando...");
+        $.ajax({
+            url: self.params.html5syncFolder+"server/ajax/updateData.php"
+        }).done(function(response) {
+            
+        }).fail(function(){
+            setState(false);
+        });
+    }
+    
+    
+    /**
+     * Carga los datos de las tablas permitidas. Toda la información de carga
+     * está especificada en el archivo de configuración:
+     * html5sync/server/config.php
+     */
+    function loadData(){
+        try{
+            showLoading(true);
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/loadData.php"
+            }).done(function(response) {
+//                console.debug(response);
+                showLoading(false);
+            }).fail(function(){
+                showLoading(false);
+            });
+        }catch(e){
+            setState(false); 
+        }
     };
+    
+    
+    /**************************************************************************/
+    /***************************** OTHER METHODS ******************************/
+    /**************************************************************************/
     /**
      * Establece el estado de la conexión con el servidor
      * @param {bool} state Estado de la conexión
@@ -126,56 +208,6 @@ var Html5Sync = function(params,callback){
             }
         };
     };
-    
-    
-    /**
-     * Carga los datos de las tablas permitidas. Toda la información de carga
-     * está especificada en el archivo de configuración:
-     * html5sync/server/config.php
-     */
-    function loadData(){
-        try{
-            showLoading(true);
-            $.ajax({
-                url: self.params.html5syncFolder+"server/ajax/loadData.php"
-            }).done(function(response) {
-//                console.debug(response);
-                showLoading(false);
-            }).fail(function(){
-                showLoading(false);
-            });
-        }catch(e){
-            setState(false); 
-        }
-    };
-    
-    
-    
-    
-    /**
-     * Pruebas para detectar cambios en tablas grandes
-     * está especificada en el archivo de configuración:
-     * html5sync/server/config.php
-     */
-//    function checkChanges(){
-//        try{
-//            showLoading(true);
-//            $.ajax({
-//                url: self.params.html5syncFolder+"server/ajax/checkChanges.php"
-//            }).done(function(response) {
-////                console.debug(response);
-//                showLoading(false);
-//            }).fail(function(){
-//                showLoading(false);
-//            });
-//        }catch(e){
-//            setState(false); 
-//        }
-//    };
-    
-    
-    
-    
     /**
      * Muestra u oculta el loader de la librería
      * @param {boolean} state Estado en que se quiere poner la imagen del loader
@@ -183,8 +215,12 @@ var Html5Sync = function(params,callback){
     function showLoading(state){
         if(state){
             self.loadingLabel.show();
+            self.showLoadingCounter++;
+        }else if(!state && self.showLoadingCounter>1){
+            self.showLoadingCounter--;
         }else{
             self.loadingLabel.hide();
+            self.showLoadingCounter=0;
         }
     }
     /**************************************************************************/
