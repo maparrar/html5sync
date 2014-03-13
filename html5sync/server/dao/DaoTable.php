@@ -1,6 +1,7 @@
 <?php
 /** DaoTable File
- * @package models @subpackage dal */
+ * @package models 
+ *  */
 /**
  * DaoTable Class
  *
@@ -9,7 +10,6 @@
  * @author https://github.com/maparrar/html5sync
  * @author maparrar <maparrar@gmail.com>
  * @package models
- * @subpackage dal
  */
 class DaoTable{
     /** Database Object 
@@ -22,7 +22,7 @@ class DaoTable{
     protected $handler;
     /**
      * Constructor: sets the database Object and the PDO handler
-     * @param Database database object
+     * @param Database $db database object
      */
     function __construct($db){
         $this->db=$db;

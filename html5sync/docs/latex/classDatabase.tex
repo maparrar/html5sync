@@ -1,0 +1,208 @@
+\hypertarget{classDatabase}{\section{Database Class Reference}
+\label{classDatabase}\index{Database@{Database}}
+}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classDatabase_a7883d28cdbffc2b417a4fbc9733fc68b}{\-\_\-\-\_\-construct} (\$name=\char`\"{}\char`\"{}, \$driver=\char`\"{}\char`\"{}, \$host=\char`\"{}\char`\"{}, \$connections=array())
+\item 
+\hyperlink{classDatabase_a73cb6eec277ccab50a2fa115487acbba}{set\-Name} (\$value)
+\item 
+\hyperlink{classDatabase_a462346c13a5fe2fb44f2b1724b538394}{set\-Driver} (\$value)
+\item 
+\hyperlink{classDatabase_a49df1afe26bb06f4d0cc623b95bd78ce}{set\-Host} (\$value)
+\item 
+\hyperlink{classDatabase_ad20b8a013d88e7204a9ead110d7a7e05}{set\-Connections} (\$value)
+\item 
+\hyperlink{classDatabase_ac73651dd458c78c0b8e98c5c3f47fa19}{get\-Name} ()
+\item 
+\hyperlink{classDatabase_a8ad30c4547ad0ed29ced3a83e6d0eff7}{get\-Driver} ()
+\item 
+\hyperlink{classDatabase_a66c7395bd86115c24161f96b9e7d6601}{get\-Host} ()
+\item 
+\hyperlink{classDatabase_aae9562910804b3fb0b14187f02ff2699}{get\-Connections} ()
+\item 
+\hyperlink{classDatabase_ae1081b7ad1fb0da55c3d89818cb6c48b}{add\-Connection} (\$name, \$login, \$password)
+\item 
+\hyperlink{classDatabase_a7c762fc601f4674513d131ea10384802}{connect} (\$connection\-Name=\char`\"{}all\char`\"{})
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classDatabase_af22161854c8f8bb14e4afa01c669fc9b}{{\bfseries \$name}}\label{classDatabase_af22161854c8f8bb14e4afa01c669fc9b}
+
+\item 
+\hypertarget{classDatabase_abaa2d02e6aafb8a9bcc711c3f5ae163f}{{\bfseries \$driver}}\label{classDatabase_abaa2d02e6aafb8a9bcc711c3f5ae163f}
+
+\item 
+\hypertarget{classDatabase_ac7fbab56b2714481177ac97d070b564f}{{\bfseries \$host}}\label{classDatabase_ac7fbab56b2714481177ac97d070b564f}
+
+\item 
+\hypertarget{classDatabase_a5b3475f4078edb1c0629ddcc00901ec7}{{\bfseries \$connections}}\label{classDatabase_a5b3475f4078edb1c0629ddcc00901ec7}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classDatabase_a7883d28cdbffc2b417a4fbc9733fc68b}{\index{Database@{Database}!\-\_\-\-\_\-construct@{\-\_\-\-\_\-construct}}
+\index{\-\_\-\-\_\-construct@{\-\_\-\-\_\-construct}!Database@{Database}}
+\subsubsection[{\-\_\-\-\_\-construct}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::\-\_\-\-\_\-construct (
+\begin{DoxyParamCaption}
+\item[{}]{\$name = {\ttfamily \char`\"{}\char`\"{}}, }
+\item[{}]{\$driver = {\ttfamily \char`\"{}\char`\"{}}, }
+\item[{}]{\$host = {\ttfamily \char`\"{}\char`\"{}}, }
+\item[{}]{\$connections = {\ttfamily array()}}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a7883d28cdbffc2b417a4fbc9733fc68b}
+Constructor 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$name} & Nombre de la base de datos \\
+\hline
+string & {\em \$driver} & Tipo de conexión\-: mysql, oracle, postgresql \\
+\hline
+string & {\em \$host} & Host donde está alojada la base de datos \\
+\hline
+ & {\em Connection\mbox{[}$\,$\mbox{]}} & \$connections Array de conexiones a la base de datos\-: read, write, delete, all \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classDatabase_ae1081b7ad1fb0da55c3d89818cb6c48b}{\index{Database@{Database}!add\-Connection@{add\-Connection}}
+\index{add\-Connection@{add\-Connection}!Database@{Database}}
+\subsubsection[{add\-Connection}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::add\-Connection (
+\begin{DoxyParamCaption}
+\item[{}]{\$name, }
+\item[{}]{\$login, }
+\item[{}]{\$password}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_ae1081b7ad1fb0da55c3d89818cb6c48b}
+Agrega una conexión a la base de datos 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$name} & Nombre de la conexión\-: read, write, delete, all \\
+\hline
+string & {\em \$login} & Login de acceso a la base de datos para la conexión \\
+\hline
+string & {\em \$password} & Password de acceso a la base de datos para la conexión \\
+\hline
+\end{DoxyParams}
+\hypertarget{classDatabase_a7c762fc601f4674513d131ea10384802}{\index{Database@{Database}!connect@{connect}}
+\index{connect@{connect}!Database@{Database}}
+\subsubsection[{connect}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::connect (
+\begin{DoxyParamCaption}
+\item[{}]{\$connection\-Name = {\ttfamily \char`\"{}all\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a7c762fc601f4674513d131ea10384802}
+Conecta con una base de datos, si hay algún error ejecuta die() para terminar cualquier proceso. 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$connection\-Name} & Nombre la conexión a usar\-: read, write, delete, all \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+P\-D\-O \hyperlink{classObject}{Object} databse handler 
+\end{DoxyReturn}
+\hypertarget{classDatabase_aae9562910804b3fb0b14187f02ff2699}{\index{Database@{Database}!get\-Connections@{get\-Connections}}
+\index{get\-Connections@{get\-Connections}!Database@{Database}}
+\subsubsection[{get\-Connections}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::get\-Connections (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_aae9562910804b3fb0b14187f02ff2699}
+Getter\-: connections \begin{DoxyReturn}{Returns}
+\hyperlink{classConnection}{Connection}\mbox{[}\mbox{]} 
+\end{DoxyReturn}
+\hypertarget{classDatabase_a8ad30c4547ad0ed29ced3a83e6d0eff7}{\index{Database@{Database}!get\-Driver@{get\-Driver}}
+\index{get\-Driver@{get\-Driver}!Database@{Database}}
+\subsubsection[{get\-Driver}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::get\-Driver (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a8ad30c4547ad0ed29ced3a83e6d0eff7}
+Getter\-: driver \begin{DoxyReturn}{Returns}
+string 
+\end{DoxyReturn}
+\hypertarget{classDatabase_a66c7395bd86115c24161f96b9e7d6601}{\index{Database@{Database}!get\-Host@{get\-Host}}
+\index{get\-Host@{get\-Host}!Database@{Database}}
+\subsubsection[{get\-Host}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::get\-Host (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a66c7395bd86115c24161f96b9e7d6601}
+Getter\-: host \begin{DoxyReturn}{Returns}
+string 
+\end{DoxyReturn}
+\hypertarget{classDatabase_ac73651dd458c78c0b8e98c5c3f47fa19}{\index{Database@{Database}!get\-Name@{get\-Name}}
+\index{get\-Name@{get\-Name}!Database@{Database}}
+\subsubsection[{get\-Name}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::get\-Name (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_ac73651dd458c78c0b8e98c5c3f47fa19}
+Getter\-: name \begin{DoxyReturn}{Returns}
+string 
+\end{DoxyReturn}
+\hypertarget{classDatabase_ad20b8a013d88e7204a9ead110d7a7e05}{\index{Database@{Database}!set\-Connections@{set\-Connections}}
+\index{set\-Connections@{set\-Connections}!Database@{Database}}
+\subsubsection[{set\-Connections}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::set\-Connections (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_ad20b8a013d88e7204a9ead110d7a7e05}
+Setter connections 
+\begin{DoxyParams}{Parameters}
+{\em Connection\mbox{[}$\,$\mbox{]}} & \$value Array de conexiones a la base de datos\-: read, write, delete, all \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classDatabase_a462346c13a5fe2fb44f2b1724b538394}{\index{Database@{Database}!set\-Driver@{set\-Driver}}
+\index{set\-Driver@{set\-Driver}!Database@{Database}}
+\subsubsection[{set\-Driver}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::set\-Driver (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a462346c13a5fe2fb44f2b1724b538394}
+Setter driver 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$value} & Tipo de conexión\-: mysql, oracle, postgresql \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classDatabase_a49df1afe26bb06f4d0cc623b95bd78ce}{\index{Database@{Database}!set\-Host@{set\-Host}}
+\index{set\-Host@{set\-Host}!Database@{Database}}
+\subsubsection[{set\-Host}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::set\-Host (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a49df1afe26bb06f4d0cc623b95bd78ce}
+Setter host 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$value} & Host donde está alojada la base de datos \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classDatabase_a73cb6eec277ccab50a2fa115487acbba}{\index{Database@{Database}!set\-Name@{set\-Name}}
+\index{set\-Name@{set\-Name}!Database@{Database}}
+\subsubsection[{set\-Name}]{\setlength{\rightskip}{0pt plus 5cm}Database\-::set\-Name (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classDatabase_a73cb6eec277ccab50a2fa115487acbba}
+Setter name 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$value} & Nombre de la base de datos \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+server/core/Database.\-php\end{DoxyCompactItemize}

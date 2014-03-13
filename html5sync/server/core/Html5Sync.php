@@ -63,10 +63,6 @@ class Html5Sync{
         $this->connect();
         //Carga la estructura de las tablas para el usuario
         $this->loadTables();
-        
-        
-        
-        
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**

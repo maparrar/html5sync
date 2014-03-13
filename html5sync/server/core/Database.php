@@ -1,13 +1,12 @@
 <?php
 /** Database File
-* @package core @subpackage  */
+* @package core */
 /**
 * Database Class
 *
 * @author https://github.com/maparrar/maqinato
 * @author maparrar <maparrar@gmail.com>
 * @package core
-* @subpackage 
 */
 class Database{
     /** 
@@ -17,7 +16,7 @@ class Database{
      */
     protected $name;
     /** 
-     * Tipo de conexión: mysql, oracle, ... 
+     * Tipo de conexión: mysql, oracle, postgres 
      * 
      * @var string
      */
@@ -37,7 +36,7 @@ class Database{
     /**
     * Constructor
     * @param string $name Nombre de la base de datos        
-    * @param string $driver Tipo de conexión: mysql, oracle, ...        
+    * @param string $driver Tipo de conexión: mysql, oracle, postgresql        
     * @param string $host Host donde está alojada la base de datos        
     * @param Connection[] $connections Array de conexiones a la base de datos: read, write, delete, all        
     */
@@ -62,7 +61,7 @@ class Database{
     }
     /**
     * Setter driver
-    * @param string $value Tipo de conexión: mysql, oracle, ...
+    * @param string $value Tipo de conexión: mysql, oracle, postgresql
     * @return void
     */
     public function setDriver($value) {

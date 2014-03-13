@@ -1,0 +1,189 @@
+\hypertarget{classTable}{\section{Table Class Reference}
+\label{classTable}\index{Table@{Table}}
+}
+Inheritance diagram for Table\-:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classTable}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classTable_a91623aa64ea7f31f72f467185e512aa4}{\-\_\-\-\_\-construct} (\$name=\char`\"{}\char`\"{}, \$mode=\char`\"{}\char`\"{}, \$fields=array(), \$data=array())
+\item 
+\hyperlink{classTable_aa0f8f35754d7d53c2583f9b06b657fa7}{set\-Name} (\$value)
+\item 
+\hyperlink{classTable_a26ab532f91acbfa70a0426683474beec}{set\-Mode} (\$value)
+\item 
+\hyperlink{classTable_afe848d39f27946d4ea1dc660efe356db}{set\-Fields} (\$value)
+\item 
+\hyperlink{classTable_a1ea0598b1e9ac7dff5374a9b71eff57b}{set\-Data} (\$value)
+\item 
+\hyperlink{classTable_a8e2ad8a066449c8fedf8f3a9192db355}{get\-Name} ()
+\item 
+\hyperlink{classTable_a1258d8bb455db47e49ea963f9b7f5166}{get\-Mode} ()
+\item 
+\hyperlink{classTable_a838132901978900cdf8c6399fd13f219}{get\-Fields} ()
+\item 
+\hyperlink{classTable_ad04390b230c6a2a911d0812779a7e698}{get\-Data} ()
+\item 
+\hyperlink{classTable_af1378aceb18290d444c34e3e75150235}{get\-Pk} ()
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classTable_a7c7f5d88257a02dd1fbeee22a77c7f39}{{\bfseries \$name}}\label{classTable_a7c7f5d88257a02dd1fbeee22a77c7f39}
+
+\item 
+\hypertarget{classTable_a03178ddf2cb8e5333712f4b3e98a1887}{{\bfseries \$mode}}\label{classTable_a03178ddf2cb8e5333712f4b3e98a1887}
+
+\item 
+\hypertarget{classTable_ab93d4088a554c8b47cb854229b83fbfb}{{\bfseries \$fields}}\label{classTable_ab93d4088a554c8b47cb854229b83fbfb}
+
+\item 
+\hypertarget{classTable_aa14f816eb8c78233ceb451fd18f69645}{{\bfseries \$data}}\label{classTable_aa14f816eb8c78233ceb451fd18f69645}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classTable_a91623aa64ea7f31f72f467185e512aa4}{\index{Table@{Table}!\-\_\-\-\_\-construct@{\-\_\-\-\_\-construct}}
+\index{\-\_\-\-\_\-construct@{\-\_\-\-\_\-construct}!Table@{Table}}
+\subsubsection[{\-\_\-\-\_\-construct}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::\-\_\-\-\_\-construct (
+\begin{DoxyParamCaption}
+\item[{}]{\$name = {\ttfamily \char`\"{}\char`\"{}}, }
+\item[{}]{\$mode = {\ttfamily \char`\"{}\char`\"{}}, }
+\item[{}]{\$fields = {\ttfamily array()}, }
+\item[{}]{\$data = {\ttfamily array()}}
+\end{DoxyParamCaption}
+)}}\label{classTable_a91623aa64ea7f31f72f467185e512aa4}
+Constructor 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$name} & Nombre de la tabla \\
+\hline
+string & {\em \$mode} & Modo de uso de la tabla\-: ('unlock'\-: Para operaciones insert+read), ('lock'\-: Para operaciones update+delete) \\
+\hline
+array & {\em \$fields} & Array con los nombres de las columnas \\
+\hline
+array & {\em \$data} & Array con los datos de la tabla \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classTable_ad04390b230c6a2a911d0812779a7e698}{\index{Table@{Table}!get\-Data@{get\-Data}}
+\index{get\-Data@{get\-Data}!Table@{Table}}
+\subsubsection[{get\-Data}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::get\-Data (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTable_ad04390b230c6a2a911d0812779a7e698}
+Getter\-: data \begin{DoxyReturn}{Returns}
+array 
+\end{DoxyReturn}
+\hypertarget{classTable_a838132901978900cdf8c6399fd13f219}{\index{Table@{Table}!get\-Fields@{get\-Fields}}
+\index{get\-Fields@{get\-Fields}!Table@{Table}}
+\subsubsection[{get\-Fields}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::get\-Fields (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTable_a838132901978900cdf8c6399fd13f219}
+Getter\-: fields \begin{DoxyReturn}{Returns}
+\hyperlink{classField}{Field}\mbox{[}\mbox{]} 
+\end{DoxyReturn}
+\hypertarget{classTable_a1258d8bb455db47e49ea963f9b7f5166}{\index{Table@{Table}!get\-Mode@{get\-Mode}}
+\index{get\-Mode@{get\-Mode}!Table@{Table}}
+\subsubsection[{get\-Mode}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::get\-Mode (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTable_a1258d8bb455db47e49ea963f9b7f5166}
+Getter\-: mode \begin{DoxyReturn}{Returns}
+string 
+\end{DoxyReturn}
+\hypertarget{classTable_a8e2ad8a066449c8fedf8f3a9192db355}{\index{Table@{Table}!get\-Name@{get\-Name}}
+\index{get\-Name@{get\-Name}!Table@{Table}}
+\subsubsection[{get\-Name}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::get\-Name (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTable_a8e2ad8a066449c8fedf8f3a9192db355}
+Getter\-: name \begin{DoxyReturn}{Returns}
+string 
+\end{DoxyReturn}
+\hypertarget{classTable_af1378aceb18290d444c34e3e75150235}{\index{Table@{Table}!get\-Pk@{get\-Pk}}
+\index{get\-Pk@{get\-Pk}!Table@{Table}}
+\subsubsection[{get\-Pk}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::get\-Pk (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classTable_af1378aceb18290d444c34e3e75150235}
+Return the table P\-K \begin{DoxyReturn}{Returns}
+\hyperlink{classField}{Field} 
+\end{DoxyReturn}
+\hypertarget{classTable_a1ea0598b1e9ac7dff5374a9b71eff57b}{\index{Table@{Table}!set\-Data@{set\-Data}}
+\index{set\-Data@{set\-Data}!Table@{Table}}
+\subsubsection[{set\-Data}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::set\-Data (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classTable_a1ea0598b1e9ac7dff5374a9b71eff57b}
+Setter data 
+\begin{DoxyParams}[1]{Parameters}
+array & {\em \$value} & Array con los datos de la tabla \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classTable_afe848d39f27946d4ea1dc660efe356db}{\index{Table@{Table}!set\-Fields@{set\-Fields}}
+\index{set\-Fields@{set\-Fields}!Table@{Table}}
+\subsubsection[{set\-Fields}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::set\-Fields (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classTable_afe848d39f27946d4ea1dc660efe356db}
+Setter fields 
+\begin{DoxyParams}{Parameters}
+{\em Field\mbox{[}$\,$\mbox{]}} & \$value \hyperlink{classField}{Field} objects of the table \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classTable_a26ab532f91acbfa70a0426683474beec}{\index{Table@{Table}!set\-Mode@{set\-Mode}}
+\index{set\-Mode@{set\-Mode}!Table@{Table}}
+\subsubsection[{set\-Mode}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::set\-Mode (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classTable_a26ab532f91acbfa70a0426683474beec}
+Setter mode 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$value} & Modo de uso de la tabla\-: ('unlock'\-: Para operaciones insert+read), ('lock'\-: Para operaciones update+delete) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classTable_aa0f8f35754d7d53c2583f9b06b657fa7}{\index{Table@{Table}!set\-Name@{set\-Name}}
+\index{set\-Name@{set\-Name}!Table@{Table}}
+\subsubsection[{set\-Name}]{\setlength{\rightskip}{0pt plus 5cm}Table\-::set\-Name (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classTable_aa0f8f35754d7d53c2583f9b06b657fa7}
+Setter name 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$value} & Nombre de la tabla \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+server/core/Table.\-php\end{DoxyCompactItemize}

@@ -1,0 +1,92 @@
+\hypertarget{classStateDB}{\section{State\-D\-B Class Reference}
+\label{classStateDB}\index{State\-D\-B@{State\-D\-B}}
+}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classStateDB_a8cafbf2a2d23683027d2133389339808}{\-\_\-\-\_\-construct} (\$path=\char`\"{}../sqlite/html5sync.\-sqlite\char`\"{})
+\item 
+\hyperlink{classStateDB_aabb8f09f5745735ee52f64680b6bf8cd}{set\-Path} (\$value)
+\item 
+\hyperlink{classStateDB_a7dfe3273772bcc8740133d8c2c7b95c5}{get\-Path} ()
+\item 
+\hyperlink{classStateDB_abf5cbf210df002d0802b7c22569ec2bb}{version} (\$state, \$user\-Id, \$role=\char`\"{}\char`\"{})
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classStateDB_af7ed265b88a574e5add6a2d1684839ff}{{\bfseries \$handler}}\label{classStateDB_af7ed265b88a574e5add6a2d1684839ff}
+
+\item 
+\hypertarget{classStateDB_aa6ec63a6f1117743938c32bae309fbf7}{{\bfseries \$path}}\label{classStateDB_aa6ec63a6f1117743938c32bae309fbf7}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classStateDB_a8cafbf2a2d23683027d2133389339808}{\index{State\-D\-B@{State\-D\-B}!\-\_\-\-\_\-construct@{\-\_\-\-\_\-construct}}
+\index{\-\_\-\-\_\-construct@{\-\_\-\-\_\-construct}!StateDB@{State\-D\-B}}
+\subsubsection[{\-\_\-\-\_\-construct}]{\setlength{\rightskip}{0pt plus 5cm}State\-D\-B\-::\-\_\-\-\_\-construct (
+\begin{DoxyParamCaption}
+\item[{}]{\$path = {\ttfamily \char`\"{}../sqlite/html5sync.sqlite\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{classStateDB_a8cafbf2a2d23683027d2133389339808}
+Constructor 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$path} & Ruta y nombre de la base de datos \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classStateDB_a7dfe3273772bcc8740133d8c2c7b95c5}{\index{State\-D\-B@{State\-D\-B}!get\-Path@{get\-Path}}
+\index{get\-Path@{get\-Path}!StateDB@{State\-D\-B}}
+\subsubsection[{get\-Path}]{\setlength{\rightskip}{0pt plus 5cm}State\-D\-B\-::get\-Path (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classStateDB_a7dfe3273772bcc8740133d8c2c7b95c5}
+Getter\-: path \begin{DoxyReturn}{Returns}
+string 
+\end{DoxyReturn}
+\hypertarget{classStateDB_aabb8f09f5745735ee52f64680b6bf8cd}{\index{State\-D\-B@{State\-D\-B}!set\-Path@{set\-Path}}
+\index{set\-Path@{set\-Path}!StateDB@{State\-D\-B}}
+\subsubsection[{set\-Path}]{\setlength{\rightskip}{0pt plus 5cm}State\-D\-B\-::set\-Path (
+\begin{DoxyParamCaption}
+\item[{}]{\$value}
+\end{DoxyParamCaption}
+)}}\label{classStateDB_aabb8f09f5745735ee52f64680b6bf8cd}
+Setter path 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$value} & Ruta y nombre de la base de datos \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+void 
+\end{DoxyReturn}
+\hypertarget{classStateDB_abf5cbf210df002d0802b7c22569ec2bb}{\index{State\-D\-B@{State\-D\-B}!version@{version}}
+\index{version@{version}!StateDB@{State\-D\-B}}
+\subsubsection[{version}]{\setlength{\rightskip}{0pt plus 5cm}State\-D\-B\-::version (
+\begin{DoxyParamCaption}
+\item[{}]{\$state, }
+\item[{}]{\$user\-Id, }
+\item[{}]{\$role = {\ttfamily \char`\"{}\char`\"{}}}
+\end{DoxyParamCaption}
+)}}\label{classStateDB_abf5cbf210df002d0802b7c22569ec2bb}
+Verifica para cada usuario si la estructura de las tablas ha cambiado por medio de una función de hash. Si ha cambiado, actualiza el número de versión. Si no ha cambiado, retorna el mismo número de versión. 
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$state} & Estructura de las tablas en J\-S\-O\-N \\
+\hline
+int & {\em \$user\-Id} & Id del usuario \\
+\hline
+string & {\em \$role} & Rol del usuario en caso de que sea nuevo \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+int El número de la versión de la base de datos 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+server/dao/State\-D\-B.\-php\end{DoxyCompactItemize}

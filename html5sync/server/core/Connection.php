@@ -1,13 +1,12 @@
 <?php
 /** Connection File
-* @package core @subpackage  */
+* @package core*/
 /**
 * Connection Class
 *
 * @author https://github.com/maparrar/maqinato
 * @author maparrar <maparrar@gmail.com>
 * @package core
-* @subpackage 
 */
 class Connection{
     /** 
