@@ -82,27 +82,72 @@ class StateDB{
     }
     /**
      * Verifica para cada usuario si la estructura de las tablas ha cambiado por
+     * medio de una función de hash. 
+     * @param string $state Estructura de las tablas en JSON
+     * @param User $user Objeto Usuario
+     * @return int El número de la versión de la base de datos
+     */
+    public function checkIfStructureChanged($state,$user){
+        $changed=false;
+        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
+        if(!$this->userExists($user)){
+            $this->userCreate(md5($state),$user);
+        }
+        //Retorna el último estado
+        $oldState=$this->getHashTable($user);
+        $newState=md5($state);
+        if($newState!=$oldState){
+            $changed=true;
+        }
+        return  $changed;
+    }
+    /**
+     * Retorna la fecha de la última actualización almacenada en la base de datos de estado
+     * @param User $user Objeto Usuario
+     * @return DateTime Objeto con la fecha de la última actualización
+     */
+    public function getLastUpdate($user){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `User` WHERE `id`= :id");
+        $stmt->bindParam(':id',$user->getId());
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            $response=new DateTime($row["lastUpdate"]);
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $response;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Verifica para cada usuario si la estructura de las tablas ha cambiado por
      * medio de una función de hash. Si ha cambiado, actualiza el número de 
      * versión. Si no ha cambiado, retorna el mismo número de versión.
      * @param string $state Estructura de las tablas en JSON
-     * @param int $userId Id del usuario
-     * @param string $role Rol del usuario en caso de que sea nuevo
+     * @param User $user Objeto Usuario
      * @return int El número de la versión de la base de datos
      */
-    function version($state,$userId,$role=""){
-        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
-        if(!$this->userExists($userId)){
-            $this->userCreate(md5($state),$userId,$role);
-        }else{
-            //Retorna el último estado
-            $oldState=$this->getHashTable($userId);
-            $newState=md5($state);
-            if($newState!=$oldState){
-                $this->updateHashTable($newState,$userId);
-            }
-        }
-        //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
-        return  $this->getVersion($userId);
+    function version($state,$user){
+//        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
+//        if($this->userExists($user->getId())){
+//            //Retorna el último estado
+//            $oldState=$this->getHashTable($user);
+//            $newState=md5($state);
+//            if($newState!=$oldState){
+//                $this->updateHashTable($newState,$user);
+//            }
+//        }
+//        //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
+//        return  $this->getVersion($user);
     }
     /**************************************************************************/
     /******************************   U S E R S  ******************************/
@@ -110,24 +155,23 @@ class StateDB{
     /**
      * Inserta un usuario en la tabla de User
      * @param string $hashTable Hash de la estructura de la tabla para el usuario
-     * @param int $userId Identificador del usuario
-     * @param string $role Rol del usuario en caso de que sea nuevo
+     * @param User $user Objeto Usuario
      * @return boolean True si se pudo insertar el usuario, false en otro caso
      */
-    private function userCreate($hashTable,$userId,$role=""){
+    private function userCreate($hashTable,$user){
         $created=false;
-        if(!$this->userExists($userId)){
+        if(!$this->userExists($user)){
             $stmt = $this->handler->prepare("
                 INSERT INTO User (`id`,`versionDB`,`hashTable`,`lastUpdate`,`role`) 
                 VALUES           (:id,:versionDB,:hashTable,:lastUpdate,:role)
             ");
             $version=1;
             $date=date('Y-m-d H:i:s');
-            $stmt->bindParam(':id',$userId);
+            $stmt->bindParam(':id',$user->getId());
             $stmt->bindParam(':versionDB',$version);
             $stmt->bindParam(':hashTable',$hashTable);
             $stmt->bindParam(':lastUpdate',$date);
-            $stmt->bindParam(':role',$role);
+            $stmt->bindParam(':role',$user->getRole());
             if(!$stmt->execute()){
                 $error=$stmt->errorInfo();
                 error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
@@ -137,17 +181,17 @@ class StateDB{
     }
     /**
      * Verifica si un usuario existe en la base de datos de estado
-     * @param int $userId Identificador del usuario
+     * @param User $user Objeto Usuario
      * @return boolean True si el usuario existe, false en otro caso
      */
-    private function userExists($userId){
+    private function userExists($user){
         $exist=false;
         $stmt = $this->handler->prepare("SELECT id FROM User WHERE id=:id");
-        $stmt->bindParam(':id',$userId);
+        $stmt->bindParam(':id',$user->getId());
         if ($stmt->execute()) {
             $list=$stmt->fetch();
             if($list){
-                if(intval($list["id"])===intval($userId)){
+                if(intval($list["id"])===intval($user->getId())){
                     $exist=true;
                 }else{
                     $exist=false;
@@ -161,13 +205,13 @@ class StateDB{
     }
     /**
      * Retorna el número de la versión para el usuario
-     * @param int $userId Identificador del usuario
+     * @param User $user Objeto Usuario
      * @return int Versión la base de datos para el usuario
      */
-    private function getVersion($userId){
+    private function getVersion($user){
         $response=false;
         $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
-        $stmt->bindParam(':id',$userId);
+        $stmt->bindParam(':id',$user->getId());
         if ($stmt->execute()) {
             $row=$stmt->fetch();
             $response=intval($row["versionDB"]);
@@ -180,17 +224,17 @@ class StateDB{
     /**
      * Actualiza el estado para el usuario, aumenta en uno el número de la versión.
      * @param string $hashTable Hash de las tablas para el usuario
-     * @param int $userId Identificador del usuario
+     * @param User $user Objeto Usuario
      * @return boolean True si pudo actualizar los datos. False en otro caso
      */
-    private function updateHashTable($hashTable,$userId){
+    private function updateHashTable($hashTable,$user){
         $updated=false;
         $stmt = $this->handler->prepare("UPDATE User SET 
             `versionDB`=:versionDB,
             `hashTable`=:hashTable 
             WHERE id=:id");
-        $version=$this->getVersion($userId)+1;
-        $stmt->bindParam(':id',$userId);
+        $version=$this->getVersion($user->getId())+1;
+        $stmt->bindParam(':id',$user->getId());
         $stmt->bindParam(':versionDB',$version);
         $stmt->bindParam(':hashTable',$hashTable);
         if($stmt->execute()){
@@ -203,13 +247,13 @@ class StateDB{
     }
     /**
      * Retorna el número de la versión para el usuario
-     * @param int $userId Identificador del usuario
+     * @param User $user Objeto Usuario
      * @return int Versión la base de datos para el usuario
      */
-    private function getHashTable($userId){
+    private function getHashTable($user){
         $response=false;
         $stmt = $this->handler->prepare("SELECT `hashTable` FROM `User` WHERE `id`= :id");
-        $stmt->bindParam(':id',$userId);
+        $stmt->bindParam(':id',$user->getId());
         if ($stmt->execute()) {
             $row=$stmt->fetch();
             $response=$row["hashTable"];

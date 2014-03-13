@@ -118,31 +118,27 @@ class DaoTable{
         }
         return $list;
     }
-    
-    
     /**
      * Verifica si hubo cambios en una lista de tablas para un usuario
-     * @param string[] $table Nombre de la tabla que se quiere verificar
+     * @param string $table Nombre de la tabla que se quiere verificar
+     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
      * @return boolean True si se detectaron cambios, False en otro caso
      */
-    function checkDataChanges($table){
-        $list=array();
+    function checkDataChanged($table,$lastUpdate){
+        $changed=false;
         $handler=$this->db->connect("all");
-        $stmt = $handler->prepare("SELECT * FROM ".$table->getName()." LIMIT 10000");
+        $stmt = $handler->prepare("SELECT count(*) AS updated FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'");
         if ($stmt->execute()) {
-            print_r($table->getName()."\n");
-            print_r(md5(serialize($stmt->fetchAll())));
-            print_r("\n");
-            
-//            while ($row = $stmt->fetch()){
-//                $field=new Field($row["name"],$row["type"],$row["key"]);
-//                array_push($list,$field);
-//            }
+            $row=$stmt->fetch();
+            $updated=intval($row["updated"]);
+            if($updated){
+                $changed=true;
+            }
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
-        return $list;
+        return $changed;
     }
     /**
      * Define el modo UpdatedColumn. Inserta una columna donde se lleva la cuenta
