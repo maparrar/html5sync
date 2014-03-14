@@ -120,7 +120,7 @@ Estrategias de sincronización de la base de datos:
 Changelog
 =========
 
-* v.0.0.7 - [2014-03-11]
+* v.0.0.7 - [2014-03-14]
     * Creación del "updateMode" tipo "updatedColumn"
     * Creación automática de la columna de actualización
     * Creación de trigger para actualizar la columna
@@ -129,6 +129,7 @@ Changelog
     * Detección de cambios en la estructura y en los datos en cada sync de ajax
     * Primera versiónd de la documentación (html5sync/docs/html/)
     * Acumulación de ajax pendientes para mostrara el cargador
+    * Actualización e inserción automática en indexedDB cuando se actualiza la DB del servidor
 
 * v.0.0.6 - [2014-03-08]
     * Optimización del sistema de comparación de estados por medio de Hash

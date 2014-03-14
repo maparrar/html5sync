@@ -80,7 +80,6 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     function sync(callback){
-        showLoading(true);
         $.ajax({
             url: self.params.html5syncFolder+"server/ajax/sync.php"
         }).done(function(response) {
@@ -100,14 +99,11 @@ var Html5Sync = function(params,callback){
                     updateData();
                 }
             }
-            showLoading(false);
             if(callback)callback(false);
         }).fail(function(){
             setState(false);
-            showLoading(false);
         });
     };
-    
     /**
      * Carga de nuevo la estructura de la base de datos por medio de ajax
      * @param {function} callback Función para retornar los resultados
