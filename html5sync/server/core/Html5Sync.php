@@ -137,6 +137,13 @@ class Html5Sync{
     public function getParameters() {
         return $this->parameters;
     }    
+    /**
+    * Getter: databaseName
+    * @return array
+    */
+    public function getDatabaseName() {
+        return $this->config["database"]["name"];
+    }    
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
      * Verifica si la estructura de las tablas cambió.

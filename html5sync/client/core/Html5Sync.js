@@ -16,6 +16,7 @@ var Html5Sync = function(params,callback){
     var self = this;
     self.state;         //{bool} Estado de la conexión con el servidor.
     self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
+    self.userId=false;  //Identificador del usuario      
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
     /**************************************************************************/
@@ -38,12 +39,7 @@ var Html5Sync = function(params,callback){
         //Inicia el proceso de sincronización
         startSync();
         
-        $("#checkChanges").click(function(){
-            checkChanges();
-        });
-        $("#loadData").click(function(){
-            loadData();
-        });
+        
     }();
     
     /**************************************************************************/
@@ -67,8 +63,9 @@ var Html5Sync = function(params,callback){
      * Verifica si la conexión con el servidor está activa y actualiza el 
      * indicador de estado. Verifica si hay cambios en las tablas para el usuario,
      * si los hay, retorna los cambios.
+     * @param {fucntion} callback Función para retornar los resultados
      */
-    function sync(){
+    function sync(callback){
         showLoading(true);
         $.ajax({
             url: self.params.html5syncFolder+"server/ajax/sync.php"
@@ -88,6 +85,7 @@ var Html5Sync = function(params,callback){
                 }
             }
             showLoading(false);
+            if(callback)callback(false);
         }).fail(function(){
             setState(false);
             showLoading(false);
@@ -96,63 +94,56 @@ var Html5Sync = function(params,callback){
     
     /**
      * Carga de nuevo la estructura de la base de datos por medio de ajax
+     * @param {fucntion} callback Función para retornar los resultados
      */
-    function updateStructure(){
+    function updateStructure(callback){
         debug("..::DB INFO::.. Se detectaron cambios en la estructura de las tablas de la BD. Actualizando...");
         $.ajax({
             url: self.params.html5syncFolder+"server/ajax/updateStructure.php"
         }).done(function(response) {
-//            var data=JSON.parse(response);
-//            var state=(data.state==="true")?true:false;
-//            var changesInStructure=(data.changesInStructure==="true")?true:false;
-//            var changesInData=(data.changesInData==="true")?true:false;
-//            //Marca como conectado
-//            setState(state);
-//            //Si hay cambios en la estructura o en los datos se deben recargar
-//            if(changesInStructure){
-//                updateStructure();
-//            }
-//            if(changesInData){
-//                updateData();
-//            }
-            //Actualiza los datos luego de actualizar la estructura
-            updateData();
+            var data=JSON.parse(response);
+            self.userId=parseInt(data.userId);
+            var database=data.database;
+            var version=parseInt(data.version);
+            var tables=data.tables;
+            var parameters=parseDatabaseParameters(database,version,tables);
+            var database=new Database(parameters,function(err){
+                if(err){
+                    if(callback)callback(err);
+                }else{
+                    if(callback)callback(false);
+                    //Actualiza los datos luego de actualizar la estructura
+                    updateData(function(err){
+                        if(err){
+                            if(callback)callback(err);
+                        }
+                    });
+                }
+            });
         }).fail(function(){
+            callback(new Error("Unable to connect the server to update structure"));
             setState(false);
         });
-    }
-    function updateData(){
+    };
+    /**
+     * Carga la información de las tablas cuando se detectan cambios
+     * @param {fucntion} callback Función para retornar los resultados
+     */
+    function updateData(callback){
         debug("..::DB INFO::.. Se detectaron cambios en los datos de la BD. Actualizando...");
         $.ajax({
             url: self.params.html5syncFolder+"server/ajax/updateData.php"
         }).done(function(response) {
             
+            console.debug(response);
+            
+            if(callback)callback(false);
         }).fail(function(){
+            if(callback)callback(new Error("Unable to reload data from the server"));
             setState(false);
         });
-    }
-    
-    
-    /**
-     * Carga los datos de las tablas permitidas. Toda la información de carga
-     * está especificada en el archivo de configuración:
-     * html5sync/server/config.php
-     */
-    function loadData(){
-        try{
-            showLoading(true);
-            $.ajax({
-                url: self.params.html5syncFolder+"server/ajax/loadData.php"
-            }).done(function(response) {
-//                console.debug(response);
-                showLoading(false);
-            }).fail(function(){
-                showLoading(false);
-            });
-        }catch(e){
-            setState(false); 
-        }
     };
+    
     
     
     /**************************************************************************/
@@ -222,7 +213,56 @@ var Html5Sync = function(params,callback){
             self.loadingLabel.hide();
             self.showLoadingCounter=0;
         }
-    }
+    };
+    /**
+     * Crea la parametrización de la base de datos a partir de los datos obtenidos
+     * del servidor
+     * @param {string} database Nombre de la base de datos
+     * @param {int} version Número de versión
+     * @param {array} tables Lista de tablas a convertir
+     * @returns {array} Lista de parámetros para pasar a la base de datos
+     */
+    function parseDatabaseParameters(database,version,tables){
+        var stores=new Array();
+        for(var i in tables){
+            stores.push(tableToStore(tables[i]));
+        }
+        //Lista de parámetros que define la configuración de la base de datos
+        return {
+            database: "html5sync_"+database+"_"+self.userId,
+            version: version,                //Versión de la base de datos
+            stores:stores     
+        };
+    };
+    /**
+     * Función que convierte una tabla en formato JSON a un almacén de objetos
+     * @param {string} table Tabla en JSON
+     * @returns {string} Almacén de objetos en JSON
+     */
+    function tableToStore(table){
+        var indexes=new Array();
+        var key={autoIncrement : true};
+        for(var i in table.fields){
+            var field=table.fields[i];
+            var unique=false;
+            if(field.key==="PK"){
+                unique=true;
+                key={keyPath:field.name};
+            }
+            var index={
+                name:field.name,
+                key:field.name,
+                params:{unique: unique}
+            };
+            indexes.push(index);
+        }
+        var store={
+            name:table.name,
+            key:key,
+            indexes:indexes
+        };
+        return store;
+    };
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/
@@ -232,10 +272,29 @@ var Html5Sync = function(params,callback){
      * @param {object[]} data Objeto o array de objetos
      * @param {function} callback Función a la que se retornan los resultados
      */
-    self.publicFunction=function(storeName,data,callback){
+    self.publicFunction=function(){
         
     };
     
     
-    
+    /**
+     * Carga los datos de las tablas permitidas. Toda la información de carga
+     * está especificada en el archivo de configuración:
+     * html5sync/server/config.php
+     */
+    function loadData(){
+        try{
+            showLoading(true);
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/loadData.php"
+            }).done(function(response) {
+//                console.debug(response);
+                showLoading(false);
+            }).fail(function(){
+                showLoading(false);
+            });
+        }catch(e){
+            setState(false); 
+        }
+    };
 };

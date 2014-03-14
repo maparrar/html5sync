@@ -64,7 +64,7 @@ return array(
             "name" => "employees",
             "mode" => "lock",
             "roles"=> array(
-                "role1",
+                "ventas",
                 "role2"
             ),
             "users"=> array(
@@ -76,7 +76,8 @@ return array(
             "name" => "departments",
             "mode" => "unlock",
             "roles"=> array(
-                "contabilidad"
+                "contabilidad",
+                "ventas"
             )
         )
     )

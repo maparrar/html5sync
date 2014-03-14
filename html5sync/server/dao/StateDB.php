@@ -139,7 +139,7 @@ class StateDB{
                 $this->updateHashTable($newState,$user);
             }
         }
-        //Retorna el mismo número de verión si no hubo cambios, más uno si hubo cambios
+        //Retorna el mismo número de versión si no hubo cambios, más uno si hubo cambios
         return  $this->getVersion($user);
     }
     /**************************************************************************/

@@ -179,6 +179,8 @@ Todo
 * Limitar la carga de un script con AJAX cuando se ya se haya solicitado y no se haya terminado
 * Parametrizar los tiempos de sincronización desde PHP
 * Incluir en el README la documentación de config.php
+* Eliminar la base de datos del navegador después de un tiempo si conexión
+* Sistema de verificación de transmisión correcta de datos
 
 
 Licencia MIT
