@@ -98,7 +98,7 @@ class DaoTable{
      * @param Table $table Tabla con nombre y lista de campos
      * @return array[] Array de arrays con los registros de la tabla
      */
-    function loadData($table){
+    function reloadData($table){
         $list=array();
         $fieldString="";
         $handler=$this->db->connect("all");
@@ -143,6 +143,30 @@ class DaoTable{
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
         return $changed;
+    }
+    /**
+     * Retorna los registros que han sido modificados
+     * @param string $table Nombre de la tabla que se quiere verificar
+     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
+     * @return boolean True si se detectaron cambios, False en otro caso
+     */
+    function returnDataChanged($table,$lastUpdate){
+        $list=array();
+        $handler=$this->db->connect("all");
+        $stmt = $handler->prepare("SELECT * FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'");
+        if ($stmt->execute()) {
+            while ($row = $stmt->fetch()){
+                $register=array();
+                foreach ($table->getFields() as $field) {
+                    array_push($register,$row[$field->getName()]);
+                }
+                array_push($list,$register);
+            }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+        }
+        return $list;
     }
     /**
      * Define el modo UpdatedColumn. Inserta una columna donde se lleva la cuenta

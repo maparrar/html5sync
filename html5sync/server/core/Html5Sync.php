@@ -174,6 +174,25 @@ class Html5Sync{
         return $changed;
     }
     /**
+     * Retorna los datos de las tablas que han cambiado
+     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     */
+    public function returnTablesWithChanges(){
+        $changed=array();
+        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        foreach ($this->tables as $table) {
+            if($dao->returnDataChanged($table,$lastUpdate)){
+                $table->setData($dao->returnDataChanged($table,$lastUpdate));
+                array_push($changed, $table);
+            }
+        }
+        //Actualiza la fecha de última actualización para no recargár más los datos cargados
+        $this->stateDB->updateLastUpdate($this->user);
+        return $changed;
+    }
+    /**
      * Carga la configuración del archivo server/config.php
      */
     private function loadConfiguration(){
@@ -250,9 +269,14 @@ class Html5Sync{
      * Retorna la lista de tablas en formato JSON
      * @return string Las tablas del usuario en formato JSON
      */
-    function getTablesInJson(){
+    public function getTablesInJson($tables=false){
+        if($tables){
+            $listTables=$tables;
+        }else{
+            $listTables=$this->tables;
+        }
         $json='[';
-        foreach ($this->tables as $table) {
+        foreach ($listTables as $table) {
             //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
             $json.=$table->jsonEncode().",";
         }
@@ -265,7 +289,7 @@ class Html5Sync{
      * Retorna la versión de la base de datos almacenada para el usuario
      * @return int Número de versión
      */
-    function getVersion(){
+    public function getVersion(){
         $state=$this->getTablesInJson();
         return $this->stateDB->version($state,$this->user);
     }

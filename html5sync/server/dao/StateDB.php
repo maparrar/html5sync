@@ -122,6 +122,22 @@ class StateDB{
         return $response;
     }
     /**
+     * Actualiza la última fecha de actualización con la fecha de ahora
+     * @param User $user Objeto Usuario
+     */
+    public function updateLastUpdate($user){
+        $stmt = $this->handler->prepare("UPDATE User SET 
+            `lastUpdate`=:lastUpdate  
+            WHERE id=:id");
+        $date=date('Y-m-d H:i:s');
+        $stmt->bindParam(':id',$user->getId());
+        $stmt->bindParam(':lastUpdate',$date);
+        if(!$stmt->execute()){
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+        }
+    }
+    /**
      * Verifica para cada usuario si la estructura de las tablas ha cambiado por
      * medio de una función de hash. Si ha cambiado, actualiza el número de 
      * versión. Si no ha cambiado, retorna el mismo número de versión.

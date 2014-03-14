@@ -16,7 +16,9 @@ var Html5Sync = function(params,callback){
     var self = this;
     self.state;         //{bool} Estado de la conexión con el servidor.
     self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
-    self.userId=false;  //Identificador del usuario      
+    self.userId=false;  //Identificador del usuario
+    self.databaseName=false;//Nombre de la base de datos
+    self.database=false;//Base de datos del navegador
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
     /**************************************************************************/
@@ -36,8 +38,17 @@ var Html5Sync = function(params,callback){
         //Estructura el código HTML5
         setStructure();
         
+        
+        updateStructure(function(err){
+            
+        });
+        
         //Inicia el proceso de sincronización
         startSync();
+        
+        
+        
+        
         
         
     }();
@@ -47,13 +58,16 @@ var Html5Sync = function(params,callback){
     /**************************************************************************/
     /**
      * Inicia el proceso de sincronización.
+     * @param {function} callback Función para retornar los resultados
      */
-    function startSync(){
+    function startSync(callback){
         showLoading(false);
         sync();
         setInterval(function(){
             try{
-                sync();
+                sync(function(err){
+                    if(callback)callback(err);
+                });
             }catch(e){
                 setState(false); 
             }
@@ -63,7 +77,7 @@ var Html5Sync = function(params,callback){
      * Verifica si la conexión con el servidor está activa y actualiza el 
      * indicador de estado. Verifica si hay cambios en las tablas para el usuario,
      * si los hay, retorna los cambios.
-     * @param {fucntion} callback Función para retornar los resultados
+     * @param {function} callback Función para retornar los resultados
      */
     function sync(callback){
         showLoading(true);
@@ -71,6 +85,8 @@ var Html5Sync = function(params,callback){
             url: self.params.html5syncFolder+"server/ajax/sync.php"
         }).done(function(response) {
             var data=JSON.parse(response);
+            self.userId=parseInt(data.userId);
+            self.databaseName=data.database;
             var state=(data.state==="true")?true:false;
             var changesInStructure=(data.changesInStructure==="true")?true:false;
             var changesInData=(data.changesInData==="true")?true:false;
@@ -94,56 +110,136 @@ var Html5Sync = function(params,callback){
     
     /**
      * Carga de nuevo la estructura de la base de datos por medio de ajax
-     * @param {fucntion} callback Función para retornar los resultados
+     * @param {function} callback Función para retornar los resultados
      */
     function updateStructure(callback){
+        showLoading(true);
         debug("..::DB INFO::.. Se detectaron cambios en la estructura de las tablas de la BD. Actualizando...");
         $.ajax({
             url: self.params.html5syncFolder+"server/ajax/updateStructure.php"
         }).done(function(response) {
             var data=JSON.parse(response);
             self.userId=parseInt(data.userId);
-            var database=data.database;
+            self.databaseName=data.database;
             var version=parseInt(data.version);
             var tables=data.tables;
-            var parameters=parseDatabaseParameters(database,version,tables);
-            var database=new Database(parameters,function(err){
+            var parameters=parseDatabaseParameters(version,tables);
+            self.database=new Database(parameters,function(err){
                 if(err){
                     if(callback)callback(err);
                 }else{
                     if(callback)callback(false);
-                    //Actualiza los datos luego de actualizar la estructura
-                    updateData(function(err){
+                    //Carga todos los datos de las tablas
+                    reloadData(function(err){
                         if(err){
                             if(callback)callback(err);
                         }
                     });
                 }
             });
+            showLoading(false);
         }).fail(function(){
             callback(new Error("Unable to connect the server to update structure"));
             setState(false);
+            showLoading(false);
         });
     };
     /**
-     * Carga la información de las tablas cuando se detectan cambios
-     * @param {fucntion} callback Función para retornar los resultados
+     * Carga toda la información de las tablas
+     * @param {function} callback Función para retornar los resultados
      */
-    function updateData(callback){
-        debug("..::DB INFO::.. Se detectaron cambios en los datos de la BD. Actualizando...");
+    function reloadData(callback){
+        showLoading(true);
         $.ajax({
-            url: self.params.html5syncFolder+"server/ajax/updateData.php"
+            url: self.params.html5syncFolder+"server/ajax/reloadData.php"
         }).done(function(response) {
             
             console.debug(response);
             
             if(callback)callback(false);
+            showLoading(false);
         }).fail(function(){
             if(callback)callback(new Error("Unable to reload data from the server"));
             setState(false);
+            showLoading(false);
         });
     };
-    
+    /**
+     * Carga la información de las tablas cuando se detectan cambios
+     * @param {function} callback Función para retornar los resultados
+     */
+    function updateData(callback){
+        showLoading(true);
+        debug("..::DB INFO::.. Se detectaron cambios en los datos de la BD. Actualizando...");
+        $.ajax({
+            url: self.params.html5syncFolder+"server/ajax/updateData.php"
+        }).done(function(response) {
+            var serverData=JSON.parse(response);
+            var tables=serverData.tables;
+            for(var i in tables){
+                var table=tables[i];
+                var rows=serverTableToJSON(table);
+                for(var j in rows){
+                    var row=rows[j];
+                    if(row.html5sync_transaction==="insert"){
+                        self.database.add(table.name,row,function(err){
+                            if(err){console.debug(err);}
+                        });
+                    }else if(row.html5sync_transaction==="update"){
+                        var pk=serverTableGetPK(table);
+                        //Si encuentra un campo que sea PK, actualiza el registro, sino lo inserta
+                        if(pk){
+                            self.database.update(table.name,pk.key,row,function(err){
+                                if(err){console.debug(err);}
+                            });
+                        }
+                    }
+                }
+            }
+            if(callback)callback(false);
+            showLoading(false);
+        }).fail(function(){
+            if(callback)callback(new Error("Unable to reload data from the server"));
+            setState(false);
+            showLoading(false);
+        });
+    };
+    /**
+     * Recibe una tabla del servidor y la modifica para que se puedan ingresar 
+     * en la base de datos del navegador. Asocia a cada dato de cada registro 
+     * con el nombre de la columna. Retorna un JSON bien formado
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @returns {object} La tabla en JSON bien formada
+     */
+    function serverTableToJSON(table){
+        var rows=table.data;
+        var fields=table.fields;
+        var registers=new Array();
+        for(var i in rows){
+            var row=rows[i];
+            var register=new Object();
+            for(var j in row){
+                register[fields[j].name]=row[j];
+            }
+            registers.push(register);
+        }
+        return registers;
+    }
+    /**
+     * Retorna la PK de una tabla recibida del servidor, si no tiene, retorna false
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @returns {mixed} False si no hay pk, objeto Field si la encuentra
+     */
+    function serverTableGetPK(table){
+        var fields=table.fields;
+        var pk=false;
+        for(var i in fields){
+            if(fields[i].key==="PK"){
+                pk=fields[i];
+            }
+        }
+        return pk;
+    }
     
     
     /**************************************************************************/
@@ -217,19 +313,18 @@ var Html5Sync = function(params,callback){
     /**
      * Crea la parametrización de la base de datos a partir de los datos obtenidos
      * del servidor
-     * @param {string} database Nombre de la base de datos
      * @param {int} version Número de versión
      * @param {array} tables Lista de tablas a convertir
      * @returns {array} Lista de parámetros para pasar a la base de datos
      */
-    function parseDatabaseParameters(database,version,tables){
+    function parseDatabaseParameters(version,tables){
         var stores=new Array();
         for(var i in tables){
             stores.push(tableToStore(tables[i]));
         }
         //Lista de parámetros que define la configuración de la base de datos
         return {
-            database: "html5sync_"+database+"_"+self.userId,
+            database: returnDBName(),
             version: version,                //Versión de la base de datos
             stores:stores     
         };
@@ -263,38 +358,43 @@ var Html5Sync = function(params,callback){
         };
         return store;
     };
+    /**
+     * Calcula el nombre de la base de datos indexedDB
+     * @returns {string} Nombre de la base de datos
+     */
+    function returnDBName(){
+        return "html5sync_"+self.databaseName+"_"+self.userId;
+    }
+    
+    /**
+     * Método para hacer debug sobre los datos de la base de datos indexedDB
+     */
+    function printIndexedDB(){
+        
+    }
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/
     /**
-     * Inserta objetos en un almacén. Recibe un objeto o un array de objetos
-     * @param {string} storeName Nombre del almacén de datos donde se quiere insertar la información
-     * @param {object[]} data Objeto o array de objetos
-     * @param {function} callback Función a la que se retornan los resultados
-     */
-    self.publicFunction=function(){
-        
-    };
-    
-    
-    /**
-     * Carga los datos de las tablas permitidas. Toda la información de carga
+     * Recarga los datos de las tablas permitidas. Toda la información de carga
      * está especificada en el archivo de configuración:
      * html5sync/server/config.php
      */
-    function loadData(){
-        try{
-            showLoading(true);
-            $.ajax({
-                url: self.params.html5syncFolder+"server/ajax/loadData.php"
-            }).done(function(response) {
-//                console.debug(response);
-                showLoading(false);
-            }).fail(function(){
-                showLoading(false);
-            });
-        }catch(e){
-            setState(false); 
-        }
+    self.forceUpdate=function(){
+//        try{
+//            showLoading(true);
+//            $.ajax({
+//                url: self.params.html5syncFolder+"server/ajax/loadData.php"
+//            }).done(function(response) {
+////                console.debug(response);
+//                showLoading(false);
+//            }).fail(function(){
+//                showLoading(false);
+//            });
+//        }catch(e){
+//            setState(false); 
+//        }
     };
+    
+    
 };

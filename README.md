@@ -181,6 +181,9 @@ Todo
 * Incluir en el README la documentación de config.php
 * Eliminar la base de datos del navegador después de un tiempo si conexión
 * Sistema de verificación de transmisión correcta de datos
+* Bloquear librería mientras se recarga la estructura
+
+* Verificar la creación de indexedDB antes de cargar la estructura
 
 
 Licencia MIT
