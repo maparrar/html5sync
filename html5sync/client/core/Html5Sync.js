@@ -156,16 +156,8 @@ var Html5Sync = function(params,callback){
                 showLoading(true);
                 self.database.clearStore(table,function(err,table){
                     if(!err){
-                        //Guarda los datos en la base de datos del navegdor
-//                        fillTable(table,function(err){
-//                            if(err){
-//                                if(callback)callback(err);
-//                            }else{
-                                
-                                //Si detecta que quedan datos por cargar de la tabla, los solicita
-                                reloadTable(table);
-//                            }
-//                        });
+                        //Empieza a cargar los datos
+                        reloadTable(table);
                     }
                 });
             }
@@ -200,7 +192,7 @@ var Html5Sync = function(params,callback){
                 var data=JSON.parse(response);
                 var table=data.table;
                 
-                debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+table.initialRow+" de "+totalOfRows+" registros");
+                debug(new Date().getTime()+"=><= Recargando la tabla "+table.name+": "+table.initialRow+" de "+totalOfRows+" registros");
                 
                 //Guarda los datos en la base de datos del navegdor
                 fillTable(table,function(err){
@@ -219,7 +211,7 @@ var Html5Sync = function(params,callback){
         }else{
             showLoading(false);
         }
-    }
+    };
     /**
      * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
      * los registros
@@ -235,12 +227,40 @@ var Html5Sync = function(params,callback){
                 if(callback)callback(false);
             }
         });
-    }
+    };
     /**
      * Carga la información de las tablas cuando se detectan cambios
      * @param {function} callback Función para retornar los resultados
      */
     function updateData(callback){
+        showLoading(true);
+        $.ajax({
+            url: self.params.html5syncFolder+"server/ajax/updateData.php",
+            type: "POST"
+        }).done(function(response) {
+            var data=JSON.parse(response);
+            var tables=data.tables;
+            //Revisa si para cada tabla faltan datos, solicita los nuevos
+            for(var i in tables){
+                var table=tables[i];
+                
+                console.debug(table);
+                showLoading(true);
+                self.database.clearStore(table,function(err,table){
+                    if(!err){
+                        //Empieza a cargar los datos
+                        reloadTable(table);
+                    }
+                });
+            }
+            if(callback)callback(false);
+            showLoading(false);
+        }).fail(function(){
+            if(callback)callback(new Error("Unable to reload data from the server"));
+            setState(false);
+            showLoading(false);
+        });
+        
         showLoading(true);
         debug("..::DB INFO::.. Se detectaron cambios en los datos de la BD. Actualizando...");
         $.ajax({
@@ -275,6 +295,74 @@ var Html5Sync = function(params,callback){
             setState(false);
             showLoading(false);
         });
+    };
+    /**
+     * Verifica si se cargaron todos los datos de una tabla, si faltan, carga la
+     * siguiente página
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @param {function} callback Función para retornar los resultados
+     */
+    function updateTable(table,callback){
+        var initialRow=parseInt(table.initialRow);
+        var numberOfRows=parseInt(table.numberOfRows);
+        var totalOfRows=parseInt(table.totalOfRows);
+        if((initialRow+numberOfRows)<totalOfRows){
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/updateTable.php",
+                data:{
+                    tableName:table.name,
+                    initialRow:initialRow+numberOfRows
+                },
+                type: "POST"
+            }).done(function(response) {
+                var data=JSON.parse(response);
+                var table=data.table;
+                debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+table.initialRow+" de "+totalOfRows+" registros");
+                
+                
+                var rows=serverTableToJSON(table);
+                for(var j in rows){
+                    var row=rows[j];
+                    var pk=serverTableGetPK(table);
+                    //Si encuentra un campo que sea PK, actualiza el registro, sino lo inserta
+                    if(pk){
+                        self.database.update(table.name,pk.key,row,function(err){
+                            if(err){console.debug(err);}
+                        });
+                    }
+//                    if(row.html5sync_transaction==="insert"){
+//                        self.database.add(table.name,row,function(err){
+//                            if(err){console.debug(err);}
+//                        });
+//                    }else if(row.html5sync_transaction==="update"){
+//                        var pk=serverTableGetPK(table);
+//                        //Si encuentra un campo que sea PK, actualiza el registro, sino lo inserta
+//                        if(pk){
+//                            self.database.update(table.name,pk.key,row,function(err){
+//                                if(err){console.debug(err);}
+//                            });
+//                        }
+//                    }
+                }
+                
+                
+                //Guarda los datos en la base de datos del navegdor
+                fillTable(table,function(err){
+                    if(err){
+                        if(callback)callback(err);
+                    }else{
+                        //Si detecta que quedan datos por cargar de la tabla, los solicita
+                        reloadTable(table);
+                    }
+                });
+                if(callback)callback(false);
+            }).fail(function(){
+                if(callback)callback(new Error("Unable to reload data from the server"));
+                setState(false);
+            });
+        }else{
+            showLoading(false);
+        }
     };
     /**
      * Recibe una tabla del servidor y la modifica para que se puedan ingresar 

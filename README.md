@@ -200,6 +200,7 @@ Todo
 * Sistema de verificación de transmisión correcta de datos
 * Bloquear librería mientras se recarga la estructura
 * Crear trigger para almacenar los registros eliminados
+* Crear barras que indiquen el progreso de las operaciones
 
 
 
