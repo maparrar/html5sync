@@ -169,10 +169,12 @@ var Database = function(params,callback){
      */
     self.clearStore=function(table,callback){
         var storeName=table.name;
+        debug("Iniciando borrado de almacén: "+storeName);
         try{
             var tx = self.db.transaction([storeName],"readwrite");
             var store = tx.objectStore(storeName);
             tx.oncomplete=function(e){
+                debug("Fin borrado de almacén: "+storeName);
                 if(callback)callback(false,table);
             };
             tx.onerror=function(e){
@@ -202,7 +204,7 @@ var Database = function(params,callback){
             if(callback)callback(false);
 //            debug("... add() - Transacción finalizada");
         };
-        //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un for
+        //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
         if(Object.prototype.toString.call(data)!=="[object Array]"){
             data=new Array(data);
         }

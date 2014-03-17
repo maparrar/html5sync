@@ -224,12 +224,12 @@ class Html5Sync{
         //Se crea el objeto para manejar tablas con PDO
         $dao=new DaoTable($this->db);
         foreach ($this->tables as $table){
-            $data=$dao->getAllRows($table,0,$this->parameters["rowsPerPage"]);
-            if($data){
-                $table->setData($data);
+//            $data=$dao->getAllRows($table,0,$this->parameters["rowsPerPage"]);
+//            if($data){
+//                $table->setData($data);
                 array_push($changed, $table);
                 $table->setTotalOfRows($dao->getTotalOfRows($table));
-            }
+//            }
         }
         //Actualiza la fecha de última actualización para no recargár más los datos cargados
         $this->stateDB->updateLastUpdate($this->user);
@@ -250,8 +250,6 @@ class Html5Sync{
             $table->setData($data);
             $table->setTotalOfRows($dao->getTotalOfRows($table));
             $table->setInitialRow($initialRow);
-
-            error_log("initialRow intable:.. ".$table->getInitialRow()."\n");
         }
         return $table;
     }
@@ -349,7 +347,9 @@ class Html5Sync{
             $json.=$table->jsonEncode().",";
         }
         //Remove the last comma
-        $json=substr($json,0,-1);
+        if(count($listTables)){
+            $json=substr($json,0,-1);
+        }
         $json.="]";
         return $json;
     }

@@ -28,14 +28,7 @@ Es necesario establecer la cantidad máxima de filas a cargar por página en con
 en la variable "rowsPerPage". Este valor depende de varios factores: la velocidad 
 del servidor, el tamaño máximo de memoria del servidor, el ancho de banda disponible,
 la base de datos, el tamaño de las tablas y la cantidad de columnas por tablas, entre
-otros. A manera de ejemplo (extremadamente simplificado) se calcularon los siguientes valores
-de carga para una tabla con 300.000 registros y 8 columnas de datos.
-* rowsPerPage=1000; -> 92.422 milisegundos
-* rowsPerPage=5000; -> 27.646 milisegundos
-* rowsPerPage=10000; -> 17.864 milisegundos
-
-Aunque con 10.000 registros es más rápido, se corre el riesgo de superar el límite
-de memoria por conexión manejado por el servidor.
+otros.
 
 Cliente
 =========
@@ -139,8 +132,9 @@ Estrategias de sincronización de la base de datos:
 Changelog
 =========
 
-* v.0.0.8 - [2014-03-15]
+* v.0.0.8 - [2014-03-16]
     * Se verifica la creación de indexedDB antes de cargar la estructura
+    * Paginación para la carga inicial
 
 * v.0.0.7 - [2014-03-14]
     * Creación del "updateMode" tipo "updatedColumn"

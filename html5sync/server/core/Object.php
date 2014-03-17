@@ -47,7 +47,7 @@ class Object{
                 $output='"'.$exc->getTraceAsString().'"';
             }
         }else{
-            $output='"'.$variable.'"';
+            $output='"'.htmlentities($variable,ENT_QUOTES).'"';
         }
         return $output;
     }

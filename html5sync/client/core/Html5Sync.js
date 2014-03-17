@@ -151,18 +151,21 @@ var Html5Sync = function(params,callback){
             //Revisa si para cada tabla faltan datos, solicita los nuevos
             for(var i in tables){
                 var table=tables[i];
+                
+                console.debug(table);
+                showLoading(true);
                 self.database.clearStore(table,function(err,table){
                     if(!err){
                         //Guarda los datos en la base de datos del navegdor
-                        fillTable(table,function(err){
-                            if(err){
-                                if(callback)callback(err);
-                            }else{
-                                showLoading(true);
+//                        fillTable(table,function(err){
+//                            if(err){
+//                                if(callback)callback(err);
+//                            }else{
+                                
                                 //Si detecta que quedan datos por cargar de la tabla, los solicita
                                 reloadTable(table);
-                            }
-                        });
+//                            }
+//                        });
                     }
                 });
             }
@@ -184,7 +187,7 @@ var Html5Sync = function(params,callback){
         var initialRow=parseInt(table.initialRow);
         var numberOfRows=parseInt(table.numberOfRows);
         var totalOfRows=parseInt(table.totalOfRows);
-        debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+initialRow+" de "+totalOfRows+" registros");
+        
         if((initialRow+numberOfRows)<totalOfRows){
             $.ajax({
                 url: self.params.html5syncFolder+"server/ajax/reloadTable.php",
@@ -196,6 +199,9 @@ var Html5Sync = function(params,callback){
             }).done(function(response) {
                 var data=JSON.parse(response);
                 var table=data.table;
+                
+                debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+table.initialRow+" de "+totalOfRows+" registros");
+                
                 //Guarda los datos en la base de datos del navegdor
                 fillTable(table,function(err){
                     if(err){
