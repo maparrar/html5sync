@@ -144,7 +144,28 @@ class Html5Sync{
     public function getDatabaseName() {
         return $this->config["database"]["name"];
     }    
+    /**
+    * Getter: rowsPerPage
+    * @return int
+    */
+    public function getRowsPerPage() {
+        return $this->parameters["rowsPerPage"];
+    }    
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    /**
+     * Retrona una tabla a partir de su nombre
+     * @param string $name Nombre de la tabla
+     * @return Table Tabla
+     */
+    private function getTableByName($name) {
+        $output=false;
+        foreach ($this->tables as $table) {
+            if($table->getName()===$name){
+                $output=$table;
+            }
+        }
+        return $output;
+    }
     /**
      * Verifica si la estructura de las tablas cambió.
      * @return boolean True si la estructura de las tablas cambió, False en otro caso
@@ -175,22 +196,64 @@ class Html5Sync{
     }
     /**
      * Retorna los datos de las tablas que han cambiado
+     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
      * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
      */
-    public function returnTablesWithChanges(){
+    public function getUpdatedTables($initialRow=0){
         $changed=array();
         $lastUpdate=$this->stateDB->getLastUpdate($this->user);
         //Se crea el objeto para manejar tablas con PDO
         $dao=new DaoTable($this->db);
-        foreach ($this->tables as $table) {
-            if($dao->returnDataChanged($table,$lastUpdate)){
-                $table->setData($dao->returnDataChanged($table,$lastUpdate));
+        foreach ($this->tables as $table){
+            $data=$dao->getUpdatedRows($table,$lastUpdate,$initialRow,$this->parameters["rowsPerPage"]);
+            if($data){
+                $table->setData($data);
                 array_push($changed, $table);
             }
         }
         //Actualiza la fecha de última actualización para no recargár más los datos cargados
         $this->stateDB->updateLastUpdate($this->user);
         return $changed;
+    }
+    /**
+     * Retorna todos los datos de las tablas
+     * @return mixed Array con las tablas para el usuario
+     */
+    public function getAllTables(){
+        $changed=array();
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        foreach ($this->tables as $table){
+            $data=$dao->getAllRows($table,0,$this->parameters["rowsPerPage"]);
+            if($data){
+                $table->setData($data);
+                array_push($changed, $table);
+                $table->setTotalOfRows($dao->getTotalOfRows($table));
+            }
+        }
+        //Actualiza la fecha de última actualización para no recargár más los datos cargados
+        $this->stateDB->updateLastUpdate($this->user);
+        return $changed;
+    }
+    /**
+     * Retorna todos los datos de una tablas por páginas
+     * @param string $tableName Nombre de la tabla
+     * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
+     * @return Table Array con las tablas para el usuario
+     */
+    public function getTableData($tableName,$initialRow=0){
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        $table=$this->getTableByName($tableName);
+        $data=$dao->getAllRows($table,$initialRow,$this->parameters["rowsPerPage"]);
+        if($data){
+            $table->setData($data);
+            $table->setTotalOfRows($dao->getTotalOfRows($table));
+            $table->setInitialRow($initialRow);
+
+            error_log("initialRow intable:.. ".$table->getInitialRow()."\n");
+        }
+        return $table;
     }
     /**
      * Carga la configuración del archivo server/config.php
@@ -229,11 +292,11 @@ class Html5Sync{
         //Se lee cada tabla
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
-                $table=$dao->loadTable($this->db->getDriver(),$tableData["name"],$tableData["mode"]);
+                $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
                 //Se usa el tipo de actualización seleccionada
                 if($this->parameters["updateMode"]==="updatedColumn"){
                     //Si la columna de actualización no existe, se crea
-                    $dao->setUpdatedColumnMode($this->db->getDriver(),$table);
+                    $dao->setUpdatedColumnMode($table);
                 }
                 array_push($this->tables,$table);
             }
@@ -270,8 +333,13 @@ class Html5Sync{
      * @return string Las tablas del usuario en formato JSON
      */
     public function getTablesInJson($tables=false){
+        $listTables=array();
         if($tables){
-            $listTables=$tables;
+            if(!is_array($tables)){
+                $listTables=array($tables);
+            }else{
+                $listTables=$tables;
+            }
         }else{
             $listTables=$this->tables;
         }

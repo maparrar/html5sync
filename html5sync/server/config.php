@@ -28,6 +28,9 @@ return array(
      *                       anterior. Este procedimiento no es invasivo en la base
      *                       de datos, pero puede requerir mucho tiempo si se trata
      *                       de muchos registros. [en construcción]
+     *  - rowsPerPage:       Cantidad máxima de registros que se envían cada vez
+     *                       desde el servidor al navegador, cuando se recarga toda
+     *                       la base de datos o cuando se cargan las actualizaciones
      *  - browser: Parámetros del navegador:
      *      - syncTimer:     (milisegundos) Intervalo de tiempo en el que el navegador
      *                       verifica si existe o no conexión con el servidor.
@@ -36,8 +39,9 @@ return array(
      *  - timezone:          Zona por defecto, para manejo de la función date en PHP
      */
     "parameters" => array(
-        "updateMode"=> "updatedColumn",
-        "browser"   => array(
+        "updateMode"    => "updatedColumn",
+        "rowsPerPage"   => 1000,
+        "browser"       => array(
             "syncTimer"    => 10000
         ),
         "timezone" => "America/Bogota"

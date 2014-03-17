@@ -46,13 +46,8 @@ var Html5Sync = function(params,callback){
         //Inicia el proceso de sincronización
         startSync();
         
-        
-        
-        
-        
-        
     }();
-    
+   
     /**************************************************************************/
     /****************************** SYNC METHODS ******************************/
     /**************************************************************************/
@@ -112,7 +107,8 @@ var Html5Sync = function(params,callback){
         showLoading(true);
         debug("..::DB INFO::.. Se detectaron cambios en la estructura de las tablas de la BD. Actualizando...");
         $.ajax({
-            url: self.params.html5syncFolder+"server/ajax/updateStructure.php"
+            url: self.params.html5syncFolder+"server/ajax/updateStructure.php",
+            type: "POST"
         }).done(function(response) {
             var data=JSON.parse(response);
             self.userId=parseInt(data.userId);
@@ -147,11 +143,29 @@ var Html5Sync = function(params,callback){
     function reloadData(callback){
         showLoading(true);
         $.ajax({
-            url: self.params.html5syncFolder+"server/ajax/reloadData.php"
+            url: self.params.html5syncFolder+"server/ajax/reloadData.php",
+            type: "POST"
         }).done(function(response) {
-            
-            console.debug(response);
-            
+            var data=JSON.parse(response);
+            var tables=data.tables;
+            //Revisa si para cada tabla faltan datos, solicita los nuevos
+            for(var i in tables){
+                var table=tables[i];
+                self.database.clearStore(table,function(err,table){
+                    if(!err){
+                        //Guarda los datos en la base de datos del navegdor
+                        fillTable(table,function(err){
+                            if(err){
+                                if(callback)callback(err);
+                            }else{
+                                showLoading(true);
+                                //Si detecta que quedan datos por cargar de la tabla, los solicita
+                                reloadTable(table);
+                            }
+                        });
+                    }
+                });
+            }
             if(callback)callback(false);
             showLoading(false);
         }).fail(function(){
@@ -160,6 +174,62 @@ var Html5Sync = function(params,callback){
             showLoading(false);
         });
     };
+    /**
+     * Verifica si se cargaron todos los datos de una tabla, si faltan, carga la
+     * siguiente página
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @param {function} callback Función para retornar los resultados
+     */
+    function reloadTable(table,callback){
+        var initialRow=parseInt(table.initialRow);
+        var numberOfRows=parseInt(table.numberOfRows);
+        var totalOfRows=parseInt(table.totalOfRows);
+        debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+initialRow+" de "+totalOfRows+" registros");
+        if((initialRow+numberOfRows)<totalOfRows){
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/reloadTable.php",
+                data:{
+                    tableName:table.name,
+                    initialRow:initialRow+numberOfRows
+                },
+                type: "POST"
+            }).done(function(response) {
+                var data=JSON.parse(response);
+                var table=data.table;
+                //Guarda los datos en la base de datos del navegdor
+                fillTable(table,function(err){
+                    if(err){
+                        if(callback)callback(err);
+                    }else{
+                        //Si detecta que quedan datos por cargar de la tabla, los solicita
+                        reloadTable(table);
+                    }
+                });
+                if(callback)callback(false);
+            }).fail(function(){
+                if(callback)callback(new Error("Unable to reload data from the server"));
+                setState(false);
+            });
+        }else{
+            showLoading(false);
+        }
+    }
+    /**
+     * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
+     * los registros
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @param {function} callback Función para retornar los resultados
+     */
+    function fillTable(table,callback){
+        var rows=serverTableToJSON(table);
+        self.database.add(table.name,rows,function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(callback)callback(false);
+            }
+        });
+    }
     /**
      * Carga la información de las tablas cuando se detectan cambios
      * @param {function} callback Función para retornar los resultados

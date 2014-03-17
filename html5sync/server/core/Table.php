@@ -35,6 +35,22 @@ class Table extends Object{
      * @var array
      */
     protected $data;
+    /** 
+     * Número total de filas que hay en la base de datos para la tabla
+     * @var int
+     */
+    protected $totalOfRows;
+    /** 
+     * Número de filas que contiene el array data
+     * @var int
+     */
+    protected $numberOfRows;
+    /** 
+     * Indica el índice del registro inicial que contiene el array $data.
+     * Para consultas con gran cantidad de registros, se usa como paginador.
+     * @var int
+     */
+    protected $initialRow;
     /**
     * Constructor
     * @param string $name Nombre de la tabla        
@@ -47,6 +63,8 @@ class Table extends Object{
         $this->mode=$mode;
         $this->fields=$fields;
         $this->data=$data;
+        $this->numberOfRows=0;
+        $this->initialRow=0;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -80,6 +98,23 @@ class Table extends Object{
     */
     public function setData($value) {
         $this->data=$value;
+        $this->numberOfRows=count($this->data);
+    }
+    /**
+    * Setter totalOfRows
+    * @param int $value cantidad de datos de la tabla en la DB
+    * @return void
+    */
+    public function setTotalOfRows($value) {
+        $this->totalOfRows=$value;
+    }
+    /**
+    * Setter initialRow
+    * @param int $value Fila inicial para paginación
+    * @return void
+    */
+    public function setInitialRow($value) {
+        $this->initialRow=$value;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -110,6 +145,20 @@ class Table extends Object{
     public function getData() {
         return $this->data;
     }
+    /**
+    * Getter: totalOfRows
+    * @return int
+    */
+    public function getTotalOfRows() {
+        return $this->totalOfRows;
+    }
+    /**
+    * Getter: initialRow
+    * @return int
+    */
+    public function getInitialRow() {
+        return $this->initialRow;
+    }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
     * Return the table PK
@@ -123,5 +172,12 @@ class Table extends Object{
             }
         }
         return $output;
+    }
+    /*
+     * Retorna el número de filas que contiene $data
+     * @return int Cantidad de filas en $data
+     */
+    public function getNumberOfRows(){
+        return $this->numberOfRows;
     }
 }

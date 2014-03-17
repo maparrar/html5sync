@@ -18,6 +18,25 @@ IndexedDB:
 * Conceptos básicos: https://developer.mozilla.org/en-US/docs/IndexedDB/Basic_Concepts_Behind_IndexedDB
 * Usando IndexedDB: https://developer.mozilla.org/en-US/docs/IndexedDB/Using_IndexedDB
 
+Paginación:
+El sistema carga el contenido de las tabla por medio de paginación, es decir, carga 
+las tablas por partes para evitar sobrecargas de memoria en el servidor y evitando
+tener que modificar la variable de memoria máxima permitida. Cada página es un
+llamado al servidor por medio de AJAX.
+
+Es necesario establecer la cantidad máxima de filas a cargar por página en config.php
+en la variable "rowsPerPage". Este valor depende de varios factores: la velocidad 
+del servidor, el tamaño máximo de memoria del servidor, el ancho de banda disponible,
+la base de datos, el tamaño de las tablas y la cantidad de columnas por tablas, entre
+otros. A manera de ejemplo (extremadamente simplificado) se calcularon los siguientes valores
+de carga para una tabla con 300.000 registros y 8 columnas de datos.
+* rowsPerPage=1000; -> 92.422 milisegundos
+* rowsPerPage=5000; -> 27.646 milisegundos
+* rowsPerPage=10000; -> 17.864 milisegundos
+
+Aunque con 10.000 registros es más rápido, se corre el riesgo de superar el límite
+de memoria por conexión manejado por el servidor.
+
 Cliente
 =========
 
@@ -120,6 +139,9 @@ Estrategias de sincronización de la base de datos:
 Changelog
 =========
 
+* v.0.0.8 - [2014-03-15]
+    * Se verifica la creación de indexedDB antes de cargar la estructura
+
 * v.0.0.7 - [2014-03-14]
     * Creación del "updateMode" tipo "updatedColumn"
     * Creación automática de la columna de actualización
@@ -183,8 +205,9 @@ Todo
 * Eliminar la base de datos del navegador después de un tiempo si conexión
 * Sistema de verificación de transmisión correcta de datos
 * Bloquear librería mientras se recarga la estructura
+* Crear trigger para almacenar los registros eliminados
 
-* Verificar la creación de indexedDB antes de cargar la estructura
+
 
 
 Licencia MIT

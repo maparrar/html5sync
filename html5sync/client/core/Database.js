@@ -163,6 +163,26 @@ var Database = function(params,callback){
             debug("... No hay versión anterior del almacén: "+name);
         }
     };
+    /**
+     * Borra los datos un almacén de objetos. ¡¡¡ Elimina todo el contenido !!! 
+     * @param {string} name Nombre del almacén de objetos
+     */
+    self.clearStore=function(table,callback){
+        var storeName=table.name;
+        try{
+            var tx = self.db.transaction([storeName],"readwrite");
+            var store = tx.objectStore(storeName);
+            tx.oncomplete=function(e){
+                if(callback)callback(false,table);
+            };
+            tx.onerror=function(e){
+                if(callback)callback(e);
+            };
+            store.clear();
+        }catch(e){
+            debug("... No hay versión anterior del almacén: "+storeName);
+        }
+    };
     
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
@@ -174,12 +194,13 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.add=function(storeName,data,callback){
-        debug("add() - Transacción iniciada");
+//        debug("add() - Transacción iniciada");
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         //Evento que se dispara cuando se finaliza la transacción con éxito
         tx.oncomplete = function(e) {
-            debug("... add() - Transacción finalizada");
+            if(callback)callback(false);
+//            debug("... add() - Transacción finalizada");
         };
         //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un for
         if(Object.prototype.toString.call(data)!=="[object Array]"){
@@ -187,13 +208,10 @@ var Database = function(params,callback){
         }
         for (var i in data) {
             var request = store.add(data[i]);
-            debug("... add() - Agregando: "+JSON.stringify(data[i]));
+//            debug("... add()");
             request.onerror = function(e) {
-                debug("... add() ... Error: Uno o más objetos violan la unicidad de alguno de los índices. No se agregarán más objetos.");
+//                debug("... add() ... Error: Uno o más objetos violan la unicidad de alguno de los índices. No se agregarán más objetos.");
                 if(callback)callback(e.target.error);
-            };
-            request.onsuccess = function(e) {
-                if(callback)callback(false);
             };
         }
     };
@@ -234,13 +252,14 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.update=function(storeName,key,object,callback){
-        debug("upd() - Transacción iniciada");
+//        debug("upd() - Transacción iniciada");
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         var request = store.get(key);
         request.onerror = function(e) {
-            debug("... upd() ... No se pudo actualizar el objeto: "+key);
-            if(callback)callback(e.target.error);
+            self.add(storeName,object,function(err){
+                if(callback)callback(err);
+            });
         };
         request.onsuccess = function(e) {
             // Retorna la versión anterior del objeto y lo actualiza con el nuevo
@@ -249,11 +268,11 @@ var Database = function(params,callback){
             // Vuelve a insertar el objeto en la base de datos
             var requestUpdate = store.put(newer);
             requestUpdate.onerror = function(e) {
-                debug("... upd() ... No se pudo actualizar el objeto: "+key);
+//                debug("... upd() ... No se pudo actualizar el objeto: "+key);
                 if(callback)callback(e.target.error);
             };
             requestUpdate.onsuccess = function(e) {
-                debug("... upd() ... Transacción finalizada");
+//                debug("... upd() ... Transacción finalizada");
                 if(callback)callback(false,newer);
             };
         };
