@@ -130,8 +130,9 @@ class StateDB{
         $stmt = $this->handler->prepare("UPDATE User SET 
             `lastUpdate`=:lastUpdate  
             WHERE id=:id");
+        $id=$user->getId();  //For strict PHP
         $date=date('Y-m-d H:i:s');
-        $stmt->bindParam(':id',$user->getId());
+        $stmt->bindParam(':id',$id);
         $stmt->bindParam(':lastUpdate',$date);
         if(!$stmt->execute()){
             $error=$stmt->errorInfo();
@@ -176,12 +177,14 @@ class StateDB{
                 VALUES           (:id,:versionDB,:hashTable,:lastUpdate,:role)
             ");
             $version=1;
+            $id=$user->getId();  //For strict PHP
+            $role=$user->getRole();  //For strict PHP
             $date=date('Y-m-d H:i:s');
-            $stmt->bindParam(':id',$user->getId());
+            $stmt->bindParam(':id',$id);
             $stmt->bindParam(':versionDB',$version);
             $stmt->bindParam(':hashTable',$hashTable);
             $stmt->bindParam(':lastUpdate',$date);
-            $stmt->bindParam(':role',$user->getRole());
+            $stmt->bindParam(':role',$role);
             if(!$stmt->execute()){
                 $error=$stmt->errorInfo();
                 error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
@@ -222,7 +225,8 @@ class StateDB{
     private function getVersion($user){
         $response=false;
         $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
-        $stmt->bindParam(':id',$user->getId());
+        $id=$user->getId();  //For strict PHP
+        $stmt->bindParam(':id',$id);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
             $response=intval($row["versionDB"]);
@@ -245,7 +249,8 @@ class StateDB{
             `hashTable`=:hashTable 
             WHERE id=:id");
         $version=$this->getVersion($user)+1;
-        $stmt->bindParam(':id',$user->getId());
+        $id=$user->getId();  //For strict PHP
+        $stmt->bindParam(':id',$id);
         $stmt->bindParam(':versionDB',$version);
         $stmt->bindParam(':hashTable',$hashTable);
         if($stmt->execute()){
