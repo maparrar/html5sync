@@ -30,6 +30,13 @@ del servidor, el tamaño máximo de memoria del servidor, el ancho de banda disp
 la base de datos, el tamaño de las tablas y la cantidad de columnas por tablas, entre
 otros.
 
+Problemas de compatibilidad detectados:
+* Firefox 28 solicita permiso para guardar más de 50 MB en el navegador
+* En Firefox 28, cuando se alcanzan 300 MB de datos almacenados localmente (en el navegador), muestra el siguiente error en Firebug:
+    uknownError self.request = window.indexedDB.open(self.params.database, self.version);
+  Una solución temporal es Ctrl+i, en la pestaña "Permisos" buscar la entrada "Mantener almacenamiento sin conexión" y limpiar los datos para cargar de nuevo.
+  Bug: https://bugzilla.mozilla.org/show_bug.cgi?id=775040
+
 Cliente
 =========
 
@@ -201,6 +208,7 @@ Todo
 * Bloquear librería mientras se recarga la estructura
 * Crear trigger para almacenar los registros eliminados
 * Crear barras que indiquen el progreso de las operaciones
+* Configurar límite para cantidad de registros por tabla
 
 
 
