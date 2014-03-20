@@ -111,7 +111,8 @@ class StateDB{
     public function getLastUpdate($user){
         $response=false;
         $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `User` WHERE `id`= :id");
-        $stmt->bindParam(':id',$user->getId());
+        $id=$user->getId();  //For strict PHP
+        $stmt->bindParam(':id',$id);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
             $response=new DateTime($row["lastUpdate"]);
@@ -196,7 +197,8 @@ class StateDB{
     private function userExists($user){
         $exist=false;
         $stmt = $this->handler->prepare("SELECT id FROM User WHERE id=:id");
-        $stmt->bindParam(':id',$user->getId());
+        $id=$user->getId();  //For strict PHP
+        $stmt->bindParam(':id',$id);
         if ($stmt->execute()) {
             $list=$stmt->fetch();
             if($list){
@@ -262,7 +264,8 @@ class StateDB{
     private function getHashTable($user){
         $response=false;
         $stmt = $this->handler->prepare("SELECT `hashTable` FROM `User` WHERE `id`= :id");
-        $stmt->bindParam(':id',$user->getId());
+        $id=$user->getId();  //For strict PHP
+        $stmt->bindParam(':id',$id);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
             $response=$row["hashTable"];
