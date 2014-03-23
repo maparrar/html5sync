@@ -38,14 +38,8 @@ var Html5Sync = function(params,callback){
         //Estructura el código HTML5
         setStructure();
         
-        
-        updateStructure(function(err){
-            
-        });
-        
         //Inicia el proceso de sincronización
         startSync();
-        
     }();
    
     /**************************************************************************/
@@ -100,6 +94,13 @@ var Html5Sync = function(params,callback){
                     }
                 }
             }
+            //Si no existe la base de datos la crea y la carga por primera vez
+            var name=returnDBName();
+            databaseExists(name,function(exists){
+                if(!exists){
+                    updateStructure();
+                }
+            });
             if(callback)callback(false);
         }).fail(function(){
             setState(false);
@@ -448,6 +449,31 @@ var Html5Sync = function(params,callback){
     function printIndexedDB(){
         
     }
+    /**
+     * Check if a database exists
+     * @param {string} name Database name
+     * @param {function} callback Function to return the response
+     * @returns {bool} True if the database exists
+     */
+    function databaseExists(name,callback){
+        var dbExists = true;
+        var request = window.indexedDB.open(name);
+        request.onupgradeneeded = function (e){
+            if(request.result.version===1){
+                dbExists = false;
+                window.indexedDB.deleteDatabase(name);
+                if(callback)
+                    callback(dbExists);
+            }
+            
+        };
+        request.onsuccess = function(e) {
+            if(dbExists){
+                if(callback)
+                    callback(dbExists);
+            }
+        };
+    };
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/

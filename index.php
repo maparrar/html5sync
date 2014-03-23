@@ -9,7 +9,7 @@
  
 <?php
 session_start();
-$_SESSION['html5sync_userId']=3;
+$_SESSION['html5sync_userId']=7;
 $_SESSION['html5sync_role']="role1";
 ?>
  
