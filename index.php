@@ -9,7 +9,7 @@
  
 <?php
 session_start();
-$_SESSION['html5sync_userId']=7;
+$_SESSION['html5sync_userId']=14;
 $_SESSION['html5sync_role']="role1";
 ?>
  
@@ -33,7 +33,11 @@ $_SESSION['html5sync_role']="role1";
                 
                
                 $("#reloadData").click(function(){
-                    loadData();
+                    html5Sync.forceReload(function(err){
+                        if(err){
+                            console.debug(err);
+                        }
+                    });
                 });
             });
         </script>

@@ -14,6 +14,8 @@ var Html5Sync = function(params,callback){
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
     var self = this;
+    self.busyFunctions=new Array();  //Lista de funciones ocupadas que solo se pueden usar una vez al tiempo
+    
     self.state;         //{bool} Estado de la conexión con el servidor.
     self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
     self.userId=false;  //Identificador del usuario
@@ -111,68 +113,78 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     function updateStructure(callback){
-        showLoading(true);
-        debug("..::DB INFO::.. Se detectaron cambios en la estructura de las tablas de la BD. Actualizando...");
-        $.ajax({
-            url: self.params.html5syncFolder+"server/ajax/updateStructure.php",
-            type: "POST"
-        }).done(function(response) {
-            var data=JSON.parse(response);
-            self.userId=parseInt(data.userId);
-            self.databaseName=data.database;
-            var version=parseInt(data.version);
-            var tables=data.tables;
-            var parameters=parseDatabaseParameters(version,tables);
-            self.database=new Database(parameters,function(err){
-                if(err){
-                    if(callback)callback(err);
-                }else{
-                    if(callback)callback(false);
-                    //Carga todos los datos de las tablas
-                    reloadData(function(err){
-                        if(err){
-                            if(callback)callback(err);
-                        }
-                    });
-                }
+        if(!isBusy("updateStructure")){
+            showLoading(true);
+            setToBusy("updateStructure");
+            debug("..::DB INFO::.. Se detectaron cambios en la estructura de las tablas de la BD. Actualizando...");
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/updateStructure.php",
+                type: "POST"
+            }).done(function(response) {
+                var data=JSON.parse(response);
+                self.userId=parseInt(data.userId);
+                self.databaseName=data.database;
+                var version=parseInt(data.version);
+                var tables=data.tables;
+                var parameters=parseDatabaseParameters(version,tables);
+                self.database=new Database(parameters,function(err){
+                    if(err){
+                        if(callback)callback(err);
+                    }else{
+                        if(callback)callback(false);
+                        //Carga todos los datos de las tablas
+                        reloadData(function(err){
+                            if(err){
+                                if(callback)callback(err);
+                            }
+                        });
+                    }
+                });
+                showLoading(false);
+                setToIdle("updateStructure");
+            }).fail(function(){
+                callback(new Error("Unable to connect the server to update structure"));
+                setState(false);
+                showLoading(false);
+                setToIdle("updateStructure");
             });
-            showLoading(false);
-        }).fail(function(){
-            callback(new Error("Unable to connect the server to update structure"));
-            setState(false);
-            showLoading(false);
-        });
+        }
     };
     /**
      * Carga toda la información de las tablas
      * @param {function} callback Función para retornar los resultados
      */
     function reloadData(callback){
-        showLoading(true);
-        $.ajax({
-            url: self.params.html5syncFolder+"server/ajax/reloadData.php",
-            type: "POST"
-        }).done(function(response) {
-            var data=JSON.parse(response);
-            var tables=data.tables;
-            //Revisa si para cada tabla faltan datos, solicita los nuevos
-            for(var i in tables){
-                var table=tables[i];
-                showLoading(true);
-                self.database.clearStore(table,function(err,table){
-                    if(!err){
-                        //Empieza a cargar los datos
-                        reloadTable(table);
-                    }
-                });
-            }
-            if(callback)callback(false);
-            showLoading(false);
-        }).fail(function(){
-            if(callback)callback(new Error("Unable to reload data from the server"));
-            setState(false);
-            showLoading(false);
-        });
+        if(!isBusy("reloadData")){
+            showLoading(true);
+            setToBusy("reloadData");
+            $.ajax({
+                url: self.params.html5syncFolder+"server/ajax/reloadData.php",
+                type: "POST"
+            }).done(function(response) {
+                var data=JSON.parse(response);
+                var tables=data.tables;
+                //Revisa si para cada tabla faltan datos, solicita los nuevos
+                for(var i in tables){
+                    var table=tables[i];
+                    showLoading(true);
+                    self.database.clearStore(table,function(err,table){
+                        if(!err){
+                            //Empieza a cargar los datos
+                            reloadTable(table);
+                        }
+                    });
+                }
+                if(callback)callback(false);
+                showLoading(false);
+                setToIdle("reloadData");
+            }).fail(function(){
+                if(callback)callback(new Error("Unable to reload data from the server"));
+                setState(false);
+                showLoading(false);
+                setToIdle("reloadData");
+            });
+        }
     };
     /**
      * Verifica si se cargaron todos los datos de una tabla, si faltan, carga la
@@ -184,7 +196,6 @@ var Html5Sync = function(params,callback){
         var initialRow=parseInt(table.initialRow);
         var numberOfRows=parseInt(table.numberOfRows);
         var totalOfRows=parseInt(table.totalOfRows);
-        
         if((initialRow+numberOfRows)<totalOfRows){
             $.ajax({
                 url: self.params.html5syncFolder+"server/ajax/reloadTable.php",
@@ -469,11 +480,53 @@ var Html5Sync = function(params,callback){
         };
         request.onsuccess = function(e) {
             if(dbExists){
-                if(callback)
-                    callback(dbExists);
+                if(self.database){
+                    if(callback)
+                        callback(dbExists);
+                }else{
+                    if(callback)
+                        callback(false);
+                }
             }
         };
     };
+    
+    /**
+     * Agrega el nombre de una función al array de funciones ocupadas que no se
+     * pueden usar hasta que no se desocupen
+     * @param {string} name Nombre de la función
+     */
+    function setToBusy(name){
+        if(!isBusy(name)){
+            self.busyFunctions.push(name);
+        }
+    };
+    /**
+     * Elimina el nombre de una función del array de funciones ocupadas que no se
+     * pueden usar hasta que no se desocupen.
+     * @param {string} name Nombre de la función
+     */
+    function setToIdle(name){
+        for(var i in self.busyFunctions){
+            if(self.busyFunctions[i]===name){
+                self.busyFunctions.splice(i,1);
+            }
+        }
+    };
+    /**
+     * Verifica si una función está ocupada
+     * @param {string} name Nombre de la función
+     * @returns {bool} True si la función está ocupada, false en otro caso
+     */
+    function isBusy(name){
+        var busy=false;
+        for(var i in self.busyFunctions){
+            if(self.busyFunctions[i]===name){
+                busy=true;
+            }
+        }
+        return busy;
+    }
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
     /**************************************************************************/
@@ -481,22 +534,11 @@ var Html5Sync = function(params,callback){
      * Recarga los datos de las tablas permitidas. Toda la información de carga
      * está especificada en el archivo de configuración:
      * html5sync/server/config.php
+     * @param {function} callback Función para retornar resultados
      */
-    self.forceUpdate=function(){
-//        try{
-//            showLoading(true);
-//            $.ajax({
-//                url: self.params.html5syncFolder+"server/ajax/loadData.php"
-//            }).done(function(response) {
-////                console.debug(response);
-//                showLoading(false);
-//            }).fail(function(){
-//                showLoading(false);
-//            });
-//        }catch(e){
-//            setState(false); 
-//        }
+    self.forceReload=function(callback){
+        reloadData(function(err){
+            if(callback)callback(err);
+        });
     };
-    
-    
 };
