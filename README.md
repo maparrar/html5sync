@@ -143,6 +143,7 @@ Changelog
     * Se verifica la creación de indexedDB antes de cargar la estructura
     * Paginación para la carga inicial
     * Paginación para actualización de registros
+    * Control de redundancia de funciones de Ajax
 
 * v.0.0.7 - [2014-03-14]
     * Creación del "updateMode" tipo "updatedColumn"
