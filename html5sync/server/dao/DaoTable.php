@@ -78,7 +78,7 @@ class DaoTable{
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
                 $key="";
-                if($row["key"]==="t"||$row["key"]==="PRI"){
+                if($row["key"]==="t"||$row["key"]==="PRI"||$row["key"]){
                     $key="PK";
                 }
                 $field=new Field($row["name"],$row["type"],$key);

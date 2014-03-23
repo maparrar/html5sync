@@ -40,7 +40,7 @@ return array(
      */
     "parameters" => array(
         "updateMode"    => "updatedColumn",
-        "rowsPerPage"   => 100,
+        "rowsPerPage"   => 500,
         "browser"       => array(
             "syncTimer"    => 10000
         ),

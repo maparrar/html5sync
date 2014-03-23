@@ -237,17 +237,9 @@ var Html5Sync = function(params,callback){
                 var table=data.table;
                 debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+(parseInt(table.initialRow)+1)+" de "+totalOfRows+" registros");
                 var rows=serverTableToJSON(table);
-                
-                
-                console.debug(rows);
-                
                 for(var j in rows){
                     var row=rows[j];
                     var pk=serverTableGetPK(table);
-                    
-                    
-                    console.debug(row);
-                    
                     //Si encuentra un campo que sea PK, actualiza el registro, sino lo inserta
                     if(pk){
                         self.database.update(table.name,pk.key,row,function(err){

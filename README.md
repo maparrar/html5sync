@@ -139,9 +139,10 @@ Estrategias de sincronización de la base de datos:
 Changelog
 =========
 
-* v.0.0.8 - [2014-03-16]
+* v.0.0.8 - [2014-03-23]
     * Se verifica la creación de indexedDB antes de cargar la estructura
     * Paginación para la carga inicial
+    * Paginación para actualización de registros
 
 * v.0.0.7 - [2014-03-14]
     * Creación del "updateMode" tipo "updatedColumn"
@@ -208,7 +209,6 @@ Todo
 * Bloquear librería mientras se recarga la estructura
 * Crear trigger para almacenar los registros eliminados
 * Crear barras que indiquen el progreso de las operaciones
-* Configurar límite para cantidad de registros por tabla
 
 
 
