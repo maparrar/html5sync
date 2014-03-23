@@ -186,33 +186,14 @@ class Html5Sync{
         $dao=new DaoTable($this->db);
         foreach ($this->tables as $table) {
             if($dao->checkDataChanged($table,$lastUpdate)){
-                array_push($changed, $table->getName());
+                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+                $table->setInitialRow(0);
+                array_push($changed, $table);
             }
         }
         if(count($changed)==0){
             $changed=false;
         }
-        return $changed;
-    }
-    /**
-     * Retorna los datos de las tablas que han cambiado
-     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
-     */
-    public function getUpdatedTables($initialRow=0){
-        $changed=array();
-        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-        //Se crea el objeto para manejar tablas con PDO
-        $dao=new DaoTable($this->db);
-        foreach ($this->tables as $table){
-            $data=$dao->getUpdatedRows($table,$lastUpdate,$initialRow,$this->parameters["rowsPerPage"]);
-            if($data){
-                $table->setData($data);
-                array_push($changed, $table);
-            }
-        }
-        //Actualiza la fecha de última actualización para no recargár más los datos cargados
-        $this->stateDB->updateLastUpdate($this->user);
         return $changed;
     }
     /**
@@ -252,6 +233,32 @@ class Html5Sync{
             $table->setInitialRow($initialRow);
         }
         return $table;
+    }
+    /**
+     * Retorna los datos que han cambiado de la tabla 
+     * @param string $tableName Nombre de la tabla
+     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
+     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     */
+    public function getUpdatedTable($tableName,$initialRow=0){
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        $table=$this->getTableByName($tableName);
+        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
+        $data=$dao->getUpdatedRows($table,$lastUpdate,$initialRow,$this->parameters["rowsPerPage"]);
+        if($data){
+            $table->setData($data);
+            $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+            $table->setInitialRow($initialRow);
+        }
+        return $table;
+    }
+    /**
+     * Actualiza la última fecha de acceso a los datos en la base de datos de estado SQLite
+     */
+    public function updateLastUpdate(){
+        //Actualiza la fecha de última actualización para no recargár más los datos cargados
+        $this->stateDB->updateLastUpdate($this->user);
     }
     /**
      * Carga la configuración del archivo server/config.php

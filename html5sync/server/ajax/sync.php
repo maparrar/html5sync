@@ -16,9 +16,10 @@ if($html5sync->checkIfStructureChanged()){
 }else{
     $json.='"changesInStructure":"false",';
 }
-//Detecta si hubo cambios en los datos
-if($html5sync->checkIfDataChanged()){
-    $json.='"changesInData":"true"';
+//Detecta si hubo cambios en los datos, retorna las tablas en las que hubo cambios
+$dataChanges=$html5sync->checkIfDataChanged();
+if($dataChanges){
+    $json.='"changesInData":'.$html5sync->getTablesInJson($dataChanges);
 }else{
     $json.='"changesInData":"false"';
 }

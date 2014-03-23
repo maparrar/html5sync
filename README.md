@@ -89,7 +89,7 @@ Servidor
         </code>
     * Agregar en el archivo cache.manifest todos los recursos que se requieran fuera de línea
 
-* Detección de cambios y soncronización de las tablas
+* Detección de cambios y sincronización de las tablas
     El sistena permite dos modos de detección de cambios en los datos de una tabla, que se establecen en la variable updateMode de config.php:
         - updatedColumn: Implica que html5sync debe tener permiso para crear
                          una columna adicional en cada tabla a sincronizar. 

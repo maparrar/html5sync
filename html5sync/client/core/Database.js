@@ -87,10 +87,6 @@ var Database = function(params,callback){
     var Database = function() {
         if(window.indexedDB !== undefined) {
             self.version = self.params.version; //Versión de la Base de datos indexedDB
-            
-            console.debug("database="+self.params.database);
-            console.debug("version="+self.version);
-            
             self.request = window.indexedDB.open(self.params.database, self.version);
             debug("Iniciando acceso a la base de datos: "+self.params.database+" - versión: "+self.version);
             //Asigna los eventos

@@ -13,7 +13,7 @@ $initialRow=filter_input(INPUT_POST,'initialRow',FILTER_SANITIZE_NUMBER_INT);
 if(!$initialRow){
     $initialRow=0;
 }
-//Retorna las tablas que han tenido cambios
+//Retorna la tabla
 $table=$html5sync->getTableData($tableName,$initialRow);
 //Convierte la información a JSON
 $json='{"rowsPerPage":'.$html5sync->getRowsPerPage().',"table":'.$table->jsonEncode().'}';

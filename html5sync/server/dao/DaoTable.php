@@ -184,14 +184,21 @@ class DaoTable{
         $this->addTrigger($table);
     }
     /**
-     * Retorna la cantidad de filas para una tabla
+     * Retorna la cantidad de filas para una tabla, si se pasa una fecha de última 
+     * modificación se retorna la cantidad de registros por cambiar
      * @param string $table Nombre de la tabla que se quiere verificar
+     * @param mixed $lastUpdate (optional) fecha de la última modificación
      * @return int Cantidad de filas que tiene una tabla
      */
-    function getTotalOfRows($table){
+    function getTotalOfRows($table,$lastUpdate=false){
         $total=0;
         $handler=$this->db->connect("all");
-        $stmt = $handler->prepare("SELECT count(*) AS total FROM ".$table->getName());
+        if($lastUpdate){
+            $sql='SELECT count(*) AS total FROM '.$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'";
+        }else{
+            $sql="SELECT count(*) AS total FROM ".$table->getName();
+        }
+        $stmt = $handler->prepare($sql);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
             $total=intval($row["total"]);
