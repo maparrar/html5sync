@@ -75,6 +75,7 @@ var Database = function(params,callback){
     //y se agregan a la variable self (this del objeto)
     var def = {
         database: "html5db",
+        load: false,
         version: 1,
         options: {
             overwriteObjectStores: true
@@ -86,9 +87,13 @@ var Database = function(params,callback){
      */
     var Database = function() {
         if(window.indexedDB !== undefined) {
-            self.version = self.params.version; //Versión de la Base de datos indexedDB
-            self.request = window.indexedDB.open(self.params.database, self.version);
-            debug("Iniciando acceso a la base de datos: "+self.params.database+" - versión: "+self.version);
+            if(self.params.load){
+                self.request = window.indexedDB.open(self.params.database);
+            }else{
+                self.version = self.params.version; //Versión de la Base de datos indexedDB
+                self.request = window.indexedDB.open(self.params.database, self.version);
+            }
+            debug("Iniciando acceso a la base de datos: "+self.params.database);
             //Asigna los eventos
             events();
         }else{
@@ -118,7 +123,10 @@ var Database = function(params,callback){
         self.request.onsuccess = function(e) {
             self.db = self.request.result;
             self.callback(false);
-            debug("Se he accedido con éxito la base de datos: "+self.params.database);
+            if(self.params.load){
+                self.version=self.request.result.version;
+            }
+            debug("Se he accedido con éxito la base de datos: "+self.params.database+" - versión: "+self.version);
         };
         /*
          * Evento del request que se dispara cuando la base de datos

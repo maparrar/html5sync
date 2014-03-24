@@ -101,6 +101,12 @@ var Html5Sync = function(params,callback){
             databaseExists(name,function(exists){
                 if(!exists){
                     updateStructure();
+                }else{
+                    if(!self.database){
+                        self.database=new Database({load:true,database:name},function(err){
+                            if(callback)callback(err);
+                        });
+                    }
                 }
             });
             if(callback)callback(false);
@@ -480,13 +486,8 @@ var Html5Sync = function(params,callback){
         };
         request.onsuccess = function(e) {
             if(dbExists){
-                if(self.database){
-                    if(callback)
+                if(callback)
                         callback(dbExists);
-                }else{
-                    if(callback)
-                        callback(false);
-                }
             }
         };
     };
