@@ -203,6 +203,7 @@ var Html5Sync = function(params,callback){
         var numberOfRows=parseInt(table.numberOfRows);
         var totalOfRows=parseInt(table.totalOfRows);
         if((initialRow+numberOfRows)<totalOfRows){
+            setToBusy("reloadData");
             $.ajax({
                 url: self.params.html5syncFolder+"server/ajax/reloadTable.php",
                 data:{
@@ -230,6 +231,10 @@ var Html5Sync = function(params,callback){
             });
         }else{
             showLoading(false);
+        }
+        //Si es la última tabla cargada, libera la función de recarga de datos
+        if((totalOfRows-(initialRow+1))<=numberOfRows){
+            setToIdle("reloadData");
         }
     };
     /**
