@@ -30,7 +30,8 @@ var Html5Sync = function(params,callback){
         debugging:false,
         html5syncFolder:"html5sync/",
         stateTimer: 10000,
-        showState:false
+        showState:false,
+        viewer:false
     };
     self.params = $.extend(def, params);
     /**
@@ -106,6 +107,7 @@ var Html5Sync = function(params,callback){
                         self.database=new Database({load:true,database:name},function(err){
                             if(callback)callback(err);
                         });
+                        buildViewer();
                     }
                 }
             });
@@ -393,6 +395,10 @@ var Html5Sync = function(params,callback){
                 $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
             }
         };
+        //Agrega el visor de la base de datos
+        if(self.params.viewer){
+            $("body").append('<div id="html5sync_viewer"></div>');
+        }
     };
     /**
      * Muestra u oculta el loader de la librería
@@ -532,6 +538,26 @@ var Html5Sync = function(params,callback){
             }
         }
         return busy;
+    }
+    /**
+     * Función que muestra la base de datos actual en el HTML
+     * @returns {undefined}
+     */
+    function buildViewer(){
+        if(self.params.viewer){
+            var viewer=$("#html5sync_viewer");
+
+            console.debug(viewer);
+            console.debug(self.database);
+        }
+    }
+    function updateViewer(){
+        if(self.params.viewer){
+            var viewer=$("#html5sync_viewer");
+
+            console.debug(viewer);
+            console.debug(self.database);
+        }
     }
     /**************************************************************************/
     /***************************** PUBLIC METHODS *****************************/
