@@ -71,6 +71,9 @@ Servidor
     * sudo apt-get install php5-sqlite
     * sudo service apache2 restart
 
+* Establecer los permisos de escritura para SQLite
+    * sudo chmod -R 647 application_folder/html5sync/server/sqlite
+
 * Se requiere activar el caché para la aplicación en HTML5 (ver más http://diveintohtml5.info/offline.html)
     Para que la aplicación esté disponible fuera de línea, es necesario activar el uso del caché de la aplicación. Los pasos para que funcione son:
     * Indicar en el archivo .htaccess (en el caso de Apache) del servidor que se debe cargar el archivo en el formato MIME adecuado
