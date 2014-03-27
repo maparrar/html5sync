@@ -24,6 +24,5 @@ if($dataChanges){
     $json.='"changesInData":"false"';
 }
 $json.='}';
-
 //Se retorna la respuesta en JSON
 echo $json;
