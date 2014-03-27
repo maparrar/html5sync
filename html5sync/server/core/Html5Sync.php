@@ -63,10 +63,8 @@ class Html5Sync{
         $this->tables=array();
         $this->user=$user;
         
-        
-        $this->loadConfiguration();
-        
         //Se establece timezone y carga la configuración
+        $this->loadConfiguration();
         date_default_timezone_set($this->parameters["timezone"]);
                 
         //Se conecta a la base de datos

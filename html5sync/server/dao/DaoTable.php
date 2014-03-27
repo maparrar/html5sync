@@ -180,8 +180,9 @@ class DaoTable{
      * @param Table $table Tabla con nombre en la base de datos
      */
     function setUpdatedColumnMode($table){
-        $this->addColumn($table);
-        $this->addTrigger($table);
+        $this->addTableForDeleted();
+        $this->addColumns($table);
+        $this->addTriggers($table);
     }
     /**
      * Retorna la cantidad de filas para una tabla, si se pasa una fecha de última 
@@ -209,12 +210,25 @@ class DaoTable{
         return $total;
     }
     /**
+     * Crea una tabla para almacenar los registros de las tablas que han sido borrados
+     * @param Table $table Tabla con nombre en la base de datos
+     */
+    private function addTableForDeleted(){
+        $handler=$this->db->connect("all");
+        if($this->db->getDriver()==="pgsql"){
+            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted ("id" SERIAL PRIMARY KEY,"table" varchar(40) NOT NULL,"date" timestamp DEFAULT NULL)');
+            $handler->query('CREATE OR REPLACE FUNCTION html5sync_proc_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO html5sync_deleted ("table","date") VALUES(TG_RELNAME,current_timestamp(0)); RETURN NEW; END; $$ LANGUAGE plpgsql;');
+        }elseif($this->db->getDriver()==="mysql"){
+            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (`id` INT NOT NULL AUTO_INCREMENT,`table` varchar(40) NOT NULL,`date` datetime DEFAULT NULL, PRIMARY KEY (id))');
+        }
+    }
+    /**
      * Agrega una columna que será alimentada con la fecha de actualización o insersión
      * por medio de un Trigger. Además crea una columna para almacenar el tipo
      * de transacción
      * @param Table $table Tabla con nombre en la base de datos
      */
-    private function addColumn($table){
+    private function addColumns($table){
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
             $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update timestamp DEFAULT NULL');
@@ -228,16 +242,18 @@ class DaoTable{
      * actualización y/o insersión en la tabla.
      * @param Table $table Tabla con nombre en la base de datos
      */
-    private function addTrigger($table){
+    private function addTriggers($table){
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
             $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_insert_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'insert'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
             $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_update_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'update'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
             $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_insert_".$table->getName()."();");
             $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_update_".$table->getName()."();");
+            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." AFTER DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_delete();");
         }elseif($this->db->getDriver()==="mysql"){
             $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "insert"; END;');
             $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "update"; END;');
+            $handler->query('CREATE TRIGGER html5sync_trig_delete_'.$table->getName().' AFTER DELETE ON '.$table->getName().' FOR EACH ROW BEGIN INSERT INTO html5sync_deleted (`table`,`date`) VALUES("'.$table->getName().'",NOW()); END;');
         }
     }
 }
