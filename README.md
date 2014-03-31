@@ -142,6 +142,9 @@ Estrategias de sincronización de la base de datos:
 Changelog
 =========
 
+* v.0.0.9 - [2014-03-30]
+    *  Creación del trigger para filas eliminadas en Postgresql
+
 * v.0.0.8 - [2014-03-23]
     * Se verifica la creación de indexedDB antes de cargar la estructura
     * Paginación para la carga inicial
