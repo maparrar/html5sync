@@ -247,10 +247,27 @@ class DaoTable{
     private function addTableForDeleted(){
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
-            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted ("id" SERIAL PRIMARY KEY,"table" varchar(40) NOT NULL,"date" timestamp DEFAULT NULL)');
-            $handler->query('CREATE OR REPLACE FUNCTION html5sync_proc_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO html5sync_deleted ("table","date") VALUES(TG_RELNAME,current_timestamp(0)); RETURN NEW; END; $$ LANGUAGE plpgsql;');
+            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (html5sync_id SERIAL PRIMARY KEY,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date timestamp DEFAULT NULL)');
+            $sql="CREATE OR REPLACE FUNCTION html5sync_proc_delete() RETURNS TRIGGER AS $$ ".
+                "DECLARE ".
+                        "pk text; ".
+                        "id text; ".
+                        "keyText text; ".
+                        "query text; ".
+                "BEGIN  ".
+                        "keyText := TG_TABLE_NAME||'_pkey'; ".
+                        "EXECUTE 'SELECT column_name FROM information_schema.constraint_column_usage WHERE table_name='''||TG_TABLE_NAME||''' AND constraint_name='''||keyText||''';' INTO pk; ".
+                        "query := 'SELECT '||pk||' FROM '||TG_TABLE_NAME||' WHERE '||pk||'=$1.'||pk||';'; ".
+                        "EXECUTE query USING OLD INTO id; ".
+                        "INSERT INTO html5sync_deleted  ".
+                                "(html5sync_table,html5sync_key,html5sync_date)  ".
+                        "VALUES ".
+                                "(TG_TABLE_NAME,id,current_timestamp(0));  ".
+                "RETURN OLD;  ".
+                "END; $$ LANGUAGE plpgsql; ";
+            $handler->query($sql);
         }elseif($this->db->getDriver()==="mysql"){
-            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (`id` INT NOT NULL AUTO_INCREMENT,`table` varchar(40) NOT NULL,`date` datetime DEFAULT NULL, PRIMARY KEY (id))');
+            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (html5sync_id INT NOT NULL AUTO_INCREMENT,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date datetime DEFAULT NULL, PRIMARY KEY (html5sync_id))');
         }
     }
     /**
@@ -280,11 +297,11 @@ class DaoTable{
             $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_update_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'update'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
             $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_insert_".$table->getName()."();");
             $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_update_".$table->getName()."();");
-            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." AFTER DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_delete();");
+            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_delete();");
         }elseif($this->db->getDriver()==="mysql"){
             $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "insert"; END;');
             $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "update"; END;');
-            $handler->query('CREATE TRIGGER html5sync_trig_delete_'.$table->getName().' AFTER DELETE ON '.$table->getName().' FOR EACH ROW BEGIN INSERT INTO html5sync_deleted (`table`,`date`) VALUES("'.$table->getName().'",NOW()); END;');
+            $handler->query('CREATE TRIGGER html5sync_trig_delete_'.$table->getName().' BEFORE DELETE ON '.$table->getName().' FOR EACH ROW BEGIN INSERT INTO html5sync_deleted (html5sync_table,html5sync_date) VALUES("'.$table->getName().'",NOW()); END;');
         }
     }
 }
