@@ -51,6 +51,12 @@ class Table extends Object{
      * @var int
      */
     protected $initialRow;
+    /** 
+     * Indica si sobre la tabla hubo eliminación de algún registro para cargarlo
+     * desde la base de datos
+     * @var int
+     */
+    protected $withDeletions;
     /**
     * Constructor
     * @param string $name Nombre de la tabla        
@@ -65,6 +71,7 @@ class Table extends Object{
         $this->data=$data;
         $this->numberOfRows=0;
         $this->initialRow=0;
+        $this->withDeletions=false;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -116,6 +123,14 @@ class Table extends Object{
     public function setInitialRow($value) {
         $this->initialRow=$value;
     }
+    /**
+    * Setter withDeletions
+    * @param bool $value True si hubo eliminacio de registros
+    * @return void
+    */
+    public function setWithDeletions($value) {
+        $this->withDeletions=$value;
+    }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
     * Getter: name
@@ -158,6 +173,13 @@ class Table extends Object{
     */
     public function getInitialRow() {
         return $this->initialRow;
+    }
+    /**
+    * Getter: withDeletions
+    * @return bool
+    */
+    public function getWithDeletions() {
+        return $this->withDeletions;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**

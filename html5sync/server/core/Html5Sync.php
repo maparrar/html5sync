@@ -176,25 +176,58 @@ class Html5Sync{
         return $this->stateDB->checkIfStructureChanged($jsonTables,$this->user);
     }
     /**
-     * Verifica si los datos de las tablas de usuario cambiaron.
+     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaros
+     * registros
      * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
      */
-    public function checkIfDataChanged(){
-        $changed=array();
+    public function getTablesWithChanges(){
+        $tables=array();
         $lastUpdate=$this->stateDB->getLastUpdate($this->user);
         //Se crea el objeto para manejar tablas con PDO
         $dao=new DaoTable($this->db);
         foreach ($this->tables as $table) {
-            if($dao->checkDataChanged($table,$lastUpdate)){
+            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
+            if($dao->checkIfRowsChanged($table,$lastUpdate)){
                 $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
                 $table->setInitialRow(0);
-                array_push($changed, $table);
+                array_push($tables, $table);
             }
         }
-        if(count($changed)==0){
-            $changed=false;
+        if(count($tables)==0){
+            $tables=false;
         }
-        return $changed;
+        return $tables;
+    }
+    /**
+     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaros
+     * registros
+     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     */
+    public function getTablesWithDeletions(){
+        $tables=array();
+        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        foreach ($this->tables as $table) {
+            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
+            if($dao->checkIfRowsChanged($table,$lastUpdate)){
+                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+                $table->setInitialRow(0);
+                array_push($tables, $table);
+            }
+            //Verifica si hubo deleciones, sino está en la lista, la agrega
+            if($dao->checkIfRowsDeleted($table,$lastUpdate)){
+                
+                
+                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+                $table->setInitialRow(0);
+                array_push($tables, $table);
+            }
+        }
+        if(count($tables)==0){
+            $tables=false;
+        }
+        return $tables;
     }
     /**
      * Retorna todos los datos de las tablas

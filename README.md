@@ -1,5 +1,4 @@
-html5sync
-=========
+# html5sync
 
 Herramienta para sincronizar una base de datos del servidor con una en el cliente (HTML5).
 
@@ -9,16 +8,17 @@ Esta herramienta está en proceso de construcción.
 - jomejia: https://github.com/jomejia
 
 
-Referencia
-=========
+[TOC]
+
+## Referencia
 
 html5sync pretende ser compatible con varios tipos de almacenamiento en el navegador web. Debido a que la base de datos más robusta en el momento para HTML5 es indexedDB, será la primera en ser implementada. Para más información, consulte los siguientes enlaces:
 
-IndexedDB:
+### IndexedDB:
 * Conceptos básicos: https://developer.mozilla.org/en-US/docs/IndexedDB/Basic_Concepts_Behind_IndexedDB
 * Usando IndexedDB: https://developer.mozilla.org/en-US/docs/IndexedDB/Using_IndexedDB
 
-Paginación:
+### Paginación:
 El sistema carga el contenido de las tabla por medio de paginación, es decir, carga 
 las tablas por partes para evitar sobrecargas de memoria en el servidor y evitando
 tener que modificar la variable de memoria máxima permitida. Cada página es un
@@ -40,8 +40,7 @@ Problemas de compatibilidad detectados:
 Condiciones sobre las tablas:
 * Solo sobre las tablas con PK se pueden detectar las eliminaciones de registros
 
-Cliente
-=========
+## Cliente
 
 * ObjectStore
     Crea un almacén de objetos que se puede definir de la siguiente manera (tomado de: https://developer.mozilla.org/en-US/docs/IndexedDB/Using_IndexedDB#Structuring_the_database):
@@ -54,17 +53,8 @@ Cliente
     * Key Path (keyPath): YES - Key Generator (autoIncrement): YES
         This object store can only hold JavaScript objects. Usually a key is generated and the value of the generated key is stored in the object in a property with the same name as the key path. However, if such a property already exists, the value of that property is used as key rather than generating a new key.
 
-* Proceso de actualización de datos
-    * 1. El navegador solicita la actualización
-    * 2. El servidor retorna las tablas en JSON
-    * 3. Verificar si cambió la versión de la base de datos
-        * 3.1 Si cambió, actualiza la estructura de IndexedDB, pasa a 4
-        * 3.2 No cambió, pasa a 4
-    * 4. Para cada tabla -> Almacén de Objetos hacer
-        * 4.1 Almacenar los datosde la tabla en el almacén
+## Servidor
 
-Servidor
-=========
 * Se debe permitir el acceso a html5sync a la base de datos. Para usar el ejemplo ver el script en: resources/database.sql
     * Configurar el usuario para que html5sync pueda acceder a la base de datos:
         mysql> GRANT ALL PRIVILEGES ON your_database.* TO 'html5sync'@'localhost' IDENTIFIED BY 'your_password';
@@ -114,8 +104,20 @@ Servidor
                          de muchos registros. [en construcción]
     Además de sincronizar las tablas, también se requiere acctualizar la estructura de las tablas cuando hayan cambios. Para esto se usa una función de hash sobre la concatenación de la estructura de todas las tablas para un usuario, así, si alguna cambia, se actualiza toda la estructura.
 
-* Proceso de actualización de datos
-    * 1. El navegador solicita actualización
+## Sync
+
+### Pasos de sincronización
+
+1. ![client -> server](green.png) [cliente -> servidor] 1. El navegador solicita la actualización sync()
+    * ![](green.png) [servidor -> cliente] 2. El servidor retorna las tablas en JSON
+                                - 
+    * 3. Verificar si cambió la versión de la base de datos
+        * 3.1 Si cambió, actualiza la estructura de IndexedDB, pasa a 4
+        * 3.2 No cambió, pasa a 4
+    * 4. Para cada tabla -> Almacén de Objetos hacer
+        * 4.1 Almacenar los datosde la tabla en el almacén
+
+* 1. El navegador solicita actualización
     * 2. El servidor carga la lista de tablas a sincronizar del archivo config.php
     * 3. Para cada tabla hacer
         * 3.1 Buscar en SQLite si existe un estado de esa tabla para el usuario
@@ -128,9 +130,9 @@ Servidor
     * 4. Convierte las tablas y sus datos a JSON
     * 5. Envía la lista de tablas (en JSON) con sus versiones al navegador
 
-Sync
-=========
-Estrategias de sincronización de la base de datos:
+
+
+### Estrategias de sincronización de la base de datos:
 * Bloqueo: Se manejan dos estados para una tabla que dependen de las cuatro operaciones CRUD que el usuario vaya a realizar sobre ella.
     * Create: No requiere bloqueo
       Cada que sincronicen las bases de datos de cliente y servidor, se insertan los registros en orden de creación
@@ -142,8 +144,7 @@ Estrategias de sincronización de la base de datos:
       Eliminar un registro puede modificar el estado de partida de otro usuario. Se requiere que cuando un usuario tome los datos, la tabla se bloquee y se libera cuando el usuario se vuelva a conectar.   
 
 
-Changelog
-=========
+## Changelog
 
 * v.0.0.9 - [2014-03-30]
     * Creación del trigger para filas eliminadas en Postgresql
@@ -207,8 +208,8 @@ Changelog
 
 * v.0.0.0 - [2014-02-18] - Exploración
 
-Todo
-=========
+## Todo
+
 * Verificar condiciones de fallo (tablas que no existan)
 * Implemetar seguridad en la base de datos de estado SQLite
 * Crear un paginador en PHP para manejar grandes cantidades de datos
@@ -223,8 +224,7 @@ Todo
 
 
 
-Licencia MIT
-=========
+## Licencia MIT
 The MIT License (MIT) Copyright (c) 2014
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:

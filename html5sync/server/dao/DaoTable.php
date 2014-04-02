@@ -91,12 +91,12 @@ class DaoTable{
         return $list;
     }
     /**
-     * Verifica si hubo cambios en una lista de tablas para un usuario
+     * Verifica si hubo cambios en una tabla para un usuario
      * @param Table $table Tabla que se quiere verificar
      * @param DateTime $lastUpdate Objeto de fecha con la última actualización
      * @return boolean True si se detectaron cambios, False en otro caso
      */
-    function checkDataChanged($table,$lastUpdate){
+    function checkIfRowsChanged($table,$lastUpdate){
         $changed=false;
         $handler=$this->db->connect("all");
         $stmt = $handler->prepare("SELECT count(*) AS updated FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'");
@@ -118,14 +118,10 @@ class DaoTable{
      * @param DateTime $lastUpdate Objeto de fecha con la última actualización
      * @return boolean True si se detectaron cambios, False en otro caso
      */
-    function checkRowsDeleted($table,$lastUpdate){
-        $changed=false;
+    function checkIfRowsDeleted($table,$lastUpdate){
+        $deleted=false;
         $handler=$this->db->connect("all");
-        if($this->db->getDriver()==="pgsql"){
-            $sql='SELECT count(*) AS deleted FROM html5sync_deleted WHERE "table"=:table AND "date">:date';
-        }elseif($this->db->getDriver()==="mysql"){
-            $sql="SELECT count(*) AS deleted FROM html5sync_deleted WHERE `table`=:table AND  `date`>:date";
-        }
+        $sql='SELECT count(*) AS deleted FROM html5sync_deleted WHERE html5sync_table=:table AND html5sync_date>:date';
         $stmt = $handler->prepare($sql);
         $name=$table->getName();
         $date=$lastUpdate->format('Y-m-d H:i:s');
@@ -135,13 +131,13 @@ class DaoTable{
             $row=$stmt->fetch();
             $updated=intval($row["deleted"]);
             if($updated){
-                $changed=true;
+                $deleted=true;
             }
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
-        return $changed;
+        return $deleted;
     }
     /**
      * Retorna los registros que han sido modificados
