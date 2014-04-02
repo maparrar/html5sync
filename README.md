@@ -1,4 +1,4 @@
-# html5sync
+# ![html5sync](html5sync/resources/images/sync_48.png) html5sync
 
 Herramienta para sincronizar una base de datos del servidor con una en el cliente (HTML5).
 
@@ -108,24 +108,33 @@ Condiciones sobre las tablas:
 1. ![client -> server](html5sync/resources/images/blue.png) El navegador solicita la actualización sync()
 2. ![client -> server](html5sync/resources/images/green.png) El servidor retorna las tablas en JSON
 	* El servidor verifica las tablas disponibles y sus permisos sobre las operaciones (insert, update, delete) para el usuario actual
+	* Se lee la última fecha registrada de la base de datos de estado 
 	* Para cada tabla, se verifica si hubo actualización, inserción o eliminación de registros después de la última fecha registrada.
 	* Retorna un conjunto de objetos en JSON con los siguientes campos por cada tabla
 	```js
 {
     	name: name_of_table,
         structure:{
-            changed: true	/*True if the structure of the table changed*/
+            changed: true	/*True si hubo cambios en la estructura de la tabla*/
+        },
+        insert:{
+            changed: true,	/*True si hubo inserciones en la tabla*/
+            totalOfRows: 3      /*Cantidad total de inserciones en la tabla*/
+        },
+        update:{
+            changed: true,	/*True si hubo actualzaciones en la tabla*/
+            totalOfRows: 3      /*Cantidad total de actualzaciones en la tabla*/
         },
         insertion:{
-            changed: true	/*True if the structure of the table changed*/
-        },
+            changed: true,	/*True si hubo eliminaciones en la tabla*/
+            totalOfRows: 3      /*Cantidad total de eliminaciones en la tabla*/
+        }
 }
 ```
-		* name: Nombre de la tabla
-		* structure: True si hubo cambios en la estructura, False en otro caso
-		* insert: True si hubo inserciones en la tabla
-		* update: True si hubo actualizaciones en la tabla
-		* delete: True si hubo eliminaciones en la tabla
+3. ![client -> server](html5sync/resources/images/blue.png) Petición de datos.
+	* Por cada tabla recibida del servidor, el cliente envía un conjunto de peticiones de acuerdo a la cantidad de registros ([ver paginación](https://github.com/maparrar/html5sync#paginaci%C3%B3n)).
+4. ![client -> server](html5sync/resources/images/green.png) El servidor 
+
 
 
 
