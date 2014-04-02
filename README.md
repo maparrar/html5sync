@@ -7,9 +7,6 @@ Esta herramienta está en proceso de construcción.
 - maparrar: http://maparrar.github.io
 - jomejia: https://github.com/jomejia
 
-
-[TOC]
-
 ## Referencia
 
 html5sync pretende ser compatible con varios tipos de almacenamiento en el navegador web. Debido a que la base de datos más robusta en el momento para HTML5 es indexedDB, será la primera en ser implementada. Para más información, consulte los siguientes enlaces:
@@ -108,9 +105,29 @@ Condiciones sobre las tablas:
 
 ### Pasos de sincronización
 
-1. ![client -> server](green.png) [cliente -> servidor] 1. El navegador solicita la actualización sync()
-    * ![](green.png) [servidor -> cliente] 2. El servidor retorna las tablas en JSON
-                                - 
+1. ![client -> server](html5sync/resources/images/blue.png) El navegador solicita la actualización sync()
+2. ![client -> server](html5sync/resources/images/green.png) El servidor retorna las tablas en JSON
+	* El servidor verifica las tablas disponibles y sus permisos sobre las operaciones (insert, update, delete) para el usuario actual
+	* Para cada tabla, se verifica si hubo actualización, inserción o eliminación de registros después de la última fecha registrada.
+	* Retorna un conjunto de objetos en JSON con los siguientes campos por cada tabla
+	```js
+{
+	name: name_of_table,
+    structure:{
+		changed: true	/*True if the structure of the table changed*/
+    }
+}
+```
+		* name: Nombre de la tabla
+		* structure: True si hubo cambios en la estructura, False en otro caso
+		* insert: True si hubo inserciones en la tabla
+		* update: True si hubo actualizaciones en la tabla
+		* delete: True si hubo eliminaciones en la tabla
+
+
+
+
+
     * 3. Verificar si cambió la versión de la base de datos
         * 3.1 Si cambió, actualiza la estructura de IndexedDB, pasa a 4
         * 3.2 No cambió, pasa a 4
