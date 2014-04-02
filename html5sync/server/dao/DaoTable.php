@@ -78,7 +78,7 @@ class DaoTable{
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
                 $key="";
-                if($row["key"]==="t"||$row["key"]==="PRI"||$row["key"]){
+                if($row["key"]==="t"||$row["key"]==="PRI"){
                     $key="PK";
                 }
                 $field=new Field($row["name"],$row["type"],$key);
@@ -299,9 +299,21 @@ class DaoTable{
             $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_update_".$table->getName()."();");
             $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_delete();");
         }elseif($this->db->getDriver()==="mysql"){
+            $pk=$table->getPk();
             $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "insert"; END;');
             $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "update"; END;');
-            $handler->query('CREATE TRIGGER html5sync_trig_delete_'.$table->getName().' BEFORE DELETE ON '.$table->getName().' FOR EACH ROW BEGIN INSERT INTO html5sync_deleted (html5sync_table,html5sync_date) VALUES("'.$table->getName().'",NOW()); END;');
+            //Se inserta el trigger de borrado si la columna tiene PK
+            if($pk){
+                $sql='CREATE TRIGGER '.
+                            'html5sync_trig_delete_'.$table->getName().' '.
+                    'BEFORE DELETE ON '.$table->getName().' '.
+                    'FOR EACH ROW BEGIN '.
+                            'DECLARE id TEXT;'.
+                            'SELECT '.$pk->getName().' FROM '.$table->getName().' WHERE '.$pk->getName().'=OLD.'.$pk->getName().' INTO id;'.
+                            'INSERT INTO html5sync_deleted (html5sync_table,html5sync_key,html5sync_date) VALUES("'.$table->getName().'",id,NOW());'.
+                    'END;';
+                $handler->query($sql);
+            }
         }
     }
 }

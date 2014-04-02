@@ -167,7 +167,7 @@ class Table extends Object{
     public function getPk() {
         $output=false;
         foreach ($this->fields as $field) {
-            if($field->getKey()==="PRI"){
+            if($field->getKey()==="PK"){
                 $output=$field;
             }
         }

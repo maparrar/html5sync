@@ -37,6 +37,9 @@ Problemas de compatibilidad detectados:
   Una solución temporal es Ctrl+i, en la pestaña "Permisos" buscar la entrada "Mantener almacenamiento sin conexión" y limpiar los datos para cargar de nuevo.
   Bug: https://bugzilla.mozilla.org/show_bug.cgi?id=775040
 
+Condiciones sobre las tablas:
+* Solo sobre las tablas con PK se pueden detectar las eliminaciones de registros
+
 Cliente
 =========
 
