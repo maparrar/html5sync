@@ -111,7 +111,7 @@ Condiciones sobre las tablas:
 	* Para cada tabla, se verifica si hubo actualización, inserción o eliminación de registros después de la última fecha registrada.
 	* Retorna un conjunto de objetos en JSON con los siguientes campos por cada tabla
 	```js
-{
+{s
 	name: name_of_table,
     structure:{
 		changed: true	/*True if the structure of the table changed*/
