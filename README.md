@@ -114,11 +114,11 @@ Condiciones sobre las tablas:
 {
     	name: name_of_table,
         structure:{
-                    changed: true	/*True if the structure of the table changed*/
+            changed: true	/*True if the structure of the table changed*/
         },
-    insertion:{
-		changed: true	/*True if the structure of the table changed*/
-    },
+        insertion:{
+            changed: true	/*True if the structure of the table changed*/
+        },
 }
 ```
 		* name: Nombre de la tabla
