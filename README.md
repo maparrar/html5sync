@@ -146,7 +146,8 @@ Changelog
 =========
 
 * v.0.0.9 - [2014-03-30]
-    *  Creación del trigger para filas eliminadas en Postgresql
+    * Creación del trigger para filas eliminadas en Postgresql
+    * Creación del trigger para filas eliminadas en Mysql
 
 * v.0.0.8 - [2014-03-23]
     * Se verifica la creación de indexedDB antes de cargar la estructura
