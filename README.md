@@ -112,10 +112,13 @@ Condiciones sobre las tablas:
 	* Retorna un conjunto de objetos en JSON con los siguientes campos por cada tabla
 	```js
 {
-    name: name_of_table,
-    structure:{
+    	name: name_of_table,
+        structure:{
+                    changed: true	/*True if the structure of the table changed*/
+        },
+    insertion:{
 		changed: true	/*True if the structure of the table changed*/
-    }
+    },
 }
 ```
 		* name: Nombre de la tabla
