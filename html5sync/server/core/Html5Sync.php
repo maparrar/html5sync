@@ -176,7 +176,7 @@ class Html5Sync{
         return $this->stateDB->checkIfStructureChanged($jsonTables,$this->user);
     }
     /**
-     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaros
+     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaron
      * registros
      * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
      */

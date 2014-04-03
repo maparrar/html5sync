@@ -10,12 +10,29 @@ $user=new User(intval($_SESSION['html5sync_userId']),$_SESSION['html5sync_role']
 $html5sync=new Html5Sync($user);
 $database=$html5sync->getDatabaseName();
 $json='{"userId":"'.$user->getId().'","database":"'.$database.'","state":"true",';
+
+
+
+
+
+
 //Detecta su hubo cambios en la estructura de alguna tabla
 if($html5sync->checkIfStructureChanged()){
     $json.='"changesInStructure":"true",';
 }else{
     $json.='"changesInStructure":"false",';
 }
+
+//Verifica para cada tabla si hubo actualizaciones, eliminaciones o inserciones
+foreach ($tables as $table){
+    $jsonTable='{"name":"'.$table->getName().'"';
+    if($html5sync->checkForInsert($table)){
+        
+    }
+    $jsonTable.='}';
+}
+
+
 //Detecta si hubo cambios en los datos, retorna las tablas en las que hubo cambios
 $dataChanges=$html5sync->getTablesWithChanges();
 if($dataChanges){
