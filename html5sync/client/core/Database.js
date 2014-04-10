@@ -87,9 +87,6 @@ var Database = function(params,callback){
      */
     var Database = function() {
         if(window.indexedDB !== undefined) {
-            
-            console.debug("version: "+self.params.version);
-            
             if(self.params.load){
                 self.request = window.indexedDB.open(self.params.database);
             }else{
