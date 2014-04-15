@@ -65,13 +65,15 @@ class StateDB{
     private function createDB($path){
         try{
             $this->handler=new PDO('sqlite:'.$path);
+            /*status: When is synchronizing: ['sync'|'idle']*/
             $query="
                 CREATE TABLE IF NOT EXISTS `User` (
                     `id` INTEGER NOT NULL PRIMARY KEY,
                     `versionDB` INTEGER NOT NULL,
                     `hashTable` TEXT,
                     `lastUpdate` TEXT,
-                    `role` TEXT
+                    `role` TEXT,
+                    `status` TEXT 
                 );
             ";
             // Crea las tablas
@@ -173,18 +175,20 @@ class StateDB{
         $created=false;
         if(!$this->userExists($user)){
             $stmt = $this->handler->prepare("
-                INSERT INTO User (`id`,`versionDB`,`hashTable`,`lastUpdate`,`role`) 
-                VALUES           (:id,:versionDB,:hashTable,:lastUpdate,:role)
+                INSERT INTO User (`id`,`versionDB`,`hashTable`,`lastUpdate`,`role`,`status`) 
+                VALUES           (:id,:versionDB,:hashTable,:lastUpdate,:role,:status)
             ");
             $version=1;
             $id=$user->getId();  //For strict PHP
             $role=$user->getRole();  //For strict PHP
             $date=date('Y-m-d H:i:s');
+            $status='idle';
             $stmt->bindParam(':id',$id);
             $stmt->bindParam(':versionDB',$version);
             $stmt->bindParam(':hashTable',$hashTable);
             $stmt->bindParam(':lastUpdate',$date);
             $stmt->bindParam(':role',$role);
+            $stmt->bindParam(':status',$status);
             if(!$stmt->execute()){
                 $error=$stmt->errorInfo();
                 error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);

@@ -62,11 +62,9 @@ class Html5Sync{
     function __construct($user){
         $this->tables=array();
         $this->user=$user;
-        
         //Se establece timezone y carga la configuración
         $this->loadConfiguration();
         date_default_timezone_set($this->parameters["timezone"]);
-                
         //Se conecta a la base de datos
         $this->connect();
         //Carga la estructura de las tablas para el usuario
@@ -151,148 +149,9 @@ class Html5Sync{
     public function getRowsPerPage() {
         return $this->parameters["rowsPerPage"];
     }    
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    /**
-     * Retrona una tabla a partir de su nombre
-     * @param string $name Nombre de la tabla
-     * @return Table Tabla
-     */
-    private function getTableByName($name) {
-        $output=false;
-        foreach ($this->tables as $table) {
-            if($table->getName()===$name){
-                $output=$table;
-            }
-        }
-        return $output;
-    }
-    /**
-     * Verifica si la estructura de las tablas cambió.
-     * @return boolean True si la estructura de las tablas cambió, False en otro caso
-     */
-    public function checkIfStructureChanged(){
-        $this->loadTables();
-        $jsonTables=$this->getTablesInJson();
-        return $this->stateDB->checkIfStructureChanged($jsonTables,$this->user);
-    }
-    /**
-     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaron
-     * registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
-     */
-    public function getTablesWithChanges(){
-        $tables=array();
-        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-        //Se crea el objeto para manejar tablas con PDO
-        $dao=new DaoTable($this->db);
-        foreach ($this->tables as $table) {
-            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
-            if($dao->checkIfRowsChanged($table,$lastUpdate)){
-                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-                $table->setInitialRow(0);
-                array_push($tables, $table);
-            }
-        }
-        if(count($tables)==0){
-            $tables=false;
-        }
-        return $tables;
-    }
-    /**
-     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaros
-     * registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
-     */
-    public function getTablesWithDeletions(){
-        $tables=array();
-        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-        //Se crea el objeto para manejar tablas con PDO
-        $dao=new DaoTable($this->db);
-        foreach ($this->tables as $table) {
-            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
-            if($dao->checkIfRowsChanged($table,$lastUpdate)){
-                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-                $table->setInitialRow(0);
-                array_push($tables, $table);
-            }
-            //Verifica si hubo deleciones, sino está en la lista, la agrega
-            if($dao->checkIfRowsDeleted($table,$lastUpdate)){
-                
-                
-                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-                $table->setInitialRow(0);
-                array_push($tables, $table);
-            }
-        }
-        if(count($tables)==0){
-            $tables=false;
-        }
-        return $tables;
-    }
-    /**
-     * Retorna todos los datos de las tablas
-     * @return mixed Array con las tablas para el usuario
-     */
-    public function getAllTables(){
-        $changed=array();
-        //Se crea el objeto para manejar tablas con PDO
-        $dao=new DaoTable($this->db);
-        foreach ($this->tables as $table){
-//            $data=$dao->getAllRows($table,0,$this->parameters["rowsPerPage"]);
-//            if($data){
-//                $table->setData($data);
-                array_push($changed, $table);
-                $table->setTotalOfRows($dao->getTotalOfRows($table));
-//            }
-        }
-        //Actualiza la fecha de última actualización para no recargár más los datos cargados
-        $this->stateDB->updateLastUpdate($this->user);
-        return $changed;
-    }
-    /**
-     * Retorna todos los datos de una tablas por páginas
-     * @param string $tableName Nombre de la tabla
-     * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
-     * @return Table Array con las tablas para el usuario
-     */
-    public function getTableData($tableName,$initialRow=0){
-        //Se crea el objeto para manejar tablas con PDO
-        $dao=new DaoTable($this->db);
-        $table=$this->getTableByName($tableName);
-        $data=$dao->getAllRows($table,$initialRow,$this->parameters["rowsPerPage"]);
-        if($data){
-            $table->setData($data);
-            $table->setTotalOfRows($dao->getTotalOfRows($table));
-            $table->setInitialRow($initialRow);
-        }
-        return $table;
-    }
-    /**
-     * Retorna los datos que han cambiado de la tabla 
-     * @param string $tableName Nombre de la tabla
-     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
-     */
-    public function getUpdatedTable($tableName,$initialRow=0){
-        //Se crea el objeto para manejar tablas con PDO
-        $dao=new DaoTable($this->db);
-        $table=$this->getTableByName($tableName);
-        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-        $data=$dao->getUpdatedRows($table,$lastUpdate,$initialRow,$this->parameters["rowsPerPage"]);
-        if($data){
-            $table->setData($data);
-            $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-            $table->setInitialRow($initialRow);
-        }
-        return $table;
-    }
-    /**
-     * Actualiza la última fecha de acceso a los datos en la base de datos de estado SQLite
-     */
-    public function updateLastUpdate(){
-        //Actualiza la fecha de última actualización para no recargár más los datos cargados
-        $this->stateDB->updateLastUpdate($this->user);
-    }
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>>>   PRIVATED METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
     /**
      * Carga la configuración del archivo server/config.php
      */
@@ -366,39 +225,202 @@ class Html5Sync{
         }
         return $accessible;
     }
+    
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>>>>   PUBLIC METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
+    /**
+     * Retorna la última fecha de actualización de los datos
+     * @return DateTime Fecha de la última verificación de html5sync
+     */
+    public function getLastUpdate(){
+        return $this->stateDB->getLastUpdate($this->user);
+    }
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Retrona una tabla a partir de su nombre
+     * @param string $name Nombre de la tabla
+     * @return Table Tabla
+     */
+//    private function getTableByName($name) {
+//        $output=false;
+//        foreach ($this->tables as $table) {
+//            if($table->getName()===$name){
+//                $output=$table;
+//            }
+//        }
+//        return $output;
+//    }
+    /**
+     * Verifica si la estructura de las tablas cambió.
+     * @return boolean True si la estructura de las tablas cambió, False en otro caso
+     */
+//    public function checkIfStructureChanged(){
+//        $this->loadTables();
+//        $jsonTables=$this->getTablesInJson();
+//        return $this->stateDB->checkIfStructureChanged($jsonTables,$this->user);
+//    }
+    /**
+     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaron
+     * registros
+     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     */
+//    public function getTablesWithChanges(){
+//        $tables=array();
+//        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
+//        //Se crea el objeto para manejar tablas con PDO
+//        $dao=new DaoTable($this->db);
+//        foreach ($this->tables as $table) {
+//            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
+//            if($dao->checkIfRowsChanged($table,$lastUpdate)){
+//                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+//                $table->setInitialRow(0);
+//                array_push($tables, $table);
+//            }
+//        }
+//        if(count($tables)==0){
+//            $tables=false;
+//        }
+//        return $tables;
+//    }
+    /**
+     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaros
+     * registros
+     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     */
+//    public function getTablesWithDeletions(){
+//        $tables=array();
+//        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
+//        //Se crea el objeto para manejar tablas con PDO
+//        $dao=new DaoTable($this->db);
+//        foreach ($this->tables as $table) {
+//            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
+//            if($dao->checkIfRowsChanged($table,$lastUpdate)){
+//                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+//                $table->setInitialRow(0);
+//                array_push($tables, $table);
+//            }
+//            //Verifica si hubo deleciones, sino está en la lista, la agrega
+//            if($dao->checkIfRowsDeleted($table,$lastUpdate)){
+//                
+//                
+//                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+//                $table->setInitialRow(0);
+//                array_push($tables, $table);
+//            }
+//        }
+//        if(count($tables)==0){
+//            $tables=false;
+//        }
+//        return $tables;
+//    }
+    /**
+     * Retorna todos los datos de las tablas
+     * @return mixed Array con las tablas para el usuario
+     */
+//    public function getAllTables(){
+//        $changed=array();
+//        //Se crea el objeto para manejar tablas con PDO
+//        $dao=new DaoTable($this->db);
+//        foreach ($this->tables as $table){
+////            $data=$dao->getAllRows($table,0,$this->parameters["rowsPerPage"]);
+////            if($data){
+////                $table->setData($data);
+//                array_push($changed, $table);
+//                $table->setTotalOfRows($dao->getTotalOfRows($table));
+////            }
+//        }
+//        //Actualiza la fecha de última actualización para no recargár más los datos cargados
+//        $this->stateDB->updateLastUpdate($this->user);
+//        return $changed;
+//    }
+    /**
+     * Retorna todos los datos de una tablas por páginas
+     * @param string $tableName Nombre de la tabla
+     * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
+     * @return Table Array con las tablas para el usuario
+     */
+//    public function getTableData($tableName,$initialRow=0){
+//        //Se crea el objeto para manejar tablas con PDO
+//        $dao=new DaoTable($this->db);
+//        $table=$this->getTableByName($tableName);
+//        $data=$dao->getAllRows($table,$initialRow,$this->parameters["rowsPerPage"]);
+//        if($data){
+//            $table->setData($data);
+//            $table->setTotalOfRows($dao->getTotalOfRows($table));
+//            $table->setInitialRow($initialRow);
+//        }
+//        return $table;
+//    }
+    /**
+     * Retorna los datos que han cambiado de la tabla 
+     * @param string $tableName Nombre de la tabla
+     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
+     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     */
+//    public function getUpdatedTable($tableName,$initialRow=0){
+//        //Se crea el objeto para manejar tablas con PDO
+//        $dao=new DaoTable($this->db);
+//        $table=$this->getTableByName($tableName);
+//        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
+//        $data=$dao->getUpdatedRows($table,$lastUpdate,$initialRow,$this->parameters["rowsPerPage"]);
+//        if($data){
+//            $table->setData($data);
+//            $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
+//            $table->setInitialRow($initialRow);
+//        }
+//        return $table;
+//    }
+    /**
+     * Actualiza la última fecha de acceso a los datos en la base de datos de estado SQLite
+     */
+//    public function updateLastUpdate(){
+//        //Actualiza la fecha de última actualización para no recargár más los datos cargados
+//        $this->stateDB->updateLastUpdate($this->user);
+//    }
+    
+    
+    
+    
     /**
      * Retorna la lista de tablas en formato JSON
      * @return string Las tablas del usuario en formato JSON
      */
-    public function getTablesInJson($tables=false){
-        $listTables=array();
-        if($tables){
-            if(!is_array($tables)){
-                $listTables=array($tables);
-            }else{
-                $listTables=$tables;
-            }
-        }else{
-            $listTables=$this->tables;
-        }
-        $json='[';
-        foreach ($listTables as $table) {
-            //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
-            $json.=$table->jsonEncode().",";
-        }
-        //Remove the last comma
-        if(count($listTables)){
-            $json=substr($json,0,-1);
-        }
-        $json.="]";
-        return $json;
-    }
+//    public function getTablesInJson($tables=false){
+//        $listTables=array();
+//        if($tables){
+//            if(!is_array($tables)){
+//                $listTables=array($tables);
+//            }else{
+//                $listTables=$tables;
+//            }
+//        }else{
+//            $listTables=$this->tables;
+//        }
+//        $json='[';
+//        foreach ($listTables as $table) {
+//            //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
+//            $json.=$table->jsonEncode().",";
+//        }
+//        //Remove the last comma
+//        if(count($listTables)){
+//            $json=substr($json,0,-1);
+//        }
+//        $json.="]";
+//        return $json;
+//    }
     /**
      * Retorna la versión de la base de datos almacenada para el usuario
      * @return int Número de versión
      */
-    public function getVersion(){
-        $state=$this->getTablesInJson();
-        return $this->stateDB->version($state,$this->user);
-    }
+//    public function getVersion(){
+//        $state=$this->getTablesInJson();
+//        return $this->stateDB->version($state,$this->user);
+//    }
 }
