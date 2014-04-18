@@ -30,15 +30,84 @@ $_SESSION['html5sync_role']="role1";
                 },function(err){
                     console.debug(err);
                 });
+//                $("#reloadData").click(function(){
+//                    html5Sync.forceReload(function(err){
+//                        if(err){
+//                            console.debug(err);
+//                        }
+//                    });
+//                });
                 
-               
-                $("#reloadData").click(function(){
-                    html5Sync.forceReload(function(err){
-                        if(err){
-                            console.debug(err);
+                
+                var stores=[
+                    {
+                        name:"Agricultor",
+                        key:{keyPath:"id"},
+                        indexes:[
+                            {
+                                name:"id",
+                                key:"id",
+                                params:{unique:true}
+                            },
+                            {
+                                name:"nombre",
+                                key:"nombre",
+                                params:{unique:false}
+                            },
+                            {
+                                name:"apellido",
+                                key:"apellido",
+                                params:{unique:false}
+                            }
+                        ]
+                    }
+                ]
+                
+                var parameters={
+                    database: "agroplan",
+                    version: 2,                //Versión de la base de datos
+                    stores:stores   
+                }
+                var database=new Database(parameters,function(err){
+                    var agricultores=[
+                        {
+                            "id":1,
+                            "nombre":"pepito 1",
+                            "apellido":"perez 1",
+                            "cedula":"11111",
+                            "direccion":"cra 1",
+                            "telefono":"11111",
+                            "municipio":1
+                        },
+                        {
+                            "id":2,
+                            "nombre":"pepito 2",
+                            "apellido":"perez 2",
+                            "cedula":"22222",
+                            "direccion":"cra 2",
+                            "telefono":"22222",
+                            "municipio":1
+                        }
+                    ];
+
+//                    database.add("Agricultor",agricultores,function(err){
+//                        if(err){console.debug(err);}
+//                    });
+                    
+                    
+                    
+                    
+                    database.get("Agricultor",2,function(err,obj){
+                        if(!err){
+                            console.debug(obj);
                         }
                     });
                 });
+                
+                
+                
+                
+                
             });
         </script>
     </head>
