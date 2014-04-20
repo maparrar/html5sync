@@ -189,10 +189,17 @@ class StateDB{
             $stmt->bindParam(':lastUpdate',$date);
             $stmt->bindParam(':role',$role);
             $stmt->bindParam(':status',$status);
-            if(!$stmt->execute()){
-                $error=$stmt->errorInfo();
-                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-            }
+            
+            error_log("--------------------");
+            $stmt->execute();
+            $error=$stmt->errorInfo();
+            error_log($error);
+            error_log("********************");
+            
+//            if(!$stmt->execute()){
+//                $error=$stmt->errorInfo();
+//                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+//            }
         }
         return $created;
     }

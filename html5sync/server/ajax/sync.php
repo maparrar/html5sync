@@ -15,10 +15,12 @@ $database=$html5sync->getDatabaseName();
 
 
 
+
 //Lee la última fecha para el usuario
 $lastUpdate=$html5sync->getLastUpdate();
 
 //Marca la base de datos estática "en actualización" para el usuario
+
 
 //Se verifican las actualizaciones, inserciones o eliminaciones para las tablas disponibles para el usuario
 
