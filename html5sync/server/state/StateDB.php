@@ -28,7 +28,7 @@ class StateDB{
     * @param User $user Usuario para verificar si existe en la base de datos
     */
     function __construct($user){        
-        $this->path="../state/html5sync_".$user->getId().".sqlite";
+        $this->path="../state/sqlite/html5sync_".$user->getId().".sqlite";
         //Crea la base de datos si no existe
         $this->createDB($this->path);
         //Si el usuario no existe en la base de datos, lo crea
