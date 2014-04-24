@@ -1,25 +1,44 @@
 <?php
 session_start();
-include_once '../core/Html5Sync.php';
+include_once '../business/BusinessDB.php';
+include_once '../core/Configuration.php';
 include_once '../core/User.php';
+include_once '../state/StateDB.php';
+
+//Control de errores
+$error=false;
 
 //Toma los datos de usuario y rol de la aplicación
 $user=new User(intval($_SESSION['html5sync_userId']),$_SESSION['html5sync_role']);
+//Carga la configuración del archivo server/config.php
+$config=new Configuration();
+//Crea el objeto para el manejo de la base de datos del negocio
+$businessDB=new BusinessDB($user,$config);
+//Crea el objeto para manejo de la base de datos estática y crea el usuario si no existe
+$stateDB=new StateDB($user);
 
-//Realiza la conexión y configuración para el usuario actual
-$html5sync=new Html5Sync($user);
-$database=$html5sync->getDatabaseName();
-
-
-
+//Establece el timezone definido en el archivo de configuración
+date_default_timezone_set($config->getParameter("main","timezone"));
 
 
 
 
 //Lee la última fecha para el usuario
-$lastUpdate=$html5sync->getLastUpdate();
+$lastUpdate=$stateDB->getLastUpdate($user);
+if(!$lastUpdate){
+    $error="Could not read the last update date for the user. Synchronization failed.";
+}
 
 //Marca la base de datos estática "en actualización" para el usuario
+$stateDB->setStatus($user,'sync');
+
+
+//Carga la lista de tablas del usuario
+$tables=$businessDB->getTables();
+
+print_r($tables);
+
+
 
 
 //Se verifican las actualizaciones, inserciones o eliminaciones para las tablas disponibles para el usuario
@@ -58,9 +77,13 @@ $lastUpdate=$html5sync->getLastUpdate();
 
 
 //Se retorna la respuesta en JSON
-$json='{'
-        . '"userId":"'.$user->getId().'",'
-        . '"database":"'.$database.'",'
-        . '"lastUpdate":"'.$lastUpdate->format('Y-m-d H:i:s').'",'
-        . '"state":"true",';
+if($error){
+    $json='{"error":"'.$error.'"}';
+}else{
+    $json='{'
+            . '"userId":"'.$user->getId().'",'
+            . '"database":"'.$config->getParameter("database","name").'",'
+            . '"lastUpdate":"'.$lastUpdate->format('Y-m-d H:i:s').'"'
+        .'}';
+}
 echo $json;

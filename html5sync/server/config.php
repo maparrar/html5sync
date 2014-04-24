@@ -38,7 +38,7 @@ return array(
      *                       para las tablas seleccionadas para los usuarios.
      *  - timezone:          Zona por defecto, para manejo de la función date en PHP
      */
-    "parameters" => array(
+    "main" => array(
         "updateMode"    => "updatedColumn",
         "rowsPerPage"   => 500,
         "browser"       => array(

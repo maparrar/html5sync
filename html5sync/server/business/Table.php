@@ -1,7 +1,7 @@
 <?php
 /** Table File
 * @package html5sync @subpackage core */
-require_once 'Object.php';
+require_once '../core/Object.php';
 /**
 * Table Class
 *

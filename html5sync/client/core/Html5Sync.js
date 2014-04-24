@@ -76,42 +76,47 @@ var Html5Sync = function(params,callback){
             url: self.params.html5syncFolder+"server/ajax/sync.php"
         }).done(function(response) {
             var data=JSON.parse(response);
-            self.userId=parseInt(data.userId);
-            self.databaseName=data.database;
-            var state=(data.state==="true")?true:false;
-            var changesInStructure=(data.changesInStructure==="true")?true:false;
-            var changesInData=(data.changesInData==="false")?false:data.changesInData;
-            //Marca como conectado
-            setState(state);
-            //Si hay cambios en la estructura o en los datos se deben recargar
-            if(changesInStructure){
-                updateStructure();
+            if(data.error){
+                debug(data.error);
+                if(callback)callback(new Error(data.error));
             }else{
-                if(changesInData){
-                    for(var i in changesInData){
-                        updateTable(changesInData[i],function(err){
-                            if(err){
-                                if(callback)callback(err);
-                            }
-                        });
-                    }
-                }
-            }
-            //Si no existe la base de datos la crea y la carga por primera vez
-            var name=returnDBName();
-            databaseExists(name,function(exists){
-                if(!exists){
+                self.userId=parseInt(data.userId);
+                self.databaseName=data.database;
+                var state=(data.state==="true")?true:false;
+                var changesInStructure=(data.changesInStructure==="true")?true:false;
+                var changesInData=(data.changesInData==="false")?false:data.changesInData;
+                //Marca como conectado
+                setState(state);
+                //Si hay cambios en la estructura o en los datos se deben recargar
+                if(changesInStructure){
                     updateStructure();
                 }else{
-                    if(!self.database){
-                        self.database=new Database({load:true,database:name},function(err){
-                            if(callback)callback(err);
-                        });
-                        buildViewer();
+                    if(changesInData){
+                        for(var i in changesInData){
+                            updateTable(changesInData[i],function(err){
+                                if(err){
+                                    if(callback)callback(err);
+                                }
+                            });
+                        }
                     }
                 }
-            });
-            if(callback)callback(false);
+                //Si no existe la base de datos la crea y la carga por primera vez
+                var name=returnDBName();
+                databaseExists(name,function(exists){
+                    if(!exists){
+                        updateStructure();
+                    }else{
+                        if(!self.database){
+                            self.database=new Database({load:true,database:name},function(err){
+                                if(callback)callback(err);
+                            });
+                            buildViewer();
+                        }
+                    }
+                });
+                if(callback)callback(false);
+            }
         }).fail(function(){
             setState(false);
         });

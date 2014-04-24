@@ -25,11 +25,16 @@ class StateDB{
     protected $path;
     /**
     * Constructor
-    * @param string $path Ruta y nombre de la base de datos
+    * @param User $user Usuario para verificar si existe en la base de datos
     */
-    function __construct($path="../sqlite/html5sync.sqlite"){        
-        $this->path=$path;
+    function __construct($user){        
+        $this->path="../state/html5sync_".$user->getId().".sqlite";
+        //Crea la base de datos si no existe
         $this->createDB($this->path);
+        //Si el usuario no existe en la base de datos, lo crea
+        if(!$this->userExists($user)){
+            $this->userCreate(md5("emptystructure"),$user);
+        }
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -49,7 +54,6 @@ class StateDB{
         return $this->path;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
     /**
      * Verifica si la base de datos existe. Si no existe retorna false
      * @param type $path Ruta de la base de datos
@@ -92,17 +96,17 @@ class StateDB{
     public function checkIfStructureChanged($state,$user){
         $changed=false;
         //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
-        if(!$this->userExists($user)){
-            $this->userCreate(md5("emptystructure"),$user);
-            $changed=true;
-        }else{
+//        if(!$this->userExists($user)){
+//            $this->userCreate(md5("emptystructure"),$user);
+//            $changed=true;
+//        }else{
             //Retorna el último estado
             $oldState=$this->getHashTable($user);
             $newState=md5($state);
             if($newState!=$oldState){
                 $changed=true;
             }
-        }
+//        }
         return  $changed;
     }
     /**
@@ -117,7 +121,9 @@ class StateDB{
         $stmt->bindParam(':id',$id);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
-            $response=new DateTime($row["lastUpdate"]);
+            if($row){
+                $response=new DateTime($row["lastUpdate"]);
+            }
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
@@ -149,7 +155,7 @@ class StateDB{
      * @param User $user Objeto Usuario
      * @return int El número de la versión de la base de datos
      */
-    function version($state,$user){
+    public function version($state,$user){
         //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
         if($this->userExists($user)){
             //Retorna el último estado
@@ -189,17 +195,10 @@ class StateDB{
             $stmt->bindParam(':lastUpdate',$date);
             $stmt->bindParam(':role',$role);
             $stmt->bindParam(':status',$status);
-            
-            error_log("--------------------");
-            $stmt->execute();
-            $error=$stmt->errorInfo();
-            error_log($error);
-            error_log("********************");
-            
-//            if(!$stmt->execute()){
-//                $error=$stmt->errorInfo();
-//                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-//            }
+            if(!$stmt->execute()){
+                $error=$stmt->errorInfo();
+                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+            }
         }
         return $created;
     }
@@ -290,5 +289,45 @@ class StateDB{
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
         return $response;
+    }
+    /**
+     * Retorna el estado del usuario
+     * @param User $user Objeto Usuario
+     * @return string {'idle'|'sync'}
+     */
+    public function getStatus($user){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `status` FROM `User` WHERE `id`= :id");
+        $id=$user->getId();  //For strict PHP
+        $stmt->bindParam(':id',$id);
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            $response=$row["status"];
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $response;
+    }
+    /**
+     * Marca el estado del usuario como "en sincronización" 'sync' o desocupado 'idle'
+     * @param User $user Objeto Usuario
+     * @param string $status Estado del usuario
+     */
+    public function setStatus($user,$status='idle'){
+        $stmt = $this->handler->prepare("UPDATE User SET 
+            `status`=:status  
+            WHERE id=:id");
+        $id=$user->getId();  //For strict PHP
+        //Fuerza a admitir valores válidos: {'idle'|'sync'}
+        if($status!=='sync'){
+            $status='idle';
+        }
+        $stmt->bindParam(':id',$id);
+        $stmt->bindParam(':status',$status);
+        if(!$stmt->execute()){
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+        }
     }
 }

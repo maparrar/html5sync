@@ -1,39 +1,27 @@
 <?php
-/** Html5Sync File
+/** BusinessDB File
 * @package html5sync @subpackage core */
 include_once 'Connection.php';
 include_once 'Database.php';
 include_once 'Field.php';
 include_once 'Table.php';
-include_once '../dao/DaoTable.php';
-include_once '../dao/StateDB.php';
+include_once 'DaoTable.php';
 /**
-* Html5Sync Class
+* BusinessDB Class
+* Clase para el manejo de la base de datos del negocio.
 *
 * @author https://github.com/maparrar/html5sync
 * @author maparrar <maparrar@gmail.com>
 * @package html5sync
 * @subpackage core
 */
-class Html5Sync{
+class BusinessDB{
     /** 
      * Database object 
      * 
      * @var Database
      */
     protected $db;
-    /** 
-     * StateDB object 
-     * Base de datos SQLite
-     * @var Database
-     */
-    protected $stateDB;
-    /** 
-     * Variable de configuración
-     * 
-     * @var array
-     */
-    protected $config;
     /** 
      * Usuario, clase manejada en html5sync 
      * 
@@ -47,49 +35,24 @@ class Html5Sync{
      */
     protected $tables;
     /** 
-     * Parámetros de html5sync 
+     * Variable de configuración
      * 
      * @var array
      */
-    protected $parameters;
+    protected $config;
     /**
     * Constructor
-    * @param Database $db Database object        
-    * @param User $user Usuario, clase manejada en html5sync        
-    * @param Table[] $tables Lista de tablas del usuario        
-    * @param array $parameters Parámetros de html5sync        
+    * @param User $user Usuario actual
+    * @param Configuration $config Objeto de configuración del sistema
     */
-    function __construct($user){
-        $this->tables=array();
+    function __construct($user,$config){
         $this->user=$user;
-        //Se establece timezone y carga la configuración
-        $this->loadConfiguration();
-        date_default_timezone_set($this->parameters["timezone"]);
+        $this->tables=false;
+        $this->config=$config;
         //Se conecta a la base de datos
         $this->connect();
-        //Carga la estructura de las tablas para el usuario
-        $this->loadTables();
-        //Se verifica si hubo cambios en alguna de las tablas para el usuario desde la 
-        //última conexión usando una función de Hash
-        $this->stateDB=new StateDB();
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    /**
-    * Setter db
-    * @param Database $value Database object
-    * @return void
-    */
-    public function setDb($value) {
-        $this->db=$value;
-    }
-    /**
-    * Setter user
-    * @param User $value Usuario, clase manejada en html5sync
-    * @return void
-    */
-    public function setUser($value) {
-        $this->user=$value;
-    }
     /**
     * Setter tables
     * @param Table[] $value Lista de tablas del usuario
@@ -98,81 +61,41 @@ class Html5Sync{
     public function setTables($value) {
         $this->tables=$value;
     }
-    /**
-    * Setter parameters
-    * @param array $value Parámetros de html5sync
-    * @return void
-    */
-    public function setParameters($value) {
-        $this->parameters=$value;
-    }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
-    * Getter: db
-    * @return Database
-    */
-    public function getDb() {
-        return $this->db;
-    }
-    /**
-    * Getter: user
-    * @return User
-    */
-    public function getUser() {
-        return $this->user;
-    }
-    /**
-    * Getter: tables
+    * Retorna la lista de tablas, solo las carga la primera vez que se solicitan
     * @return Table[]
     */
     public function getTables() {
+        if(!$this->tables){
+            $this->loadTables();
+        }
         return $this->tables;
     }
     /**
-    * Getter: parameters
-    * @return array
+    * Retorna el valor de un parámetro del archivo de configuración a través del
+    * árbol de índices
+    * @return mixed
     */
-    public function getParameters() {
-        return $this->parameters;
-    }    
-    /**
-    * Getter: databaseName
-    * @return array
-    */
-    public function getDatabaseName() {
-        return $this->config["database"]["name"];
-    }    
-    /**
-    * Getter: rowsPerPage
-    * @return int
-    */
-    public function getRowsPerPage() {
-        return $this->parameters["rowsPerPage"];
-    }    
+    public function parameter($parameter1,$parameter2=false,$parameter3=false) {
+        return $this->config->getParameter($parameter1,$parameter2,$parameter3);
+    }
     //**************************************************************************
     //>>>>>>>>>>>>>>>>>>>>>>>   PRIVATED METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
-    /**
-     * Carga la configuración del archivo server/config.php
-     */
-    private function loadConfiguration(){
-        //Se leen las variables de configuración
-        $this->config=require_once '../config.php';
-        $this->parameters=$this->config["parameters"];
-    }
     /**
      * Crea la conexión con la base de datos
      */
     private function connect(){
         //Se crea una instancia de la base de datos con la conexión (read+write)
         $this->db=new Database(
-                $this->config["database"]["name"],
-                $this->config["database"]["driver"],
-                $this->config["database"]["host"], 
+                $this->parameter("database","name"),
+                $this->parameter("database","driver"),
+                $this->parameter("database","host"), 
                 new Connection(
                     "all",
-                    $this->config["database"]["login"],
-                    $this->config["database"]["password"]
+                    $this->parameter("database","login"),
+                    $this->parameter("database","password")
                 )
             );
     }
@@ -183,7 +106,7 @@ class Html5Sync{
     private function loadTables(){
         unset($this->tables);
         $this->tables=array();
-        $tablesData=$this->config["tables"];
+        $tablesData=$this->parameter("tables");
         //Se crea el objeto para manejar tablas con PDO
         $dao=new DaoTable($this->db);
         //Se lee cada tabla
@@ -191,7 +114,7 @@ class Html5Sync{
             if($this->checkIfAccessibleTable($tableData)){
                 $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
                 //Se usa el tipo de actualización seleccionada
-                if($this->parameters["updateMode"]==="updatedColumn"){
+                if($this->parameter("main","updateMode")==="updatedColumn"){
                     //Si la columna de actualización no existe, se crea
                     $dao->setUpdatedColumnMode($table);
                 }
@@ -225,17 +148,10 @@ class Html5Sync{
         }
         return $accessible;
     }
-    
     //**************************************************************************
     //>>>>>>>>>>>>>>>>>>>>>>>>   PUBLIC METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
-    /**
-     * Retorna la última fecha de actualización de los datos
-     * @return DateTime Fecha de la última verificación de html5sync
-     */
-    public function getLastUpdate(){
-        return $this->stateDB->getLastUpdate($this->user);
-    }
+    
     
     
     
