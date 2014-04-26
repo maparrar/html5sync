@@ -51,11 +51,14 @@ var Html5Sync = function(params,callback){
         
         //Hace la carga de datos de configuración del servidor
         self.conn=new Connection();
+        debug("Starting the system setup...");
         self.conn.loadConfiguration(function(err,configuration){
             if(err){
+                debug("Html5sync require Internet connection to setup the system","bad");
                 if(callback)callback(err);
             }else{
-                debug(configuration);
+                debug("Setup success","good");
+//                debug(configuration);
             }
         });
         
@@ -423,19 +426,27 @@ var Html5Sync = function(params,callback){
             );
         self.stateLabel=$("#html5sync_state");
         self.loadingLabel=$(".html5sync_spinner");
-        window.debug=function(message,level){
+        window.debug=function(message,type,level){
             if(self.params.debugging){
                 //Si se pasa el nivel, se agregan los separadores de nivel
                 var levelText="";
                 if(level){
                     for(var i=0;i<parseInt(level);i++){
-                        levelText+="&#10148; ";
+                        levelText+="&#10140; ";
+//                        levelText+="&#8801; ";
                     }
+                }
+                //Especifica el tipo de mensaje
+                var typeText="";
+                if(type==='good'){
+                    typeText="html5sync_message_good";
+                }else if(type==='bad'){
+                    typeText="html5sync_message_bad";
                 }
                 if(!$("#html5sync_debug").exist()){
                     $("body").prepend('<div id="html5sync_debug"></div>');
                 }
-                $("#html5sync_debug").append(levelText+message+"<br>");
+                $("#html5sync_debug").append(levelText+'<span class="html5sync_message '+typeText+'">'+message+"</span><br>");
                 $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
             }
         };
