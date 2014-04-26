@@ -69,21 +69,19 @@ class StateDB{
     private function createDB($path){
         try{
             $this->handler=new PDO('sqlite:'.$path);
-            if(!$this->existDB($path)){
-                /*status: When is synchronizing: ['sync'|'idle']*/
-                $query="
-                    CREATE TABLE IF NOT EXISTS `User` (
-                        `id` INTEGER NOT NULL PRIMARY KEY,
-                        `versionDB` INTEGER NOT NULL,
-                        `hashTable` TEXT,
-                        `lastUpdate` TEXT,
-                        `role` TEXT,
-                        `status` TEXT 
-                    );
-                ";
-                // Crea las tablas
-                $this->handler->exec($query);
-            }
+            /*status: When is synchronizing: ['sync'|'idle']*/
+            $query="
+                CREATE TABLE IF NOT EXISTS `User` (
+                    `id` INTEGER NOT NULL PRIMARY KEY,
+                    `versionDB` INTEGER NOT NULL,
+                    `hashTable` TEXT,
+                    `lastUpdate` TEXT,
+                    `role` TEXT,
+                    `status` TEXT 
+                );
+            ";
+            // Crea las tablas
+            $this->handler->exec($query);
         } catch (Exception $ex) {
             error_log($ex->getMessage());
         }

@@ -12,13 +12,15 @@ $error=false;
 $user=new User(intval($_SESSION['html5sync_userId']),$_SESSION['html5sync_role']);
 //Carga la configuración del archivo server/config.php
 $config=new Configuration();
+//Establece el timezone definido en el archivo de configuración
+date_default_timezone_set($config->getParameter("main","timezone"));
+
 //Crea el objeto para el manejo de la base de datos del negocio
 $businessDB=new BusinessDB($user,$config);
 //Crea el objeto para manejo de la base de datos estática y crea el usuario si no existe
 $stateDB=new StateDB($user);
 
-//Establece el timezone definido en el archivo de configuración
-date_default_timezone_set($config->getParameter("main","timezone"));
+
 
 
 
@@ -36,7 +38,7 @@ $stateDB->setStatus($user,'sync');
 //Carga la lista de tablas del usuario
 $tables=$businessDB->getTables();
 
-print_r($tables);
+//print_r($tables);
 
 
 

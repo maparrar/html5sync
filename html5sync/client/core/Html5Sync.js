@@ -41,6 +41,16 @@ var Html5Sync = function(params,callback){
         //Estructura el código HTML5
         setStructure();
         
+        //Hace la carga de datos de configuración del servidor
+        
+        //Almacena la configuración en indexedDB
+        
+        //Si no encuentra la configuración, recarga la configuración del servidor
+        
+        //Si no encuentra y no puede cargar del servidor, avisa y se inactiva
+        
+        
+        
         //Inicia el proceso de sincronización
         startSync();
     }();
