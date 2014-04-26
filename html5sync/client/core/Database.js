@@ -319,4 +319,30 @@ var Database = function(params,callback){
             debug("No se puede borrar la base de datos: "+name);
         };
     };
+    
+    
+};
+/**
+* Static method. Check if a database exists
+* @param {string} name Database name
+* @param {function} callback Function to return the response
+* @returns {bool} True if the database exists
+*/
+Database.databaseExists=function(name,callback){
+   var dbExists = true;
+   var request = window.indexedDB.open(name);
+   request.onupgradeneeded = function (e){
+       if(request.result.version===1){
+           dbExists = false;
+           window.indexedDB.deleteDatabase(name);
+           if(callback)
+               callback(dbExists);
+       }
+   };
+   request.onsuccess = function(e) {
+       if(dbExists){
+           if(callback)
+                   callback(dbExists);
+       }
+   };
 };
