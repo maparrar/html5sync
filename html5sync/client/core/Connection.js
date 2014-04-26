@@ -5,10 +5,10 @@
  * - jomejia: https://github.com/jomejia
  */
 /**
- * Clase para manejar la configuración cargada desde el servidor
+ * Clase para manejar la conexión con el servidor
  * @param {function} callback Función a la que se retornan los resultados
  */
-var Configuration = function(params,callback){
+var Connection = function(callback){
     /**************************************************************************/
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
@@ -36,7 +36,7 @@ var Configuration = function(params,callback){
     /**
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
-    var Configuration = function() {
+    var Connection = function() {
         //Estructura el código HTML5
         setStructure();
         
