@@ -14,6 +14,12 @@ var Html5Sync = function(params,callback){
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
     var self = this;
+    self.conn=false;    //Objeto de connexión con el servidor
+    
+    
+    
+    
+    
     self.busyFunctions=new Array();  //Lista de funciones ocupadas que solo se pueden usar una vez al tiempo
     
     self.state;         //{bool} Estado de la conexión con el servidor.
@@ -41,7 +47,23 @@ var Html5Sync = function(params,callback){
         //Estructura el código HTML5
         setStructure();
         
+        
+        
         //Hace la carga de datos de configuración del servidor
+        self.conn=new Connection();
+        self.conn.loadConfiguration(function(err,configuration){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                debug(configuration);
+            }
+        });
+        
+        
+        
+        
+        
+        
         
         //Almacena la configuración en indexedDB
         
@@ -52,7 +74,7 @@ var Html5Sync = function(params,callback){
         
         
         //Inicia el proceso de sincronización
-        startSync();
+//        startSync();
     }();
    
     /**************************************************************************/
@@ -401,12 +423,19 @@ var Html5Sync = function(params,callback){
             );
         self.stateLabel=$("#html5sync_state");
         self.loadingLabel=$(".html5sync_spinner");
-        window.debug=function(message){
+        window.debug=function(message,level){
             if(self.params.debugging){
+                //Si se pasa el nivel, se agregan los separadores de nivel
+                var levelText="";
+                if(level){
+                    for(var i=0;i<parseInt(level);i++){
+                        levelText+="&#10148; ";
+                    }
+                }
                 if(!$("#html5sync_debug").exist()){
                     $("body").prepend('<div id="html5sync_debug"></div>');
                 }
-                $("#html5sync_debug").append(message+"<br>");
+                $("#html5sync_debug").append(levelText+message+"<br>");
                 $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
             }
         };
