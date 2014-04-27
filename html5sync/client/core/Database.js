@@ -75,11 +75,12 @@ var Database = function(params,callback){
     //y se agregan a la variable self (this del objeto)
     var def = {
         database: "html5db",
-        load: false,
+        load: false,    //True si solo se debe cargar la base de datos (no crear)
         version: 1,
         options: {
             overwriteObjectStores: true
-        }
+        },
+        debugLevel:0    //Nivel desde el cuál se debe empezar para la visualización del debug
     };
     self.params = $.extend(def, params);
     /**
@@ -87,13 +88,13 @@ var Database = function(params,callback){
      */
     var Database = function() {
         if(window.indexedDB !== undefined) {
-            if(self.params.load){
+            if(self.params.load){   //Si solo se debe cargar la base de datos (no crear)
                 self.request = window.indexedDB.open(self.params.database);
             }else{
                 self.version = self.params.version; //Versión de la Base de datos indexedDB
                 self.request = window.indexedDB.open(self.params.database, self.version);
             }
-            debug("Iniciando acceso a la base de datos: "+self.params.database);
+            debug("Accessing database: "+self.params.database,"info",self.params.debugLevel);
             //Asigna los eventos
             events();
         }else{
@@ -122,11 +123,11 @@ var Database = function(params,callback){
          */
         self.request.onsuccess = function(e) {
             self.db = self.request.result;
-            self.callback(false);
             if(self.params.load){
                 self.version=self.request.result.version;
             }
-            debug("Se he accedido con éxito la base de datos: "+self.params.database+" - versión: "+self.version);
+            debug("Successful access to the database: "+self.params.database+" - version: "+self.version,"good",self.params.debugLevel+1);
+            self.callback(false);
         };
         /*
          * Evento del request que se dispara cuando la base de datos
@@ -232,13 +233,13 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.get=function(storeName,key,callback){
-        debug("get() - Transacción iniciada");
+        debug("get() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName]);
         var store = tx.objectStore(storeName);
         var range=IDBKeyRange.only(key);
         var output=new Array();
         store.openCursor(range).onerror=function(e){
-            debug("... get() ... No existe el objeto de clave '"+key+"' en la base de datos.");
+            debug("get() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
             if(callback)callback(e.target.error);
         };
         store.openCursor(range).onsuccess = function(e) {
@@ -247,7 +248,7 @@ var Database = function(params,callback){
                 output.push(cursor.value);
                 cursor.continue();
             }else{
-                debug("... get() - Transacción finalizada");
+                debug("get() - Transaction ended","good",self.params.debugLevel+2);
                 if(callback)callback(false,output);
             }
         };
@@ -344,5 +345,26 @@ Database.databaseExists=function(name,callback){
            if(callback)
                    callback(dbExists);
        }
+   };
+};
+/**
+* Static method. Return a database (the database must exists)
+* @param {string} name Database name
+* @param {function} callback Function to return the response
+* @param {int} debugLevel Nivel de debug
+*/
+Database.loadDatabase=function(name,callback,debugLevel){
+   var request = window.indexedDB.open(name);
+   request.onerror = function(e) {
+       callback(new Error("Unable to connect to the local database "+name));
+   };
+   request.onsuccess = function(e) {
+        var database=new Database({load:true,database:name,debugLevel:debugLevel},function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(callback)callback(false,database);
+            }
+        });
    };
 };

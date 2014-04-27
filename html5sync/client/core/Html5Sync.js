@@ -14,7 +14,13 @@ var Html5Sync = function(params,callback){
     /******************************* ATTRIBUTES *******************************/
     /**************************************************************************/
     var self = this;
-    self.conn=false;    //Objeto de connexión con el servidor
+    self.configurator=false;    //Objeto para manejo de la configuración cargada del servidor
+    self.config=false;          
+    self.connector=false;       //Objeto de connexión con el servidor
+    
+    self.callback=callback; //Function to return responses
+    
+    
     
     
     
@@ -34,6 +40,7 @@ var Html5Sync = function(params,callback){
     //y se agregan a la variable self (this del objeto)
     var def = {
         debugging:false,
+        debugLevel:0,       //Nivel de mensajes de debug que se muestran. 0 para mostrar todos
         html5syncFolder:"html5sync/",
         stateTimer: 10000,
         showState:false,
@@ -47,39 +54,73 @@ var Html5Sync = function(params,callback){
         //Estructura el código HTML5
         setStructure();
         
-        
-        
         //Hace la carga de datos de configuración del servidor
-        self.conn=new Connection();
-        debug("Starting the system setup...");
-        self.conn.loadConfiguration(function(err,configuration){
+        loadConfiguration(function(err,data){
             if(err){
-                debug("Html5sync require Internet connection to setup the system","bad");
                 if(callback)callback(err);
             }else{
-                debug("Setup success","good");
-//                debug(configuration);
+                self.config=data;
+                console.debug(self.config);
             }
         });
         
         
-        
-        
-        
-        
-        
-        //Almacena la configuración en indexedDB
-        
-        //Si no encuentra la configuración, recarga la configuración del servidor
-        
-        //Si no encuentra y no puede cargar del servidor, avisa y se inactiva
-        
+                
         
         
         //Inicia el proceso de sincronización
 //        startSync();
     }();
    
+    /**************************************************************************/
+    /****************************** INIT METHODS ******************************/
+    /**************************************************************************/
+    /**
+     * Load the configuration from the server. If it is not found, load from the
+     * local database. If not, throw an error.
+     * @param {function} callback Funtion to return error if happens
+     */
+    function loadConfiguration(callback){
+        self.connector=new Connector();
+        self.configurator=new Configurator();
+        debug("Starting the system setup...");
+        self.connector.loadConfiguration(function(err,data){
+            if(err){
+                self.configurator.loadConfiguration(function(err,data){
+                    if(err){
+                        debug("Html5sync require Internet connection to setup the system","bad",1);
+                        debug("Setup failed","bad");
+                        if(callback)callback(err);
+                    }else{
+                        debug("Successful setup","good");
+                        callback(false,data);
+                    }
+                },1);
+            }else{
+                self.configurator.saveConfiguration(data,function(err){
+                    if(err){
+                        debug("Html5sync require Internet connection to setup the system","bad",1);
+                    }else{
+                        debug("Successful setup","good");
+                        callback(false,data);
+                    }
+                },1);
+            }
+        });
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /**************************************************************************/
     /****************************** SYNC METHODS ******************************/
     /**************************************************************************/
@@ -427,27 +468,43 @@ var Html5Sync = function(params,callback){
         self.stateLabel=$("#html5sync_state");
         self.loadingLabel=$(".html5sync_spinner");
         window.debug=function(message,type,level){
+            if(level===undefined){
+                level=0;
+            }
             if(self.params.debugging){
-                //Si se pasa el nivel, se agregan los separadores de nivel
-                var levelText="";
-                if(level){
-                    for(var i=0;i<parseInt(level);i++){
-                        levelText+="&#10140; ";
-//                        levelText+="&#8801; ";
+                //Se verifica el nivel de debug
+                var showable=false;
+                if(self.params.debugLevel===0){
+                    showable=true;
+                }else{
+                    if(level<=self.params.debugLevel){
+                        showable=true;
                     }
                 }
-                //Especifica el tipo de mensaje
-                var typeText="";
-                if(type==='good'){
-                    typeText="html5sync_message_good";
-                }else if(type==='bad'){
-                    typeText="html5sync_message_bad";
+                if(showable){
+                    //Si se pasa el nivel, se agregan los separadores de nivel
+                    var levelText="";
+                    if(level){
+                        for(var i=0;i<level;i++){
+                            levelText+="&#10140; ";
+    //                        levelText+="&#8801; ";
+                        }
+                    }
+                    //Especifica el tipo de mensaje
+                    var typeText="";
+                    if(type==='good'){
+                        typeText="html5sync_message_good";
+                    }else if(type==='bad'){
+                        typeText="html5sync_message_bad";
+                    }else{
+                        typeText="html5sync_message_info";
+                    }
+                    if(!$("#html5sync_debug").exist()){
+                        $("body").prepend('<div id="html5sync_debug"></div>');
+                    }
+                    $("#html5sync_debug").append(levelText+'<span class="html5sync_message '+typeText+'">'+message+"</span><br>");
+                    $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
                 }
-                if(!$("#html5sync_debug").exist()){
-                    $("body").prepend('<div id="html5sync_debug"></div>');
-                }
-                $("#html5sync_debug").append(levelText+'<span class="html5sync_message '+typeText+'">'+message+"</span><br>");
-                $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
             }
         };
         //Agrega el visor de la base de datos

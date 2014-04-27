@@ -16,6 +16,15 @@
     position: absolute;
     right: 10px;
 }
+#html5sync_debug .html5sync_message_info{
+    color: orange;
+}
+#html5sync_debug .html5sync_message_good{
+    color: #06C800;
+}
+#html5sync_debug .html5sync_message_bad{
+    color: #F8000E;
+}
 #html5sync_state{
     -moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
     -webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
