@@ -307,21 +307,6 @@ var Database = function(params,callback){
             debug("... del() ... Transacción finalizada");
         };
     };
-    /**
-     * Borra una base de datos indexedDB ¡¡¡ Elimina todo el contenido !!! 
-     * @param {string} name Nombre de la base de datos
-     */
-    self.deleteDatabase=function (name){
-        var request=window.indexedDB.deleteDatabase(name);
-        request.onsuccess = function () {
-            debug("Base de datos eliminada: "+name);
-        };
-        request.onerror = function () {
-            debug("No se puede borrar la base de datos: "+name);
-        };
-    };
-    
-    
 };
 /**
 * Static method. Check if a database exists
@@ -354,6 +339,7 @@ Database.databaseExists=function(name,callback){
 * @param {int} debugLevel Nivel de debug
 */
 Database.loadDatabase=function(name,callback,debugLevel){
+    if(!debugLevel)debugLevel=0;
    var request = window.indexedDB.open(name);
    request.onerror = function(e) {
        callback(new Error("Unable to connect to the local database "+name));
@@ -367,4 +353,22 @@ Database.loadDatabase=function(name,callback,debugLevel){
             }
         });
    };
+};
+/**
+* Borra una base de datos indexedDB ¡¡¡ Elimina todo el contenido !!! 
+* @param {string} name Nombre de la base de datos
+* @param {function} callback Function to return the response
+* @param {int} debugLevel Nivel de debug
+*/
+Database.deleteDatabase=function(name,callback,debugLevel){
+    if(!debugLevel)debugLevel=0;
+    var request=window.indexedDB.deleteDatabase(name);
+    request.onsuccess = function () {
+        debug("Database deleted: "+name,"good",debugLevel);
+        if(callback)callback(false);
+    };
+    request.onerror = function () {
+        debug("Cannot delete database: "+name,"bad",debugLevel);
+        if(callback)callback(false);
+    };
 };
