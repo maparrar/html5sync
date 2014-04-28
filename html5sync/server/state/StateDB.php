@@ -33,7 +33,7 @@ class StateDB{
         $this->createDB($this->path);
         //Si el usuario no existe en la base de datos, lo crea
         if(!$this->userExists($user)){
-            $this->userCreate(md5("emptystructure"),$user);
+            $this->userCreate($user);
         }
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -45,7 +45,7 @@ class StateDB{
     public function setPath($value) {
         $this->path=$value;
     }
-    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   GETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
     * Getter: path
     * @return string
@@ -74,9 +74,12 @@ class StateDB{
                 CREATE TABLE IF NOT EXISTS `User` (
                     `id` INTEGER NOT NULL PRIMARY KEY,
                     `versionDB` INTEGER NOT NULL,
+                    `lastUpdate` TEXT
+                );
+                CREATE TABLE IF NOT EXISTS `Table` (
+                    `name` TEXT NOT NULL PRIMARY KEY,
                     `hashTable` TEXT,
                     `lastUpdate` TEXT,
-                    `role` TEXT,
                     `status` TEXT 
                 );
             ";
@@ -86,44 +89,25 @@ class StateDB{
             error_log($ex->getMessage());
         }
     }
+    
+    
+    
+    /**************************************************************************/
+    /******************************   DATABASE  *******************************/
+    /**************************************************************************/
     /**
-     * Verifica para cada usuario si la estructura de las tablas ha cambiado por
-     * medio de una función de hash. 
-     * @param string $state Estructura de las tablas en JSON
+     * Retorna el número de la versión para el usuario
      * @param User $user Objeto Usuario
-     * @return int El número de la versión de la base de datos
+     * @return int Versión la base de datos para el usuario
      */
-    public function checkIfStructureChanged($state,$user){
-        $changed=false;
-        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
-//        if(!$this->userExists($user)){
-//            $this->userCreate(md5("emptystructure"),$user);
-//            $changed=true;
-//        }else{
-            //Retorna el último estado
-            $oldState=$this->getHashTable($user);
-            $newState=md5($state);
-            if($newState!=$oldState){
-                $changed=true;
-            }
-//        }
-        return  $changed;
-    }
-    /**
-     * Retorna la fecha de la última actualización almacenada en la base de datos de estado
-     * @param User $user Objeto Usuario
-     * @return DateTime Objeto con la fecha de la última actualización
-     */
-    public function getLastUpdate($user){
+    public function getVersion($user){
         $response=false;
-        $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `User` WHERE `id`= :id");
+        $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
         $id=$user->getId();  //For strict PHP
         $stmt->bindParam(':id',$id);
         if ($stmt->execute()) {
             $row=$stmt->fetch();
-            if($row){
-                $response=new DateTime($row["lastUpdate"]);
-            }
+            $response=intval($row["versionDB"]);
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
@@ -131,77 +115,29 @@ class StateDB{
         return $response;
     }
     /**
-     * Actualiza la última fecha de actualización con la fecha de ahora
+     * Aumenta en uno la versión de la base de datos de usuario y retorna la resultante
      * @param User $user Objeto Usuario
+     * @return int Versión la base de datos para el usuario
      */
-    public function updateLastUpdate($user){
+    public function increaseVersion($user){
         $stmt = $this->handler->prepare("UPDATE User SET 
-            `lastUpdate`=:lastUpdate  
+            `versionDB`=:versionDB 
             WHERE id=:id");
+        $version=$this->getVersion($user)+1;
         $id=$user->getId();  //For strict PHP
-        $date=date('Y-m-d H:i:s');
         $stmt->bindParam(':id',$id);
-        $stmt->bindParam(':lastUpdate',$date);
+        $stmt->bindParam(':versionDB',$version);
         if(!$stmt->execute()){
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
+        return $this->getVersion($user);
     }
-    /**
-     * Verifica para cada usuario si la estructura de las tablas ha cambiado por
-     * medio de una función de hash. Si ha cambiado, actualiza el número de 
-     * versión. Si no ha cambiado, retorna el mismo número de versión.
-     * @param string $state Estructura de las tablas en JSON
-     * @param User $user Objeto Usuario
-     * @return int El número de la versión de la base de datos
-     */
-    public function version($state,$user){
-        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
-        if($this->userExists($user)){
-            //Retorna el último estado
-            $oldState=$this->getHashTable($user);
-            $newState=md5($state);
-            if($newState!=$oldState){
-                $this->updateHashTable($newState,$user);
-            }
-        }
-        //Retorna el mismo número de versión si no hubo cambios, más uno si hubo cambios
-        return  $this->getVersion($user);
-    }
+    
+    
     /**************************************************************************/
-    /******************************   U S E R S  ******************************/
+    /********************************   USERS  ********************************/
     /**************************************************************************/
-    /**
-     * Inserta un usuario en la tabla de User
-     * @param string $hashTable Hash de la estructura de la tabla para el usuario
-     * @param User $user Objeto Usuario
-     * @return boolean True si se pudo insertar el usuario, false en otro caso
-     */
-    private function userCreate($hashTable,$user){
-        $created=false;
-        if(!$this->userExists($user)){
-            $stmt = $this->handler->prepare("
-                INSERT INTO User (`id`,`versionDB`,`hashTable`,`lastUpdate`,`role`,`status`) 
-                VALUES           (:id,:versionDB,:hashTable,:lastUpdate,:role,:status)
-            ");
-            $version=1;
-            $id=$user->getId();  //For strict PHP
-            $role=$user->getRole();  //For strict PHP
-            $date=date('Y-m-d H:i:s');
-            $status='idle';
-            $stmt->bindParam(':id',$id);
-            $stmt->bindParam(':versionDB',$version);
-            $stmt->bindParam(':hashTable',$hashTable);
-            $stmt->bindParam(':lastUpdate',$date);
-            $stmt->bindParam(':role',$role);
-            $stmt->bindParam(':status',$status);
-            if(!$stmt->execute()){
-                $error=$stmt->errorInfo();
-                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-            }
-        }
-        return $created;
-    }
     /**
      * Verifica si un usuario existe en la base de datos de estado
      * @param User $user Objeto Usuario
@@ -228,106 +164,309 @@ class StateDB{
         return $exist;
     }
     /**
-     * Retorna el número de la versión para el usuario
+     * Inserta un usuario en la tabla de User
      * @param User $user Objeto Usuario
-     * @return int Versión la base de datos para el usuario
+     * @return boolean True si se pudo insertar el usuario, false en otro caso
      */
-    private function getVersion($user){
-        $response=false;
-        $stmt = $this->handler->prepare("SELECT `versionDB` FROM `User` WHERE `id`= :id");
-        $id=$user->getId();  //For strict PHP
-        $stmt->bindParam(':id',$id);
+    private function userCreate($user){
+        $created=false;
+        if(!$this->userExists($user)){
+            $stmt = $this->handler->prepare("
+                INSERT INTO User (`id`,`versionDB`,`lastUpdate`) 
+                VALUES           (:id,:versionDB,:lastUpdate)
+            ");
+            $version=1;
+            $id=$user->getId();  //For strict PHP
+            $role=$user->getRole();  //For strict PHP
+            $date=date('Y-m-d H:i:s');
+            $stmt->bindParam(':id',$id);
+            $stmt->bindParam(':versionDB',$version);
+            $stmt->bindParam(':lastUpdate',$date);
+            if(!$stmt->execute()){
+                $error=$stmt->errorInfo();
+                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+            }
+        }
+        return $created;
+    }
+    
+    /**************************************************************************/
+    /*******************************   TABLES  ********************************/
+    /**************************************************************************/
+    /**
+     * Verify if a table already exists
+     * @param Table $table Object Table
+     * @return boolean True if the table exists, false otherwise
+     */
+    private function tableExists($table){
+        $exist=false;
+        $stmt = $this->handler->prepare("SELECT name FROM `Table` WHERE name=:name");
+        $name=$table->getName();  //For strict PHP
+        $stmt->bindParam(':name',$name);
         if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $response=intval($row["versionDB"]);
+            $list=$stmt->fetch();
+            if($list){
+                if($list["name"]===$table->getName()){
+                    $exist=true;
+                }else{
+                    $exist=false;
+                }
+            }
         }else{
             $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
-        return $response;
+        return $exist;
     }
+    /**
+     * Insert a Table (or array of tables) in this database
+     * @param Table[] $tables Table to inser into database
+     */
+    public function insertTables($tables){
+        if(!is_array($tables)){
+            $listTables=array($tables);
+        }else{
+            $listTables=$tables;
+        }
+        foreach ($listTables as $table) {
+            $this->insertTable($table);
+        }
+    }
+    /**
+     * Insert a table in database.
+     * @param Table $table Table to insert
+     */
+    private function insertTable($table){
+        if(!$this->tableExists($table)){
+            $stmt = $this->handler->prepare("
+                INSERT INTO `Table` (`name`,`hashTable`,`lastUpdate`,`status`) 
+                VALUES           (:name,:hashTable,:lastUpdate,:status)
+            ");
+            $name=$table->getName();  //For strict PHP
+            $hashTable=md5(mt_rand(0,100000));  //For strict PHP
+            $lastUpdate=date('Y-m-d H:i:s');
+            $status="idle";
+            $stmt->bindParam(':name',$name);
+            $stmt->bindParam(':hashTable',$hashTable);
+            $stmt->bindParam(':lastUpdate',$lastUpdate);
+            $stmt->bindParam(':status',$status);
+            if(!$stmt->execute()){
+                $error=$stmt->errorInfo();
+                error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+            }
+        }
+    }
+    /**
+     * Delete the tables for the user
+     */
+    public function deleteTables(){
+        $stmt = $this->handler->prepare("DELETE FROM `Table`");
+        if(!$stmt->execute()){
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Verifica para cada usuario si la estructura de las tablas ha cambiado por
+     * medio de una función de hash. 
+     * @param string $state Estructura de las tablas en JSON
+     * @param User $user Objeto Usuario
+     * @return int El número de la versión de la base de datos
+     */
+//    public function checkIfStructureChanged($state,$user){
+//        $changed=false;
+//        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
+////        if(!$this->userExists($user)){
+////            $this->userCreate(md5("emptystructure"),$user);
+////            $changed=true;
+////        }else{
+//            //Retorna el último estado
+//            $oldState=$this->getHashTable($user);
+//            $newState=md5($state);
+//            if($newState!=$oldState){
+//                $changed=true;
+//            }
+////        }
+//        return  $changed;
+//    }
+    /**
+     * Retorna la fecha de la última actualización almacenada en la base de datos de estado
+     * @param User $user Objeto Usuario
+     * @return DateTime Objeto con la fecha de la última actualización
+     */
+//    public function getLastUpdate($user){
+//        $response=false;
+//        $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `User` WHERE `id`= :id");
+//        $id=$user->getId();  //For strict PHP
+//        $stmt->bindParam(':id',$id);
+//        if ($stmt->execute()) {
+//            $row=$stmt->fetch();
+//            if($row){
+//                $response=new DateTime($row["lastUpdate"]);
+//            }
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+//        }
+//        return $response;
+//    }
+    /**
+     * Actualiza la última fecha de actualización con la fecha de ahora
+     * @param User $user Objeto Usuario
+     */
+//    public function updateLastUpdate($user){
+//        $stmt = $this->handler->prepare("UPDATE User SET 
+//            `lastUpdate`=:lastUpdate  
+//            WHERE id=:id");
+//        $id=$user->getId();  //For strict PHP
+//        $date=date('Y-m-d H:i:s');
+//        $stmt->bindParam(':id',$id);
+//        $stmt->bindParam(':lastUpdate',$date);
+//        if(!$stmt->execute()){
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+//        }
+//    }
+    /**
+     * Verifica para cada usuario si la estructura de las tablas ha cambiado por
+     * medio de una función de hash. Si ha cambiado, actualiza el número de 
+     * versión. Si no ha cambiado, retorna el mismo número de versión.
+     * @param string $state Estructura de las tablas en JSON
+     * @param User $user Objeto Usuario
+     * @return int El número de la versión de la base de datos
+     */
+//    public function version($state,$user){
+//        //Verifica si el usuario existe, sino, lo agrega e inserta el estado inicial
+//        if($this->userExists($user)){
+//            //Retorna el último estado
+//            $oldState=$this->getHashTable($user);
+//            $newState=md5($state);
+//            if($newState!=$oldState){
+//                $this->updateHashTable($newState,$user);
+//            }
+//        }
+//        //Retorna el mismo número de versión si no hubo cambios, más uno si hubo cambios
+//        return  $this->getVersion($user);
+//    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /**
      * Actualiza el estado para el usuario, aumenta en uno el número de la versión.
      * @param string $hashTable Hash de las tablas para el usuario
      * @param User $user Objeto Usuario
      * @return boolean True si pudo actualizar los datos. False en otro caso
      */
-    private function updateHashTable($hashTable,$user){
-        $updated=false;
-        $stmt = $this->handler->prepare("UPDATE User SET 
-            `versionDB`=:versionDB,
-            `hashTable`=:hashTable 
-            WHERE id=:id");
-        $version=$this->getVersion($user)+1;
-        $id=$user->getId();  //For strict PHP
-        $stmt->bindParam(':id',$id);
-        $stmt->bindParam(':versionDB',$version);
-        $stmt->bindParam(':hashTable',$hashTable);
-        if($stmt->execute()){
-            $updated=true;
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-        }
-        return $updated;
-    }
+//    private function updateHashTable($hashTable,$user){
+//        $updated=false;
+//        $stmt = $this->handler->prepare("UPDATE User SET 
+//            `versionDB`=:versionDB,
+//            `hashTable`=:hashTable 
+//            WHERE id=:id");
+//        $version=$this->getVersion($user)+1;
+//        $id=$user->getId();  //For strict PHP
+//        $stmt->bindParam(':id',$id);
+//        $stmt->bindParam(':versionDB',$version);
+//        $stmt->bindParam(':hashTable',$hashTable);
+//        if($stmt->execute()){
+//            $updated=true;
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+//        }
+//        return $updated;
+//    }
     /**
      * Retorna el número de la versión para el usuario
      * @param User $user Objeto Usuario
      * @return int Versión la base de datos para el usuario
      */
-    private function getHashTable($user){
-        $response=false;
-        $stmt = $this->handler->prepare("SELECT `hashTable` FROM `User` WHERE `id`= :id");
-        $id=$user->getId();  //For strict PHP
-        $stmt->bindParam(':id',$id);
-        if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $response=$row["hashTable"];
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-        }
-        return $response;
-    }
+//    private function getHashTable($user){
+//        $response=false;
+//        $stmt = $this->handler->prepare("SELECT `hashTable` FROM `User` WHERE `id`= :id");
+//        $id=$user->getId();  //For strict PHP
+//        $stmt->bindParam(':id',$id);
+//        if ($stmt->execute()) {
+//            $row=$stmt->fetch();
+//            $response=$row["hashTable"];
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+//        }
+//        return $response;
+//    }
     /**
      * Retorna el estado del usuario
      * @param User $user Objeto Usuario
      * @return string {'idle'|'sync'}
      */
-    public function getStatus($user){
-        $response=false;
-        $stmt = $this->handler->prepare("SELECT `status` FROM `User` WHERE `id`= :id");
-        $id=$user->getId();  //For strict PHP
-        $stmt->bindParam(':id',$id);
-        if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $response=$row["status"];
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
-        }
-        return $response;
-    }
+//    public function getStatus($user){
+//        $response=false;
+//        $stmt = $this->handler->prepare("SELECT `status` FROM `User` WHERE `id`= :id");
+//        $id=$user->getId();  //For strict PHP
+//        $stmt->bindParam(':id',$id);
+//        if ($stmt->execute()) {
+//            $row=$stmt->fetch();
+//            $response=$row["status"];
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+//        }
+//        return $response;
+//    }
     /**
      * Marca el estado del usuario como "en sincronización" 'sync' o desocupado 'idle'
      * @param User $user Objeto Usuario
      * @param string $status Estado del usuario
      */
-    public function setStatus($user,$status='idle'){
-        $stmt = $this->handler->prepare("UPDATE User SET 
-            `status`=:status  
-            WHERE id=:id");
-        $id=$user->getId();  //For strict PHP
-        //Fuerza a admitir valores válidos: {'idle'|'sync'}
-        if($status!=='sync'){
-            $status='idle';
-        }
-        $stmt->bindParam(':id',$id);
-        $stmt->bindParam(':status',$status);
-        if(!$stmt->execute()){
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-        }
-    }
+//    public function setStatus($user,$status='idle'){
+//        $stmt = $this->handler->prepare("UPDATE User SET 
+//            `status`=:status  
+//            WHERE id=:id");
+//        $id=$user->getId();  //For strict PHP
+//        //Fuerza a admitir valores válidos: {'idle'|'sync'}
+//        if($status!=='sync'){
+//            $status='idle';
+//        }
+//        $stmt->bindParam(':id',$id);
+//        $stmt->bindParam(':status',$status);
+//        if(!$stmt->execute()){
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+//        }
+//    }
 }

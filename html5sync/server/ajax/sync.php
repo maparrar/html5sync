@@ -7,7 +7,6 @@ include_once '../state/StateDB.php';
 
 //Control de errores
 $error=false;
-
 //Toma los datos de usuario y rol de la aplicación
 $user=new User(intval($_SESSION['html5sync_userId']),$_SESSION['html5sync_role']);
 //Carga la configuración del archivo server/config.php

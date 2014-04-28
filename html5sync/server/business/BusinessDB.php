@@ -63,7 +63,7 @@ class BusinessDB{
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
-    * Retorna la lista de tablas, solo las carga la primera vez que se solicitan
+    * Retorna la lista de tablas (sin datos), solo las carga la primera vez que se solicitan
     * @return Table[]
     */
     public function getTables() {
@@ -118,6 +118,8 @@ class BusinessDB{
                     //Si la columna de actualización no existe, se crea
                     $dao->setUpdatedColumnMode($table);
                 }
+                $table->setTotalOfRows($dao->getTotalOfRows($table));
+                $table->setInitialRow(0);
                 array_push($this->tables,$table);
             }
         }
@@ -151,6 +153,53 @@ class BusinessDB{
     //**************************************************************************
     //>>>>>>>>>>>>>>>>>>>>>>>>   PUBLIC METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
+    /**
+     * Retorna la lista de tablas en formato JSON. Si no se pasa el parámetro, usa
+     * las cargadas en el objeto
+     * @return string Las tablas del usuario en formato JSON
+     */
+    public function getTablesInJson($tables=false){
+        $listTables=array();
+        if($tables){
+            if(!is_array($tables)){
+                $listTables=array($tables);
+            }else{
+                $listTables=$tables;
+            }
+        }else{
+            $listTables=$this->getTables();
+        }
+        $json='[';
+        foreach ($listTables as $table) {
+            $json.=$table->jsonEncode().",";
+        }
+        //Remove the last comma
+        if(count($listTables)){
+            $json=substr($json,0,-1);
+        }
+        $json.="]";
+        return $json;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -304,33 +353,7 @@ class BusinessDB{
     
     
     
-    /**
-     * Retorna la lista de tablas en formato JSON
-     * @return string Las tablas del usuario en formato JSON
-     */
-//    public function getTablesInJson($tables=false){
-//        $listTables=array();
-//        if($tables){
-//            if(!is_array($tables)){
-//                $listTables=array($tables);
-//            }else{
-//                $listTables=$tables;
-//            }
-//        }else{
-//            $listTables=$this->tables;
-//        }
-//        $json='[';
-//        foreach ($listTables as $table) {
-//            //Se guarda la estructura de cada tabla serializada para comparar el estado con el anterior
-//            $json.=$table->jsonEncode().",";
-//        }
-//        //Remove the last comma
-//        if(count($listTables)){
-//            $json=substr($json,0,-1);
-//        }
-//        $json.="]";
-//        return $json;
-//    }
+    
     /**
      * Retorna la versión de la base de datos almacenada para el usuario
      * @return int Número de versión
