@@ -47,6 +47,7 @@ var Connector = function(params,callback){
      * @param {int} debugLevel Nivel inicial de debug para la función
      */
     self.loadConfiguration=function(callback,debugLevel){
+        self.showLoading(true);
         if(!debugLevel)debugLevel=0;
         debug("Loading configuration from server...","info",debugLevel+1);
         $.ajax({
@@ -64,8 +65,10 @@ var Connector = function(params,callback){
             }catch(err){
                 returnErrors();
             }
+            self.showLoading(false);
         }).fail(function(){
             returnErrors();
+            self.showLoading(false);
         });
         function returnErrors(){
             debug("Load configuration from server failed","bad",debugLevel+1);
@@ -178,6 +181,65 @@ var Connector = function(params,callback){
             if(callback)callback(new Error("Unable to reload data from the server"));
             self.showLoading(false);
         });
+    };
+    /**
+     * Verifica si la conexión con el servidor está activa y actualiza el 
+     * indicador de estado. Verifica si hay cambios en las tablas para el usuario,
+     * si los hay, retorna los cambios.
+     * @param {function} callback Función para retornar los resultados
+     */
+    self.sync=function(callback){
+        
+        debug("Synchronizing...","info",1);
+        
+//        $.ajax({
+//            url: self.params.html5syncFolder+"server/ajax/sync.php"
+//        }).done(function(response) {
+//            var data=JSON.parse(response);
+//            if(data.error){
+//                debug(data.error);
+//                if(callback)callback(new Error(data.error));
+//            }else{
+//                self.userId=parseInt(data.userId);
+//                self.databaseName=data.database;
+//                var state=(data.state==="true")?true:false;
+//                var changesInStructure=(data.changesInStructure==="true")?true:false;
+//                var changesInData=(data.changesInData==="false")?false:data.changesInData;
+//                //Marca como conectado
+//                setState(state);
+//                //Si hay cambios en la estructura o en los datos se deben recargar
+//                if(changesInStructure){
+//                    updateStructure();
+//                }else{
+//                    if(changesInData){
+//                        for(var i in changesInData){
+//                            updateTable(changesInData[i],function(err){
+//                                if(err){
+//                                    if(callback)callback(err);
+//                                }
+//                            });
+//                        }
+//                    }
+//                }
+//                //Si no existe la base de datos la crea y la carga por primera vez
+//                var name=returnDBName();
+//                databaseExists(name,function(exists){
+//                    if(!exists){
+//                        updateStructure();
+//                    }else{
+//                        if(!self.database){
+//                            self.database=new Database({load:true,database:name},function(err){
+//                                if(callback)callback(err);
+//                            });
+////                            buildViewer();
+//                        }
+//                    }
+//                });
+//                if(callback)callback(false);
+//            }
+//        }).fail(function(){
+//            setState(false);
+//        });
     };
     
     /**************************************************************************/

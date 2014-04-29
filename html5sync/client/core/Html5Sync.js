@@ -45,14 +45,27 @@ var Html5Sync = function(params,callback){
     var Html5Sync = function() {
         //Estructura el código HTML5
         setStructure();
-        showLoading(true);
         
         //Initialize objects
         self.connector=new Connector({
             showLoading:showLoading
         });
-        self.configurator=new Configurator();
+        self.configurator=new Configurator({
+            showLoading:showLoading
+        });
         
+        //Inicializa la configuración y sincronización
+        init();
+    }();
+   
+    /**************************************************************************/
+    /****************************** INIT METHODS ******************************/
+    /**************************************************************************/
+    /**
+     * Inicializa la configuración y sincronización. Se bebe usar esta función
+     * para reiniciar las librerías y bases de datos.
+     */
+    function init(){
         //Hace la carga de datos de configuración del servidor
         loadConfiguration(function(err,data){
             if(err){
@@ -68,19 +81,17 @@ var Html5Sync = function(params,callback){
                     if(err){
                         if(callback)callback(err);
                     }else{
-                        showLoading(false);
-                        
                         //Cuando se cargue, inicia la sincronización
-//                      sync()
+                        startSync(function(err){
+                            if(err){
+                                if(callback)callback(err);
+                            }
+                        });
                     }
                 });
             }
         });
-    }();
-   
-    /**************************************************************************/
-    /****************************** INIT METHODS ******************************/
-    /**************************************************************************/
+    };
     /**
      * Load the configuration from the server. If it is not found, load from the
      * local database. If not, throw an error.
@@ -169,7 +180,6 @@ var Html5Sync = function(params,callback){
             }
         });
     };
-    
     /**
      * Recarga completamente las tablas de la base de datos
      * @param {array} tables Array de objetos tabla con la propiedad table.name
@@ -224,44 +234,6 @@ var Html5Sync = function(params,callback){
         }
     };
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     /**************************************************************************/
     /****************************** SYNC METHODS ******************************/
     /**************************************************************************/
@@ -269,82 +241,24 @@ var Html5Sync = function(params,callback){
      * Inicia el proceso de sincronización.
      * @param {function} callback Función para retornar los resultados
      */
-//    function startSync(callback){
-////        showLoading(false);
-//        sync();
-//        setInterval(function(){
-//            try{
-//                sync(function(err){
-//                    if(callback)callback(err);
-//                });
-//            }catch(e){
+    function startSync(callback){
+        self.connector.sync();
+        setInterval(function(){
+            try{
+                self.connector.sync(function(err){
+                    if(callback)callback(err);
+                });
+            }catch(e){
 //                setState(false); 
-//            }
-//        },self.params.stateTimer);
-//    };
-    /**
-     * Verifica si la conexión con el servidor está activa y actualiza el 
-     * indicador de estado. Verifica si hay cambios en las tablas para el usuario,
-     * si los hay, retorna los cambios.
-     * @param {function} callback Función para retornar los resultados
-     */
-//    function sync(callback){
-//        $.ajax({
-//            url: self.params.html5syncFolder+"server/ajax/sync.php"
-//        }).done(function(response) {
-//            var data=JSON.parse(response);
-//            if(data.error){
-//                debug(data.error);
-//                if(callback)callback(new Error(data.error));
-//            }else{
-//                self.userId=parseInt(data.userId);
-//                self.databaseName=data.database;
-//                var state=(data.state==="true")?true:false;
-//                var changesInStructure=(data.changesInStructure==="true")?true:false;
-//                var changesInData=(data.changesInData==="false")?false:data.changesInData;
-//                //Marca como conectado
-//                setState(state);
-//                //Si hay cambios en la estructura o en los datos se deben recargar
-//                if(changesInStructure){
-//                    updateStructure();
-//                }else{
-//                    if(changesInData){
-//                        for(var i in changesInData){
-//                            updateTable(changesInData[i],function(err){
-//                                if(err){
-//                                    if(callback)callback(err);
-//                                }
-//                            });
-//                        }
-//                    }
-//                }
-//                //Si no existe la base de datos la crea y la carga por primera vez
-//                var name=returnDBName();
-//                databaseExists(name,function(exists){
-//                    if(!exists){
-//                        updateStructure();
-//                    }else{
-//                        if(!self.database){
-//                            self.database=new Database({load:true,database:name},function(err){
-//                                if(callback)callback(err);
-//                            });
-////                            buildViewer();
-//                        }
-//                    }
-//                });
-//                if(callback)callback(false);
-//            }
-//        }).fail(function(){
-//            setState(false);
-//        });
-//    };
-    /**
-     * Carga de nuevo la estructura de la base de datos por medio de ajax
-     * @param {function} callback Función para retornar los resultados
-     */
-//    function updateStructure(callback){
-//        
-//    };
+            }
+        },self.params.stateTimer);
+    };
+
+
+
+
+    
+    
     /**
      * Carga toda la información de las tablas
      * @param {function} callback Función para retornar los resultados
@@ -598,9 +512,18 @@ var Html5Sync = function(params,callback){
      * html5sync/server/config.php
      * @param {function} callback Función para retornar resultados
      */
-//    self.forceReload=function(callback){
-//        reloadData(function(err){
-//            if(callback)callback(err);
-//        });
-//    };
+    self.forceReload=function(callback){
+        self.database.db.close();
+        Database.deleteDatabase(returnDBName(),function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                prepareDatabase(function(err){
+                    if(err){
+                        if(callback)callback(err);
+                    }
+                });
+            }
+        });
+    };
 };

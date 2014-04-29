@@ -384,7 +384,7 @@ Database.databaseExists=function(name,callback){
 * @param {int} debugLevel Nivel de debug
 */
 Database.loadDatabase=function(name,callback,debugLevel){
-    if(!debugLevel)debugLevel=0;
+   if(!debugLevel)debugLevel=0;
    var request = window.indexedDB.open(name);
    request.onerror = function(e) {
        callback(new Error("Unable to connect to the local database "+name));
@@ -407,15 +407,25 @@ Database.loadDatabase=function(name,callback,debugLevel){
 */
 Database.deleteDatabase=function(name,callback,debugLevel){
     if(!debugLevel)debugLevel=0;
-    var request=window.indexedDB.deleteDatabase(name);
-    request.onsuccess = function () {
-        debug("Database deleted: "+name,"good",debugLevel);
-        if(callback)callback(false);
-    };
-    request.onerror = function () {
-        debug("Cannot delete database: "+name,"bad",debugLevel);
-        if(callback)callback(new Error("Cannot delete database: "+name,"bad"));
-    };
+    var prerequest = window.indexedDB.open(name);
+    prerequest.onsuccess = function(e) {
+        var db = prerequest.result;
+        db.close();
+        var request=window.indexedDB.deleteDatabase(name);
+        debug("Trying to delete database: "+name,"info",debugLevel);
+        debug("THIS MAY TAKE A WHILE","wait",debugLevel);
+        request.onsuccess = function () {
+            debug("Database deleted: "+name,"good",debugLevel+1);
+            if(callback)callback(false);
+        };
+        request.onerror = function () {
+            debug("Cannot delete database: "+name,"bad",debugLevel+1);
+            if(callback)callback(new Error("Cannot delete database: "+name,"bad"));
+        };
+   };
+   prerequest.onerror = function(e) {
+       callback(new Error("Database "+name+" not found"));
+   };
 };
 /**
 * Función que convierte un conjunto de tablas JSON en almacenes de objetos

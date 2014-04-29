@@ -22,9 +22,11 @@ var Configurator = function(params,callback){
     //Se mezclan los parámetros por defecto con los proporcionados por el usuario
     //y se agregan a la variable self (this del objeto)
     var def = {
-        ajaxFolder:"html5sync/server/ajax/"
+        ajaxFolder:"html5sync/server/ajax/",
+        showLoading: false          //Function passed like parameter that shows the Loading gift.
     };
     self.params = $.extend(def, params);
+    self.showLoading=self.params.showLoading;
     /**
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
@@ -38,6 +40,7 @@ var Configurator = function(params,callback){
      * @param {int} debugLevel Nivel inicial de debug para la función
      */
     function createDatabase(callback,debugLevel){
+        self.showLoading(true);
         debug("Creating configuration database...","info",debugLevel+0);
         var stores=[{
                 name:"Parameters",
@@ -54,9 +57,11 @@ var Configurator = function(params,callback){
         self.db=new Database(parameters,function(err){
             if(err){
                 debug("Cannot create configuration database","bad",debugLevel+1);
+                self.showLoading(false);
                 callback(err);
             }else{
                 debug("Configuration database created","good",debugLevel+0);
+                self.showLoading(false);
                 callback(false);
             }
         });
@@ -71,6 +76,7 @@ var Configurator = function(params,callback){
      * @param {int} debugLevel Nivel inicial de debug para la función
      */
     self.saveConfiguration=function(data,callback,debugLevel){
+        self.showLoading(true);
         if(!debugLevel)debugLevel=0;
         debug("Saving configuration in local database...","info",debugLevel+0);
         Database.databaseExists("html5sync",function(exists){
@@ -94,6 +100,7 @@ var Configurator = function(params,callback){
                     }
                 },debugLevel+1);
             }
+            self.showLoading(false);
             function addDataToDB(data){
                 //Verify the configuration data
                 if(data.id===undefined||data.database===undefined||data.database.length===0){
@@ -125,6 +132,7 @@ var Configurator = function(params,callback){
      * @param {int} debugLevel Nivel inicial de debug para la función
      */
     self.loadConfiguration=function(callback,debugLevel){
+        self.showLoading(true);
         if(!debugLevel)debugLevel=0;
         debug("Trying load configuration from local database...","info",debugLevel+0);
         Database.databaseExists("html5sync",function(exists){
@@ -153,6 +161,7 @@ var Configurator = function(params,callback){
             }else{
                 returnErrors();
             }
+            self.showLoading(false);
             function returnErrors(){
                 debug("Inaccessible configuration data from server or browser database","bad",debugLevel+2);
                 debug("Load configuration failed","bad",debugLevel+1);
