@@ -10,11 +10,23 @@
     color: yellow;
     font-size: 11px;
     max-height: 300px;
-    max-width: 700px;
+    /*max-width: 700px;*/
     overflow: auto;
     padding: 5px;
     position: absolute;
     right: 10px;
+}
+#html5sync_debug .html5sync_message_info{
+    color: orange;
+}
+#html5sync_debug .html5sync_message_good{
+    color: #06C800;
+}
+#html5sync_debug .html5sync_message_bad{
+    color: #F8000E;
+}
+#html5sync_debug .html5sync_message_wait{
+    color: #FFF;
 }
 #html5sync_state{
     -moz-box-shadow:inset 0px 1px 0px 0px #ffffff;

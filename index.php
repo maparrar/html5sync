@@ -9,7 +9,7 @@
  
 <?php
 session_start();
-$_SESSION['html5sync_userId']=15;
+$_SESSION['html5sync_userId']=6;
 $_SESSION['html5sync_role']="role1";
 ?>
  
@@ -20,6 +20,8 @@ $_SESSION['html5sync_role']="role1";
         <meta charset="utf-8"/>
         <link rel="stylesheet" type="text/css" href="html5sync/client/css/base.css">
         <script src="html5sync/client/jquery/jquery-2.1.0.min.js"></script>
+        <script src="html5sync/client/core/Configurator.js"></script>
+        <script src="html5sync/client/core/Connector.js"></script>
         <script src="html5sync/client/core/Html5Sync.js"></script>
         <script src="html5sync/client/core/Database.js"></script>
         <script type="text/javascript">
