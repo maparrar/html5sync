@@ -75,11 +75,13 @@ var Database = function(params,callback){
     //y se agregan a la variable self (this del objeto)
     var def = {
         database: "html5db",
-        load: false,
+        load: false,    //True si solo se debe cargar la base de datos (no crear)
         version: 1,
         options: {
             overwriteObjectStores: true
-        }
+        },
+        debugLevel:0,           //Nivel desde el cuál se debe empezar para la visualización del debug
+        debugCrud:false         //Si se deben mostrar los mensajes de debug de las operaciones CRUD
     };
     self.params = $.extend(def, params);
     /**
@@ -87,13 +89,13 @@ var Database = function(params,callback){
      */
     var Database = function() {
         if(window.indexedDB !== undefined) {
-            if(self.params.load){
+            if(self.params.load){   //Si solo se debe cargar la base de datos (no crear)
                 self.request = window.indexedDB.open(self.params.database);
             }else{
                 self.version = self.params.version; //Versión de la Base de datos indexedDB
                 self.request = window.indexedDB.open(self.params.database, self.version);
             }
-            debug("Iniciando acceso a la base de datos: "+self.params.database);
+            debug("Accessing database: "+self.params.database,"info",self.params.debugLevel);
             //Asigna los eventos
             events();
         }else{
@@ -122,11 +124,11 @@ var Database = function(params,callback){
          */
         self.request.onsuccess = function(e) {
             self.db = self.request.result;
-            self.callback(false);
             if(self.params.load){
                 self.version=self.request.result.version;
             }
-            debug("Se he accedido con éxito la base de datos: "+self.params.database+" - versión: "+self.version);
+            debug("Successful access to database: "+self.params.database+" - version: "+self.version,"good",self.params.debugLevel+1);
+            self.callback(false);
         };
         /*
          * Evento del request que se dispara cuando la base de datos
@@ -140,7 +142,7 @@ var Database = function(params,callback){
         self.request.onupgradeneeded = function(e) {
             //Se crea o reemplaza la base de datos
             self.db = e.target.result;
-            debug("Actualizando la estructura de la base de datos: "+self.params.database);
+            debug("Updating database: "+self.params.database,"info",self.params.debugLevel);
             //Se crean los almacenes de datos pasados en los parámetros
             for (var i in self.params.stores) {
                 var storeParams = self.params.stores[i];
@@ -149,12 +151,12 @@ var Database = function(params,callback){
                     deleteStore(storeParams.name);
                 }
                 var store = self.db.createObjectStore(storeParams.name, storeParams.key);
-                debug("... Se ha creado el almacén de datos: " + storeParams.name);
+                debug("Object store created: " + storeParams.name,"good",self.params.debugLevel+1);
                 //Se crea el conjunto de índices para cada almacén
                 for (var j in storeParams.indexes){
                     var indexParams=storeParams.indexes[j];
                     var index = store.createIndex(indexParams.name,indexParams.key,indexParams.params);
-                    debug("... ... Se ha creado el índice: " + indexParams.name);
+                    debug("Index created: " + indexParams.name,"good",self.params.debugLevel+2);
                 }
             }
         };
@@ -166,9 +168,9 @@ var Database = function(params,callback){
     function deleteStore(name){
         try{
             self.db.deleteObjectStore(name);
-            debug("... Se eliminó con éxito el almacén: "+name);
+            debug("Object store deleted: "+name,"good",self.params.debugLevel+1);
         }catch(e){
-            debug("... No hay versión anterior del almacén: "+name);
+            debug("Object store not found: "+name,"bad",self.params.debugLevel+1);
         }
     };
     /**
@@ -177,12 +179,12 @@ var Database = function(params,callback){
      */
     self.clearStore=function(table,callback){
         var storeName=table.name;
-        debug("Iniciando borrado de almacén: "+storeName);
+        debug("Deleting object store: "+storeName,"info",self.params.debugLevel);
         try{
             var tx = self.db.transaction([storeName],"readwrite");
             var store = tx.objectStore(storeName);
             tx.oncomplete=function(e){
-                debug("Fin borrado de almacén: "+storeName);
+                debug("Object store deleted: "+storeName,"good",self.params.debugLevel+1);
                 if(callback)callback(false,table);
             };
             tx.onerror=function(e){
@@ -190,7 +192,7 @@ var Database = function(params,callback){
             };
             store.clear();
         }catch(e){
-            debug("... No hay versión anterior del almacén: "+storeName);
+            debug("Object store not found: "+storeName,"bad",self.params.debugLevel+1);
         }
     };
     
@@ -204,13 +206,13 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.add=function(storeName,data,callback){
-//        debug("add() - Transacción iniciada");
+        if(self.params.debugCrud)debug("add() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         //Evento que se dispara cuando se finaliza la transacción con éxito
         tx.oncomplete = function(e) {
             if(callback)callback(false);
-//            debug("... add() - Transacción finalizada");
+            if(self.params.debugCrud)debug("add() - Transaction ended","good",self.params.debugLevel+2);
         };
         //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
         if(Object.prototype.toString.call(data)!=="[object Array]"){
@@ -218,9 +220,9 @@ var Database = function(params,callback){
         }
         for (var i in data) {
             var request = store.add(data[i]);
-//            debug("... add()");
+            if(self.params.debugCrud)debug("add()","info",self.params.debugLevel+3);
             request.onerror = function(e) {
-//                debug("... add() ... Error: Uno o más objetos violan la unicidad de alguno de los índices. No se agregarán más objetos.");
+                if(self.params.debugCrud)debug("add() - One object violates the unicity. Do not add more objects","bad",self.params.debugLevel+3);
                 if(callback)callback(e.target.error);
             };
         }
@@ -232,13 +234,13 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.get=function(storeName,key,callback){
-        debug("get() - Transacción iniciada");
+        if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName]);
         var store = tx.objectStore(storeName);
         var range=IDBKeyRange.only(key);
         var output=new Array();
         store.openCursor(range).onerror=function(e){
-            debug("... get() ... No existe el objeto de clave '"+key+"' en la base de datos.");
+            if(self.params.debugCrud)debug("get() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
             if(callback)callback(e.target.error);
         };
         store.openCursor(range).onsuccess = function(e) {
@@ -247,7 +249,7 @@ var Database = function(params,callback){
                 output.push(cursor.value);
                 cursor.continue();
             }else{
-                debug("... get() - Transacción finalizada");
+                if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
                 if(callback)callback(false,output);
             }
         };
@@ -262,7 +264,7 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.update=function(storeName,key,object,callback){
-//        debug("upd() - Transacción iniciada");
+        if(self.params.debugCrud)debug("upd() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         var request = store.get(key);
@@ -278,11 +280,11 @@ var Database = function(params,callback){
             // Vuelve a insertar el objeto en la base de datos
             var requestUpdate = store.put(newer);
             requestUpdate.onerror = function(e) {
-//                debug("... upd() ... No se pudo actualizar el objeto: "+key);
+                if(self.params.debugCrud)debug("upd() - Cannot update the object: "+key,"bad",self.params.debugLevel+2);
                 if(callback)callback(e.target.error);
             };
             requestUpdate.onsuccess = function(e) {
-//                debug("... upd() ... Transacción finalizada");
+                if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
                 if(callback)callback(false,newer);
             };
         };
@@ -294,29 +296,175 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.delete=function(storeName,key,callback){
-        debug("del() - Transacción iniciada");
+        if(self.params.debugCrud)debug("del() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         var request = store.delete(key);
         request.onerror = function(e) {
-            debug("... del() ... No se pudo eliminar el objeto: "+key);
+            if(self.params.debugCrud)debug("del() - Cannot delete the object: "+key,"bad",self.params.debugLevel+2);
             if(callback)callback(e.target.error);
         };
         request.onsuccess = function(e) {
-            debug("... del() ... Transacción finalizada");
+            if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
         };
+    };
+    /**************************************************************************/
+    /*************************** HTML5SYNC METHODS ****************************/
+    /**************************************************************************/
+    /**
+     * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
+     * los registros
+     * @param {object} page Página de una tablaTabla proveniente del servidor en JSON
+     * @param {function} callback Función para retornar los resultados
+     */
+    self.addPageToTable=function(page,callback){
+        var rows=serverTableToJSON(page);
+        self.add(page.name,rows,function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(callback)callback(false);
+            }
+        });
     };
     /**
-     * Borra una base de datos indexedDB ¡¡¡ Elimina todo el contenido !!! 
-     * @param {string} name Nombre de la base de datos
+     * Recibe una tabla del servidor y la modifica para que se puedan ingresar 
+     * en la base de datos del navegador. Asocia a cada dato de cada registro 
+     * con el nombre de la columna. Retorna un JSON bien formado
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @returns {object} La tabla en JSON bien formada
      */
-    self.deleteDatabase=function (name){
+    function serverTableToJSON(table){
+        var rows=table.data;
+        var fields=table.fields;
+        var registers=new Array();
+        for(var i in rows){
+            var row=rows[i];
+            var register=new Object();
+            for(var j in row){
+                register[fields[j].name]=row[j];
+            }
+            registers.push(register);
+        }
+        return registers;
+    };
+};
+
+/******************************************************************************/
+/******************************* STATIC METHODS *******************************/
+/******************************************************************************/
+/**
+* Static method. Check if a database exists
+* @param {string} name Database name
+* @param {function} callback Function to return the response
+* @returns {bool} True if the database exists
+*/
+Database.databaseExists=function(name,callback){
+   var dbExists = true;
+   var request = window.indexedDB.open(name);
+   request.onupgradeneeded = function (e){
+       if(request.result.version===1){
+           dbExists = false;
+           window.indexedDB.deleteDatabase(name);
+           if(callback)
+               callback(dbExists);
+       }
+   };
+   request.onsuccess = function(e) {
+       if(dbExists){
+           if(callback)
+                   callback(dbExists);
+       }
+   };
+};
+/**
+* Static method. Return a database (the database must exists)
+* @param {string} name Database name
+* @param {function} callback Function to return the response
+* @param {int} debugLevel Nivel de debug
+*/
+Database.loadDatabase=function(name,callback,debugLevel){
+   if(!debugLevel)debugLevel=0;
+   var request = window.indexedDB.open(name);
+   request.onerror = function(e) {
+       callback(new Error("Unable to connect to the local database "+name));
+   };
+   request.onsuccess = function(e) {
+        var database=new Database({load:true,database:name,debugLevel:debugLevel},function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(callback)callback(false,database);
+            }
+        });
+   };
+};
+/**
+* Borra una base de datos indexedDB ¡¡¡ Elimina todo el contenido !!! 
+* @param {string} name Nombre de la base de datos
+* @param {function} callback Function to return the response
+* @param {int} debugLevel Nivel de debug
+*/
+Database.deleteDatabase=function(name,callback,debugLevel){
+    if(!debugLevel)debugLevel=0;
+    var prerequest = window.indexedDB.open(name);
+    prerequest.onsuccess = function(e) {
+        var db = prerequest.result;
+        db.close();
         var request=window.indexedDB.deleteDatabase(name);
+        debug("Trying to delete database: "+name,"info",debugLevel);
+        debug("THIS MAY TAKE A WHILE","wait",debugLevel);
         request.onsuccess = function () {
-            debug("Base de datos eliminada: "+name);
+            debug("Database deleted: "+name,"good",debugLevel+1);
+            if(callback)callback(false);
         };
         request.onerror = function () {
-            debug("No se puede borrar la base de datos: "+name);
+            debug("Cannot delete database: "+name,"bad",debugLevel+1);
+            if(callback)callback(new Error("Cannot delete database: "+name,"bad"));
         };
+   };
+   prerequest.onerror = function(e) {
+       callback(new Error("Database "+name+" not found"));
+   };
+};
+/**
+* Función que convierte un conjunto de tablas JSON en almacenes de objetos
+* @param {string} tables Conjunto de Table en JSON
+* @returns {string} Almacén de objetos en JSON
+*/
+Database.tablesToStores=function(tables){
+    var stores=new Array();
+    for(var i in tables){
+        stores.push(Database.tableToStore(tables[i]));
+    }
+    return stores;
+};
+/**
+* Función que convierte una tabla que está en formato JSON a un almacén de objetos
+* @param {string} table Tabla en JSON
+* @returns {string} Almacén de objetos en JSON
+*/
+Database.tableToStore=function(table){
+    var indexes=new Array();
+    var key={autoIncrement : true};
+    for(var i in table.fields){
+        var field=table.fields[i];
+        var unique=false;
+        if(field.key==="PK"){
+            unique=true;
+            key={keyPath:field.name};
+        }
+        var index={
+            name:field.name,
+            key:field.name,
+            params:{unique: unique}
+        };
+        indexes.push(index);
+    }
+    var store={
+        name:table.name,
+        key:key,
+        indexes:indexes
     };
+    return store;
 };
