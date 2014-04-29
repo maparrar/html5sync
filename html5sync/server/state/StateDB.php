@@ -89,9 +89,6 @@ class StateDB{
             error_log($ex->getMessage());
         }
     }
-    
-    
-    
     /**************************************************************************/
     /******************************   DATABASE  *******************************/
     /**************************************************************************/
@@ -133,7 +130,6 @@ class StateDB{
         }
         return $this->getVersion($user);
     }
-    
     
     /**************************************************************************/
     /********************************   USERS  ********************************/
@@ -188,6 +184,18 @@ class StateDB{
             }
         }
         return $created;
+    }
+    /**
+     * Actualiza la última fecha de actualización del usuario de la base de datos actual
+     */
+    public function setUserLastUpdate(){
+        $stmt = $this->handler->prepare("UPDATE `User` SET `lastUpdate`=:lastUpdate");
+        $date=date('Y-m-d H:i:s');
+        $stmt->bindParam(':lastUpdate',$date);
+        if(!$stmt->execute()){
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+        }
     }
     
     /**************************************************************************/
@@ -266,8 +274,65 @@ class StateDB{
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
     }
-
-
+    /**
+     * Retorna el estado de una tabla del usuario actual
+     * @param Table $table Objeto Table
+     * @return string {'idle'|'sync'}
+     */
+    public function getStatus($table){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `status` FROM `Table` WHERE `name`= :name");
+        $name=$table->getName();  //For strict PHP
+        $stmt->bindParam(':name',$name);
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            $response=$row["status"];
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $response;
+    }
+    /**
+     * Marca el estado de la tabla como "en sincronización" 'sync' o desocupada 'idle'
+     * @param Table $table Objeto Table
+     * @param string $status Estado de la tabla
+     */
+    public function setStatus($table,$status='idle'){
+        $stmt = $this->handler->prepare("UPDATE `Table` SET 
+            `status`=:status  
+            WHERE name=:name");
+        $name=$table->getName();  //For strict PHP
+        //Fuerza a admitir valores válidos: {'idle'|'sync'}
+        if($status!=='sync'){
+            $status='idle';
+        }
+        $stmt->bindParam(':name',$name);
+        $stmt->bindParam(':status',$status);
+        if(!$stmt->execute()){
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+        }
+    }
+    /**
+     * Actualiza la última fecha de actualización con la fecha de ahora
+     * @param Table $table Objeto Table
+     */
+    public function setTableLastUpdate($table){
+        $stmt = $this->handler->prepare("UPDATE `Table` SET 
+            `lastUpdate`=:lastUpdate  
+            WHERE name=:name");
+        $name=$table->getName();  //For strict PHP
+        $date=date('Y-m-d H:i:s');
+        $stmt->bindParam(':name',$name);
+        $stmt->bindParam(':lastUpdate',$date);
+        $this->setUserLastUpdate();
+        if(!$stmt->execute()){
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
+        }
+    }
+    
 
 
 
@@ -336,23 +401,7 @@ class StateDB{
 //        }
 //        return $response;
 //    }
-    /**
-     * Actualiza la última fecha de actualización con la fecha de ahora
-     * @param User $user Objeto Usuario
-     */
-//    public function updateLastUpdate($user){
-//        $stmt = $this->handler->prepare("UPDATE User SET 
-//            `lastUpdate`=:lastUpdate  
-//            WHERE id=:id");
-//        $id=$user->getId();  //For strict PHP
-//        $date=date('Y-m-d H:i:s');
-//        $stmt->bindParam(':id',$id);
-//        $stmt->bindParam(':lastUpdate',$date);
-//        if(!$stmt->execute()){
-//            $error=$stmt->errorInfo();
-//            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-//        }
-//    }
+    
     /**
      * Verifica para cada usuario si la estructura de las tablas ha cambiado por
      * medio de una función de hash. Si ha cambiado, actualiza el número de 
@@ -429,44 +478,5 @@ class StateDB{
 //        }
 //        return $response;
 //    }
-    /**
-     * Retorna el estado del usuario
-     * @param User $user Objeto Usuario
-     * @return string {'idle'|'sync'}
-     */
-//    public function getStatus($user){
-//        $response=false;
-//        $stmt = $this->handler->prepare("SELECT `status` FROM `User` WHERE `id`= :id");
-//        $id=$user->getId();  //For strict PHP
-//        $stmt->bindParam(':id',$id);
-//        if ($stmt->execute()) {
-//            $row=$stmt->fetch();
-//            $response=$row["status"];
-//        }else{
-//            $error=$stmt->errorInfo();
-//            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
-//        }
-//        return $response;
-//    }
-    /**
-     * Marca el estado del usuario como "en sincronización" 'sync' o desocupado 'idle'
-     * @param User $user Objeto Usuario
-     * @param string $status Estado del usuario
-     */
-//    public function setStatus($user,$status='idle'){
-//        $stmt = $this->handler->prepare("UPDATE User SET 
-//            `status`=:status  
-//            WHERE id=:id");
-//        $id=$user->getId();  //For strict PHP
-//        //Fuerza a admitir valores válidos: {'idle'|'sync'}
-//        if($status!=='sync'){
-//            $status='idle';
-//        }
-//        $stmt->bindParam(':id',$id);
-//        $stmt->bindParam(':status',$status);
-//        if(!$stmt->execute()){
-//            $error=$stmt->errorInfo();
-//            error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
-//        }
-//    }
+    
 }

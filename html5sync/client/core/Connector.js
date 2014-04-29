@@ -86,8 +86,8 @@ var Connector = function(params,callback){
     self.reloadDatabase=function(databaseName,callback,debugLevel){
         if(!debugLevel)debugLevel=0;
         self.showLoading(true);
-        if(!isBusy("reloadDatabase")){
-            setToBusy("reloadDatabase");
+        if(!self.isBusy("reloadDatabase")){
+            self.setToBusy("reloadDatabase");
             debug("Reloading database from server...","info",debugLevel);
             debug("THIS MAY TAKE A WHILE","wait",debugLevel);
             $.ajax({
@@ -105,8 +105,7 @@ var Connector = function(params,callback){
                         database: databaseName,
                         version: parseInt(data.version),                //Versión de la base de datos
                         stores:Database.tablesToStores(data.tables),
-                        debugLevel:debugLevel+1,
-                        debugCrud:true
+                        debugLevel:debugLevel+1
                     };
                     var database=new Database(parameters,function(err){
                         if(err){
@@ -119,11 +118,12 @@ var Connector = function(params,callback){
                         }
                     });
                 }
-                setToIdle("reloadDatabase");
+                self.setToIdle("reloadDatabase");
+                self.showLoading(false);
             }).fail(function(){
                 debug("Cannot reload database from server","bad",debugLevel);
                 callback(new Error("Cannot reload database from server"));
-                setToIdle("reloadDatabase");
+                self.setToIdle("reloadDatabase");
                 self.showLoading(false);
             });
         }
@@ -134,49 +134,50 @@ var Connector = function(params,callback){
      * siguiente página
      * @param {object} table Tabla proveniente del servidor en JSON
      * @param {function} callback Función para retornar los resultados
+     * @param {int} debugLevel Nivel inicial de debug para la función
      */
-    self.reloadTable=function(table,callback){
-        
-        
-        callback(false,true);
-        
-        //        var initialRow=parseInt(table.initialRow);
-//        var numberOfRows=parseInt(table.numberOfRows);
-//        var totalOfRows=parseInt(table.totalOfRows);
-//        if((initialRow+numberOfRows)<totalOfRows){
-//            setToBusy("reloadData");
-//            $.ajax({
-//                url: self.params.html5syncFolder+"server/ajax/reloadTable.php",
-//                data:{
-//                    tableName:table.name,
-//                    initialRow:initialRow+numberOfRows
-//                },
-//                type: "POST"
-//            }).done(function(response) {
-//                var data=JSON.parse(response);
-//                var table=data.table;
-//                debug(new Date().getTime()+"=><= Recargando la tabla "+table.name+": "+(parseInt(table.initialRow)+1)+" de "+totalOfRows+" registros");
-//                //Guarda los datos en la base de datos del navegdor
-//                fillTable(table,function(err){
-//                    if(err){
-//                        if(callback)callback(err);
-//                    }else{
-//                        //Si detecta que quedan datos por cargar de la tabla, los solicita
-//                        reloadTable(table);
-//                    }
-//                });
-//                if(callback)callback(false);
-//            }).fail(function(){
-//                if(callback)callback(new Error("Unable to reload data from the server"));
-//                setState(false);
-//            });
-//        }else{
-////            showLoading(false);
-//        }
-//        //Si es la última tabla cargada, libera la función de recarga de datos
-//        if((totalOfRows-(initialRow+1))<=numberOfRows){
-//            setToIdle("reloadData");
-//        }
+    self.reloadTable=function(table,callback,debugLevel){
+        if(!debugLevel)debugLevel=0;
+        self.showLoading(true);
+        $.ajax({
+            url: self.params.ajaxFolder+"reloadTable.php",
+            data:{
+                tableName:table.name,
+                initialRow:parseInt(table.initialRow)
+            },
+            type: "POST"
+        }).done(function(response) {
+            var data=JSON.parse(response);
+            if(data.error){
+                debug("SERVER: "+data.error,"bad",debugLevel+1);
+                if(callback)callback(new Error("SERVER: "+data.error));
+            }else{
+                var table=data.table;
+                var initialRow=parseInt(table.initialRow);
+                var numberOfRows=parseInt(table.numberOfRows);
+                var totalOfRows=parseInt(table.totalOfRows);
+                debug("Loading "+table.name+": loaded "+(initialRow+numberOfRows)+" of "+totalOfRows,"good",debugLevel+3);
+                //Si es la última tabla cargada, retorna la variable finished=true
+                if((totalOfRows-(initialRow+1))<=numberOfRows){
+                    debug("Table "+table.name+" loaded","good",debugLevel+2);
+                    if(callback)callback(false,table,true);
+                }else{
+                    //Se usa un callback en el callback para esperar que los datos
+                    //sean ingresados en BrowserDB antes de solicitar la siguiente página
+                    if(callback)callback(false,table,false,function(err){
+                        if(!err){
+                            //Solicita la siguiente página de la tabla
+                            table.initialRow=initialRow+numberOfRows;
+                            self.reloadTable(table,callback,debugLevel);
+                        }
+                    });
+                }
+            }
+            self.showLoading(false);
+        }).fail(function(){
+            if(callback)callback(new Error("Unable to reload data from the server"));
+            self.showLoading(false);
+        });
     };
     
     /**************************************************************************/
@@ -187,7 +188,7 @@ var Connector = function(params,callback){
      * @param {string} name Nombre de la función
      * @returns {bool} True si la función está ocupada, false en otro caso
      */
-    function isBusy(name){
+    self.isBusy=function(name){
         var busy=false;
         for(var i in self.busyFunctions){
             if(self.busyFunctions[i]===name){
@@ -201,8 +202,8 @@ var Connector = function(params,callback){
      * pueden usar hasta que no se desocupen
      * @param {string} name Nombre de la función
      */
-    function setToBusy(name){
-        if(!isBusy(name)){
+    self.setToBusy=function(name){
+        if(!self.isBusy(name)){
             self.busyFunctions.push(name);
         }
     };
@@ -211,7 +212,7 @@ var Connector = function(params,callback){
      * pueden usar hasta que no se desocupen.
      * @param {string} name Nombre de la función
      */
-    function setToIdle(name){
+    self.setToIdle=function(name){
         for(var i in self.busyFunctions){
             if(self.busyFunctions[i]===name){
                 self.busyFunctions.splice(i,1);

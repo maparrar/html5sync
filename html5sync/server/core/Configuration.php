@@ -65,4 +65,7 @@ class Configuration{
         }
         return $parameter;
     }
+    /**
+     * Verifica si un usuario puede acceder a una tabla
+     */
 }

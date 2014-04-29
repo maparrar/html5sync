@@ -49,13 +49,13 @@ return array(
     /**
      * Configuración de la Base de datos a usar
      */
-    "database" => array(
-        "name" => "employees",
-        "driver" => "mysql",
-        "host" => "localhost",
-        "login" => "html5sync",
-        "password" => "H5FAHM98hBS8"
-    ),
+//    "database" => array(
+//        "name" => "employees",
+//        "driver" => "mysql",
+//        "host" => "localhost",
+//        "login" => "html5sync",
+//        "password" => "H5FAHM98hBS8"
+//    ),
     /**
      * Lista de tablas que se sincronizarán. Para cada tabla se permiten los siguientes
      * atributos:
@@ -63,66 +63,66 @@ return array(
      *  - mode (string): Puede ser "lock" o "unlock".
      *      - lock: La tabla se bloquea mientras el usuario la 
      */
-    "tables" => array(
-        array(
-            "name" => "employees",
-            "mode" => "lock",
-            "roles"=> array(
-                "ventas",
-                "role1"
-            ),
-            "users"=> array(
-                123,
-                102
-            )
-        ),
-        array(
-            "name" => "departments",
-            "mode" => "unlock",
-            "roles"=> array(
-                "contabilidad",
-                "ventas",
-                "role1"
-            )
-        )
-    )
-    
-    
-//    "database" => array(
-//        "name" => "pagila",
-//        "driver" => "pgsql",
-//        "host" => "localhost",
-//        "login" => "html5sync",
-//        "password" => "H5FAHM98hBS8"
-//    ),
 //    "tables" => array(
 //        array(
-//            "name" => "actor",
+//            "name" => "employees",
 //            "mode" => "lock",
 //            "roles"=> array(
-//                "role1",
-//                "role2"
+//                "ventas",
+//                "role1"
 //            ),
 //            "users"=> array(
-//                101,
+//                123,
 //                102
 //            )
 //        ),
 //        array(
-//            "name" => "city",
+//            "name" => "departments",
 //            "mode" => "unlock",
 //            "roles"=> array(
-//                "role1"
-//            )
-//        ),
-//        array(
-//            "name" => "film",
-//            "mode" => "unlock",
-//            "roles"=> array(
+//                "contabilidad",
+//                "ventas",
 //                "role1"
 //            )
 //        )
 //    )
+    
+    
+    "database" => array(
+        "name" => "pagila",
+        "driver" => "pgsql",
+        "host" => "localhost",
+        "login" => "html5sync",
+        "password" => "H5FAHM98hBS8"
+    ),
+    "tables" => array(
+        array(
+            "name" => "actor",
+            "mode" => "lock",
+            "roles"=> array(
+                "role1",
+                "role2"
+            ),
+            "users"=> array(
+                101,
+                102
+            )
+        ),
+        array(
+            "name" => "city",
+            "mode" => "unlock",
+            "roles"=> array(
+                "role1"
+            )
+        ),
+        array(
+            "name" => "film",
+            "mode" => "unlock",
+            "roles"=> array(
+                "role1"
+            )
+        )
+    )
 
     
     

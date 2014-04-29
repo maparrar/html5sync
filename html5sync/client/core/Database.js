@@ -308,6 +308,46 @@ var Database = function(params,callback){
             if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
         };
     };
+    /**************************************************************************/
+    /*************************** HTML5SYNC METHODS ****************************/
+    /**************************************************************************/
+    /**
+     * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
+     * los registros
+     * @param {object} page Página de una tablaTabla proveniente del servidor en JSON
+     * @param {function} callback Función para retornar los resultados
+     */
+    self.addPageToTable=function(page,callback){
+        var rows=serverTableToJSON(page);
+        self.add(page.name,rows,function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(callback)callback(false);
+            }
+        });
+    };
+    /**
+     * Recibe una tabla del servidor y la modifica para que se puedan ingresar 
+     * en la base de datos del navegador. Asocia a cada dato de cada registro 
+     * con el nombre de la columna. Retorna un JSON bien formado
+     * @param {string} table Tabla proveniente del servidor en JSON
+     * @returns {object} La tabla en JSON bien formada
+     */
+    function serverTableToJSON(table){
+        var rows=table.data;
+        var fields=table.fields;
+        var registers=new Array();
+        for(var i in rows){
+            var row=rows[i];
+            var register=new Object();
+            for(var j in row){
+                register[fields[j].name]=row[j];
+            }
+            registers.push(register);
+        }
+        return registers;
+    };
 };
 
 /******************************************************************************/

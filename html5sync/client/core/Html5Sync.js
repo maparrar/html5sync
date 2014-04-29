@@ -20,18 +20,6 @@ var Html5Sync = function(params,callback){
     
     self.callback=callback; //Function to return responses
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 //    self.state;         //{bool} Estado de la conexión con el servidor.
     self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
     self.userId=false;  //Identificador del usuario
@@ -65,7 +53,6 @@ var Html5Sync = function(params,callback){
         });
         self.configurator=new Configurator();
         
-        
         //Hace la carga de datos de configuración del servidor
         loadConfiguration(function(err,data){
             if(err){
@@ -82,30 +69,13 @@ var Html5Sync = function(params,callback){
                         if(callback)callback(err);
                     }else{
                         showLoading(false);
+                        
+                        //Cuando se cargue, inicia la sincronización
+//                      sync()
                     }
                 });
-                
-                
-                
-                
-                //Se verifica si la base de datos del negocio existe en el navegador
-                
-                //Si existe se carga
-                
-                //Si no existe, se ejecuta la primera carga desde el servidor
-//                init()
-                
-                //Cuando se cargue, inicia la sincronización
-//                sync()
             }
         });
-        
-        
-                
-        
-        
-        //Inicia el proceso de sincronización
-//        startSync();
     }();
    
     /**************************************************************************/
@@ -151,11 +121,7 @@ var Html5Sync = function(params,callback){
     function prepareDatabase(callback){
         debug("Preparing database "+returnDBName(),"info");
         Database.databaseExists(returnDBName(),function(exists){
-            
-            
-            console.debug("Html5Sync.prepareDatabase: En pruebas, se desactiva exists <<<<<");
-            exists=false;
-            
+//            exists=false;console.debug("Html5Sync.prepareDatabase: En pruebas, se desactiva exists <<<<<");
             if(exists){
                 debug("Loading database "+returnDBName(),"info",1);
                 Database.loadDatabase(returnDBName(),function(err,browserDatabase){
@@ -170,8 +136,10 @@ var Html5Sync = function(params,callback){
                             }
                         });
                     }else{
-                        debug("Database "+returnDBName()+" loaded","good",1);
                         self.database=browserDatabase;
+                        debug("Database "+returnDBName()+" prepared","good");
+                        debug("");
+                        if(callback)callback(false);
                     }
                 },1);
             }else{
@@ -188,9 +156,12 @@ var Html5Sync = function(params,callback){
                         //Recarga todas las tablas antes de seguir
                         reloadTables(tables,function(err){
                             if(err){
-                                
+                                if(callback)callback(err);
                             }else{
-                                debug("Tables successfuly loaded","good",1);
+                                debug("All tables were successfuly loaded","good",1);
+                                debug("Database "+returnDBName()+" prepared","good");
+                                debug("");
+                                if(callback)callback(false);
                             }
                         });
                     }
@@ -205,29 +176,40 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Funtion to return error if happens
      */
     function reloadTables(tables,callback){
-        debug("Reloading tables from server...","info",1);
-        
-        
+        debug("Reloading tables from server...","info",2);
+        self.connector.setToBusy("reloadTables");
         for(var i in tables){
-            debug("Loading table "+tables[i].name+"...","info",2);
-            self.connector.reloadTable(tables[i],function(err,finished){
+            var table=tables[i];
+            debug("Loading table "+table.name+"...","info",3);
+            //Se usa un callback en el callback para esperar que los datos
+            //sean ingresados en BrowserDB antes de solicitar la siguiente página
+            self.connector.reloadTable(table,function(err,page,finished,recallback){
                 if(err){
-                    debug("Cannot load table "+tables[i].name,"bad",2);
+                    debug("Cannot load table "+page.name,"bad",3);
                 }else{
-                    
                     //Se insertan los registros en el almacen de datos
-                    
+                    self.database.addPageToTable(page,function(err){
+                        if(err){
+                            debug("Cannot add the loaded page to the Object store: "+page.name,"bad",4);
+                            if(callback)callback(err);
+                        }else{
+                            //Si se insertan con éxito, se llama el recallback para cargar la siguiente página
+                            if(recallback)recallback(false);
+                        }
+                    });
                     //Si se acaban los datos de la tabla, se marca como finalizada
                     if(finished){
-                        debug("Table "+tables[i].name+" successfuly loaded","good",2);
-                        tables[i].finished=true;
+                        for(var j in tables){
+                            if(tables[j].name===page.name){
+                                tables[j].finished=true;
+                            }
+                        }
                         checkFinished();
                     }
                 }
             });
         }
-        
-        
+        //Verifica si se finalizaron todas las tablas
         function checkFinished(){
             var allFinished=true;
             for(var i in tables){
@@ -236,11 +218,11 @@ var Html5Sync = function(params,callback){
                 }
             }
             if(allFinished){
+                self.connector.setToIdle("reloadTables");
                 if(callback)callback(false);
             }
         }
-        
-    }
+    };
     
     
     
@@ -449,43 +431,7 @@ var Html5Sync = function(params,callback){
 ////            showLoading(false);
 //        }
 //    };
-    /**
-     * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
-     * los registros
-     * @param {string} table Tabla proveniente del servidor en JSON
-     * @param {function} callback Función para retornar los resultados
-     */
-//    function fillTable(table,callback){
-//        var rows=serverTableToJSON(table);
-//        self.database.add(table.name,rows,function(err){
-//            if(err){
-//                if(callback)callback(err);
-//            }else{
-//                if(callback)callback(false);
-//            }
-//        });
-//    };
-    /**
-     * Recibe una tabla del servidor y la modifica para que se puedan ingresar 
-     * en la base de datos del navegador. Asocia a cada dato de cada registro 
-     * con el nombre de la columna. Retorna un JSON bien formado
-     * @param {string} table Tabla proveniente del servidor en JSON
-     * @returns {object} La tabla en JSON bien formada
-     */
-//    function serverTableToJSON(table){
-//        var rows=table.data;
-//        var fields=table.fields;
-//        var registers=new Array();
-//        for(var i in rows){
-//            var row=rows[i];
-//            var register=new Object();
-//            for(var j in row){
-//                register[fields[j].name]=row[j];
-//            }
-//            registers.push(register);
-//        }
-//        return registers;
-//    }
+    
     /**
      * Retorna la PK de una tabla recibida del servidor, si no tiene, retorna false
      * @param {string} table Tabla proveniente del servidor en JSON

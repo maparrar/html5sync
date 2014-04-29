@@ -150,9 +150,41 @@ class BusinessDB{
         }
         return $accessible;
     }
+    /**
+     * Retrona una tabla a partir de su nombre
+     * @param string $name Nombre de la tabla
+     * @return Table Tabla
+     */
+    private function getTableByName($name) {
+        $output=false;
+        foreach ($this->tables as $table) {
+            if($table->getName()===$name){
+                $output=$table;
+            }
+        }
+        return $output;
+    }
     //**************************************************************************
     //>>>>>>>>>>>>>>>>>>>>>>>>   PUBLIC METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
+    /**
+     * Retorna todos los datos de una tablas por páginas
+     * @param string $tableName Nombre de la tabla
+     * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
+     * @return Table Array con las tablas para el usuario
+     */
+    public function getTableData($tableName,$initialRow=0){
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        $table=$this->getTableByName($tableName);
+        $data=$dao->getAllRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
+        if($data){
+            $table->setData($data);
+            $table->setTotalOfRows($dao->getTotalOfRows($table));
+            $table->setInitialRow($initialRow);
+        }
+        return $table;
+    }
     /**
      * Retorna la lista de tablas en formato JSON. Si no se pasa el parámetro, usa
      * las cargadas en el objeto
@@ -179,6 +211,21 @@ class BusinessDB{
         }
         $json.="]";
         return $json;
+    }
+    /**
+     * Revisa en la lista de tablas del usuario si la pasada es permitida
+     * @param string $tableName Nombre de la tabla que se queire verificar
+     * @return boolean True si la tabla está permitida, false en otro caso
+     */
+    public function isTableAllowed($tableName){
+        $allowed=false;
+        $listTables=$this->getTables();
+        foreach ($listTables as $table){
+            if($table->getName()===$tableName){
+                $allowed=true;
+            }
+        }
+        return $allowed;
     }
     
     
@@ -208,20 +255,7 @@ class BusinessDB{
     
     
     
-    /**
-     * Retrona una tabla a partir de su nombre
-     * @param string $name Nombre de la tabla
-     * @return Table Tabla
-     */
-//    private function getTableByName($name) {
-//        $output=false;
-//        foreach ($this->tables as $table) {
-//            if($table->getName()===$name){
-//                $output=$table;
-//            }
-//        }
-//        return $output;
-//    }
+    
     /**
      * Verifica si la estructura de las tablas cambió.
      * @return boolean True si la estructura de las tablas cambió, False en otro caso
@@ -305,24 +339,7 @@ class BusinessDB{
 //        $this->stateDB->updateLastUpdate($this->user);
 //        return $changed;
 //    }
-    /**
-     * Retorna todos los datos de una tablas por páginas
-     * @param string $tableName Nombre de la tabla
-     * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
-     * @return Table Array con las tablas para el usuario
-     */
-//    public function getTableData($tableName,$initialRow=0){
-//        //Se crea el objeto para manejar tablas con PDO
-//        $dao=new DaoTable($this->db);
-//        $table=$this->getTableByName($tableName);
-//        $data=$dao->getAllRows($table,$initialRow,$this->parameters["rowsPerPage"]);
-//        if($data){
-//            $table->setData($data);
-//            $table->setTotalOfRows($dao->getTotalOfRows($table));
-//            $table->setInitialRow($initialRow);
-//        }
-//        return $table;
-//    }
+    
     /**
      * Retorna los datos que han cambiado de la tabla 
      * @param string $tableName Nombre de la tabla
