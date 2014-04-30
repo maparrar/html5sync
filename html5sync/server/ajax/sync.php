@@ -23,19 +23,46 @@ $stateDB=new StateDB($user);
 
 
 
+//Retorna si las tablas cambiaron
 
-//Lee la última fecha para el usuario
-$lastUpdate=$stateDB->getLastUpdate($user);
-if(!$lastUpdate){
-    $error="Could not read the last update date for the user. Synchronization failed.";
-}
+//Retorna una lista de operaciones realizadas en la base de datos
 
-//Marca la base de datos estática "en actualización" para el usuario
-$stateDB->setStatus($user,'sync');
+$transactions=
+'[
+    {
+        "table":"employees",
+        "operation":"insert",
+        "object":{
+            "field1":"value1",
+            "field2":"value2"
+        }
+    },
+    {
+        "table":"departments",
+        "operation":"update",
+        "object":{
+            "field3":"value3",
+            "field4":"value4"
+        }
+    }
+]
+';
 
 
-//Carga la lista de tablas del usuario
-$tables=$businessDB->getTables();
+
+
+////Lee la última fecha para el usuario
+//$lastUpdate=$stateDB->getLastUpdate($user);
+//if(!$lastUpdate){
+//    $error="Could not read the last update date for the user. Synchronization failed.";
+//}
+//
+////Marca la base de datos estática "en actualización" para el usuario
+//$stateDB->setStatus($user,'sync');
+//
+//
+////Carga la lista de tablas del usuario
+//$tables=$businessDB->getTables();
 
 //print_r($tables);
 
@@ -78,13 +105,13 @@ $tables=$businessDB->getTables();
 
 
 //Se retorna la respuesta en JSON
+$json='{'
+        . '"transactions":'.$transactions.''
+//        . '"database":"'.$config->getParameter("database","name").'",'
+//        . '"lastUpdate":"'.$lastUpdate->format('Y-m-d H:i:s').'"'
+    .'}';
+//Si se encuentran errores, se retornan al cliente
 if($error){
     $json='{"error":"'.$error.'"}';
-}else{
-    $json='{'
-            . '"userId":"'.$user->getId().'",'
-            . '"database":"'.$config->getParameter("database","name").'",'
-            . '"lastUpdate":"'.$lastUpdate->format('Y-m-d H:i:s').'"'
-        .'}';
 }
 echo $json;

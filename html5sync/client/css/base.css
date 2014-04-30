@@ -52,6 +52,7 @@
     text-align: center;
     text-decoration:none;
     text-shadow:0px 1px 0px #ffffff;
+    z-index: 1000;
 }
 #html5sync_state.offline{
     -moz-box-shadow:inset 0px 1px 0px 0px #cf866c;

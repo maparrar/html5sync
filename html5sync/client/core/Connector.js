@@ -189,17 +189,19 @@ var Connector = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     self.sync=function(callback){
-        
         debug("Synchronizing...","info",1);
-        
-//        $.ajax({
-//            url: self.params.html5syncFolder+"server/ajax/sync.php"
-//        }).done(function(response) {
-//            var data=JSON.parse(response);
-//            if(data.error){
-//                debug(data.error);
-//                if(callback)callback(new Error(data.error));
-//            }else{
+        $.ajax({
+            url: self.params.ajaxFolder+"sync.php",
+            type: "POST"
+        }).done(function(response) {
+            var data=JSON.parse(response);
+            if(data.error){
+                debug("SERVER: "+data.error,"bad",debugLevel+1);
+                if(callback)callback(new Error("SERVER: "+data.error));
+            }else{
+                
+                console.debug(data);
+                
 //                self.userId=parseInt(data.userId);
 //                self.databaseName=data.database;
 //                var state=(data.state==="true")?true:false;
@@ -235,11 +237,11 @@ var Connector = function(params,callback){
 //                        }
 //                    }
 //                });
-//                if(callback)callback(false);
-//            }
-//        }).fail(function(){
-//            setState(false);
-//        });
+                if(callback)callback(false);
+            }
+        }).fail(function(){
+            if(callback)callback(new Error("Could not sync"));
+        });
     };
     
     /**************************************************************************/

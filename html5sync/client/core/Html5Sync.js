@@ -20,7 +20,7 @@ var Html5Sync = function(params,callback){
     
     self.callback=callback; //Function to return responses
     
-//    self.state;         //{bool} Estado de la conexión con el servidor.
+    self.state;         //{bool} Estado de la conexión con el servidor.
     self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
     self.userId=false;  //Identificador del usuario
     self.databaseName=false;//Nombre de la base de datos
@@ -242,14 +242,26 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     function startSync(callback){
-        self.connector.sync();
+        self.connector.sync(function(err){
+            if(err){
+                setState(false);
+                if(callback)callback(err);
+            }else{
+                setState(true);
+            }
+        });
         setInterval(function(){
             try{
                 self.connector.sync(function(err){
-                    if(callback)callback(err);
+                    if(err){
+                        setState(false);
+                        if(callback)callback(err);
+                    }else{
+                        setState(true);
+                    }
                 });
             }catch(e){
-//                setState(false); 
+                setState(false);
             }
         },self.params.stateTimer);
     };
@@ -370,18 +382,18 @@ var Html5Sync = function(params,callback){
      * Establece el estado de la conexión con el servidor
      * @param {bool} state Estado de la conexión
      */
-//    function setState(state){
-//        self.state=true;
-//        if(self.params.showState){
-//            if(state){
-//                self.stateLabel.removeClass("offline").addClass("online");
-//                self.stateLabel.find("#state").text("on line");
-//            }else{
-//                self.stateLabel.removeClass("online").addClass("offline");
-//                self.stateLabel.find("#state").text("off line");
-//            }
-//        }
-//    };
+    function setState(state){
+        self.state=true;
+        if(self.params.showState){
+            if(state){
+                self.stateLabel.removeClass("offline").addClass("online");
+                self.stateLabel.find("#state").text("on line");
+            }else{
+                self.stateLabel.removeClass("online").addClass("offline");
+                self.stateLabel.find("#state").text("off line");
+            }
+        }
+    };
     /**
      * Crea la estructura de la aplicación en HTML5. Define si se muestra el área
      * de debugging y/o de estado.
