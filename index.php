@@ -72,9 +72,13 @@ $_SESSION['html5sync_role']="role1";
                         },
                         {
                             name:"finca",
-                            key:{keyAutoincrement:true},
+                            key:{keyPath:"id",keyAutoincrement:true},
                             indexes:[           //Lista de Ã­ndices del almacÃ©n, ver parÃ¡metros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
                                 {
+                                    name:"id", 
+                                    key:"id", 
+                                    params:{unique: true}
+                                },                                {
                                     name:"agricultorid", 
                                     key:"agricultorid", 
                                     params:{unique: false}
