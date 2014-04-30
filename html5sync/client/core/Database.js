@@ -254,6 +254,32 @@ var Database = function(params,callback){
             }
         };
     };
+     /**
+     * Retorna un conjunto de objetos de la base de datos
+     * @param {string} storeName Nombre del almacÃ©n de datos donde se quiere leer la informaciÃ³n
+     * @param {function} callback FunciÃ³n a la que se retornan los resultados
+     */
+    self.list=function(storeName,callback){
+        if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
+        var tx = self.db.transaction([storeName]);
+        var store = tx.objectStore(storeName);
+        var range=IDBKeyRange.lowerBound(0);
+        var output=new Array();
+        store.openCursor(range).onerror=function(e){
+            if(self.params.debugCrud)debug("lis() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
+            if(callback)callback(e.target.error);
+        };
+        store.openCursor(range).onsuccess = function(e) {
+            var cursor = e.target.result;
+            if (cursor) {
+                output.push(cursor.value);
+                cursor.continue();
+            }else{
+                if(self.params.debugCrud)debug("list() - Transaction ended","good",self.params.debugLevel+2);
+                if(callback)callback(false,output);
+            }
+        };
+    };  
     /**
      * Actualiza un objeto de la base de datos a partir del almacén y la clave.
      * Si dentro del objeto pasado como parámetro se actualiza key, y esta no 

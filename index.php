@@ -19,7 +19,9 @@ $_SESSION['html5sync_role']="role1";
         <title>html5sync</title>
         <meta charset="utf-8"/>
         <link rel="stylesheet" type="text/css" href="html5sync/client/css/base.css">
+        <link rel="stylesheet" type="text/css" href="html5sync/client/css/jquery-ui-1.10.4.css">
         <script src="html5sync/client/jquery/jquery-2.1.0.min.js"></script>
+        <script src="html5sync/client/jquery/jquery-ui-1.10.4.js"></script>
         <script src="html5sync/client/core/Configurator.js"></script>
         <script src="html5sync/client/core/Connector.js"></script>
         <script src="html5sync/client/core/Html5Sync.js"></script>
@@ -40,80 +42,144 @@ $_SESSION['html5sync_role']="role1";
 //                    });
 //                });
                 
+             $( "#tabs" ).tabs(); //PestaÃ±as jqueryui
                 
-                var stores=[
-                    {
-                        name:"Agricultor",
-                        key:{keyPath:"id"},
-                        indexes:[
-                            {
-                                name:"id",
-                                key:"id",
-                                params:{unique:true}
-                            },
-                            {
-                                name:"nombre",
-                                key:"nombre",
-                                params:{unique:false}
-                            },
-                            {
-                                name:"apellido",
-                                key:"apellido",
-                                params:{unique:false}
-                            }
-                        ]
-                    }
-                ]
-                
-                var parameters={
-                    database: "agroplan",
-                    version: 2,                //Versión de la base de datos
-                    stores:stores   
-                }
-                var database=new Database(parameters,function(err){
-                    var agricultores=[
+                //Lista de parÃ¡metros que define la configuraciÃ³n de la base de datos
+                var params={
+                    database: "agroplan",  //Nombre de la base de datos
+                    version: 1,                //VersiÃ³n de la base de datos
+                    stores: [
                         {
-                            "id":1,
-                            "nombre":"pepito 1",
-                            "apellido":"perez 1",
-                            "cedula":"11111",
-                            "direccion":"cra 1",
-                            "telefono":"11111",
-                            "municipio":1
+                            name:"agricultor",
+                            key:{keyPath:"cedula"},
+                            indexes:[           //Lista de Ã­ndices del almacÃ©n, ver parÃ¡metros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
+                                {
+                                    name:"cedula",
+                                    key:"cedula",
+                                    params:{unique: true}
+                                },
+                                {
+                                    name:"nombre", 
+                                    key:"nombre", 
+                                    params:{unique: false}
+                                },
+                                {
+                                    name:"apellido",
+                                    key:"apellido",
+                                    params:{unique: false}
+                                }
+                            ]
                         },
                         {
-                            "id":2,
-                            "nombre":"pepito 2",
-                            "apellido":"perez 2",
-                            "cedula":"22222",
-                            "direccion":"cra 2",
-                            "telefono":"22222",
-                            "municipio":1
+                            name:"finca",
+                            key:{keyAutoincrement:true},
+                            indexes:[           //Lista de Ã­ndices del almacÃ©n, ver parÃ¡metros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
+                                {
+                                    name:"agricultorid", 
+                                    key:"agricultorid", 
+                                    params:{unique: false}
+                                },
+                                {
+                                    name:"nombre",
+                                    key:"nombre",
+                                    params:{unique: false}
+                                }
+                            ]
+                        },
+                        {
+                            name:"lote",
+                            key:{keyPath:"id"},
+                            indexes:[           //Lista de Ã­ndices del almacÃ©n, ver parÃ¡metros en: https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore.createIndex
+                                {
+                                    name:"id",
+                                    key:"id",
+                                    params:{unique: true}
+                                },
+                                {
+                                    name:"fincaid", 
+                                    key:"fincaid", 
+                                    params:{unique: false}
+                                },
+                                {
+                                    name:"nombre",
+                                    key:"nombre",
+                                    params:{unique: false}
+                                }
+                            ]
                         }
-                    ];
+                    ]      
+                };                
+                var database=new Database(params,function(err){
+                    if(err){
+                        console.debug(err);
+                    }else{
+                        //Todo se debe hacer dentro del contexto de la creaciÃ³n de la base de datos
+                        $("#addAgr").click(function(){
+                            var nuevoAgr={
+                                cedula:$("#agrCedula").val(),
+                                nombre:$("#agrNombre").val(),
+                                apellido:$("#agrApellido").val()
+                            };
+                            console.debug(nuevoAgr);
+                            database.add("agricultor",nuevoAgr,function(err){
+                                if(err){console.debug(err);}else{
+                                    $("#agrCedulaConsulta").append("<option value="+$("#agrCedula").val()+">"+$("#agrNombre").val()+" "+$("#agrApellido").val()+"</option>");
+                                    $("#tabs-1 input").val("");
+                                }
+                            });
+                            
+                        });
+                        $("#addFinca").click(function(){
+                            var nuevaFinc={
+                                agricultorid:$("#agrCedulaConsulta").val(),
+                                nombre:$("#finNombre").val(),
+                                area:$("#finArea").val()
+                            };
+                            console.debug(nuevaFinc);
+                            
+                            database.add("finca",nuevaFinc,function(err){
+                                if(err){console.debug(err);}
+                            });
+                            
+                        });
 
-//                    database.add("Agricultor",agricultores,function(err){
-//                        if(err){console.debug(err);}
-//                    });
-                    
-                    
-                    
-                    
-                    database.get("Agricultor",2,function(err,obj){
-                        if(!err){
-                            console.debug(obj);
-                        }
-                    });
+                        database.list("agricultor",function(err,data){
+                            if(err){console.debug(err);}else{
+                                if(data.length>0){
+                                    var i;
+                                    for(i=0;i<data.length;i++){
+                                        $("#agrCedulaConsulta").append("<option value="+data[i]['cedula']+">"+data[i]['nombre']+" "+data[i]['apellido']+"</option>");
+                                    }
+                                }
+                            }        
+                        });
+                    }
                 });
-                
-                
-                
-                
-                
             });
         </script>
     </head>
     <body>
-        <input type="button" id="reloadData" value="Recargar datos"/>
+        <div id="tabs">
+	<ul>
+		<li><a href="#tabs-1">Agricultor</a></li>
+		<li id="argAgricultorTab"><a href="#tabs-2">Finca</a></li>
+		<li><a href="#tabs-3">Lote</a></li>
+	</ul>
+            <div id="tabs-1">
+                <input type="text" id="agrCedula" placeholder="Cedula"/>
+                <input type="text" id="agrNombre" placeholder="Nombre"/>
+                <input type="text" id="agrApellido" placeholder="Apellido"/>
+                <button id="addAgr">Agregar</button>
+            </div>
+            <div id="tabs-2">
+                <select name="cedula-agricultor" id="agrCedulaConsulta">
+                    <option value="0">Seleccione un agricultor</option>
+                </select>
+                <input type="text" id="finNombre" placeholder="Nombre de la finca"/>
+                <input type="text" id="finArea" placeholder="Area"/>
+                <button id="addFinca">Agregar</button>
+            </div>
+            <div id="tabs-3">                
+            </div>
     </body>
 </html>
