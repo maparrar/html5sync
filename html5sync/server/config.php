@@ -23,6 +23,8 @@ return array(
      *                       de manera explícita las columnas:
      *                       INSERT INTO table_a (filed1,field2) VALUES (value1,value2)
      *                       para que se inserte automáticamente la fecha de actualización
+     *      - transactionsTable: html5sync debe tener permiso para crear una tabla
+     *                       donde se almacenan las transacciones
      *      - hashUpdate:    Se usa una función hash para convertir el contenido
      *                       de la tabla en una cadena que se compara con un estado
      *                       anterior. Este procedimiento no es invasivo en la base
