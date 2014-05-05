@@ -113,11 +113,15 @@ class BusinessDB{
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
                 $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
-                //Se usa el tipo de actualización seleccionada
-                if($this->parameter("main","updateMode")==="updatedColumn"){
-                    //Si la columna de actualización no existe, se crea
-                    $dao->setUpdatedColumnMode($table);
-                }
+                
+                
+                //PASAR ESTO AFUERA
+                
+//                //Se usa el tipo de actualización seleccionada
+//                if($this->parameter("main","updateMode")==="updatedColumn"){
+//                    //Si la columna de actualización no existe, se crea
+//                    $dao->setUpdatedColumnMode($table);
+//                }
                 $table->setTotalOfRows($dao->getTotalOfRows($table));
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);
