@@ -27,6 +27,10 @@ class DaoTable{
     function __construct($db){
         $this->db=$db;
     }
+    
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>>>>   DATABASE ACCESS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
     /**
      * Carga una tabla de la base de datos
      * @param string $tableName Nombre de la tabla que se quiere cargar
@@ -91,84 +95,23 @@ class DaoTable{
         return $list;
     }
     /**
-     * Verifica si hubo cambios en una tabla para un usuario
-     * @param Table $table Tabla que se quiere verificar
-     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
-     * @return boolean True si se detectaron cambios, False en otro caso
-     */
-    function checkIfRowsChanged($table,$lastUpdate){
-        $changed=false;
-        $handler=$this->db->connect("all");
-        $stmt = $handler->prepare("SELECT count(*) AS updated FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'");
-        if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $updated=intval($row["updated"]);
-            if($updated){
-                $changed=true;
-            }
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
-        }
-        return $changed;
-    }
-    /**
-     * Verifica si hubo eliminaciones en una tabla
-     * @param Table $table Tabla que se quiere verificar
-     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
-     * @return boolean True si se detectaron cambios, False en otro caso
-     */
-    function checkIfRowsDeleted($table,$lastUpdate){
-        $deleted=false;
-        $handler=$this->db->connect("all");
-        $sql='SELECT count(*) AS deleted FROM html5sync_deleted WHERE html5sync_table=:table AND html5sync_date>:date';
-        $stmt = $handler->prepare($sql);
-        $name=$table->getName();
-        $date=$lastUpdate->format('Y-m-d H:i:s');
-        $stmt->bindParam(':table',$name);
-        $stmt->bindParam(':date',$date);
-        if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $updated=intval($row["deleted"]);
-            if($updated){
-                $deleted=true;
-            }
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
-        }
-        return $deleted;
-    }
-    /**
-     * Retorna los registros que han sido modificados
+     * Retorna la cantidad de filas de una tabla.
      * @param string $table Nombre de la tabla que se quiere verificar
-     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
-     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
-     * @param int $maxRows [optional] Máxima cantidad de registros a cargar
-     * @return boolean True si se detectaron cambios, False en otro caso
+     * @return int Cantidad de filas que tiene una tabla
      */
-    function getUpdatedRows($table,$lastUpdate,$initialRow=0,$maxRows=1000){
-        $list=array();
+    public function countRows($table){
+        $total=0;
         $handler=$this->db->connect("all");
-        if($this->db->getDriver()==="pgsql"){
-            $sql="SELECT * FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."' LIMIT ".$maxRows." OFFSET ".$initialRow;
-        }elseif($this->db->getDriver()==="mysql"){
-            $sql="SELECT * FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."' LIMIT ".$initialRow.",".$maxRows;
-        }
+        $sql="SELECT COUNT(*) AS total FROM ".$table->getName();
         $stmt = $handler->prepare($sql);
         if ($stmt->execute()) {
-            while ($row = $stmt->fetch()){
-                $register=array();
-                foreach ($table->getFields() as $field) {
-                    array_push($register,$row[$field->getName()]);
-                }
-                array_push($list,$register);
-            }
+            $row=$stmt->fetch();
+            $total=intval($row["total"]);
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
-        return $list;
+        return $total;
     }
     /**
      * Retorna un array con los datos de la tabla (un array por registro)
@@ -177,7 +120,7 @@ class DaoTable{
      * @param int $maxRows [optional] Máxima cantidad de registros a cargar
      * @return array[] Array de arrays con los registros de la tabla
      */
-    function getAllRows($table,$initialRow=0,$maxRows=1000){
+    function getRows($table,$initialRow=0,$maxRows=1000){
         $list=array();
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
@@ -200,17 +143,199 @@ class DaoTable{
         }
         return $list;
     }
+    
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>   DATABASE PREPARATION   <<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
+    /**
+     * Crea la tabla de transacciones en la base de datos BusinessDB.
+     */
+    public function createTransactionsTable(){
+        $handler=$this->db->connect("all");
+        if($this->db->getDriver()==="pgsql"){
+            $handler->query('CREATE TABLE IF NOT EXISTS html5sync (html5sync_id SERIAL PRIMARY KEY,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date timestamp DEFAULT NULL,html5sync_transaction varchar(20) NOT NULL)');
+        }elseif($this->db->getDriver()==="mysql"){
+            $handler->query('CREATE TABLE IF NOT EXISTS html5sync (html5sync_id INT NOT NULL AUTO_INCREMENT,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date datetime DEFAULT NULL, html5sync_transaction varchar(40) NOT NULL, PRIMARY KEY (html5sync_id))');
+        }
+    }
+    /**
+     * Crea el procedimiento almacenado para el trigger de la tabla de transacciones
+     * Actualmente solo aplica para bases de datos PostgreSQL. Para bases de datos
+     * MySQL el procedimiento se inserta directamente en el Trigger
+     */
+    public function createTransactionsProcedures(){
+        $handler=$this->db->connect("all");
+        if($this->db->getDriver()==="pgsql"){
+            $sql="CREATE OR REPLACE FUNCTION html5sync_proc() RETURNS TRIGGER AS $$ ".
+                "DECLARE ".
+                        "pk text; id text; keyText text; query text; ".
+                "BEGIN  ".
+                        "keyText := TG_TABLE_NAME||'_pkey'; ".
+                        "EXECUTE 'SELECT column_name FROM information_schema.constraint_column_usage WHERE table_name='''||TG_TABLE_NAME||''' AND constraint_name='''||keyText||''';' INTO pk; ".
+                        "query := 'SELECT '||pk||' FROM '||TG_TABLE_NAME||' WHERE '||pk||'=$1.'||pk||';'; ".
+                        "EXECUTE query USING OLD INTO id; ".
+                        "INSERT INTO html5sync  ".
+                                "(html5sync_table,html5sync_key,html5sync_date,html5sync_transaction)  ".
+                        "VALUES ".
+                                "(TG_TABLE_NAME,id,current_timestamp(0),TG_OP);  ".
+                "RETURN OLD;  ".
+                "END; $$ LANGUAGE plpgsql; ";
+            $handler->query($sql);
+        }
+    }
+    /**
+     * Crea el conjunto de triggers de la tabla de transacciones
+     * @param Table $table Tabla sobre la que se crearán los triggers
+     */
+    public function createTransactionsTriggers($table){
+        $handler=$this->db->connect("all");
+        if($this->db->getDriver()==="pgsql"){
+            $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc();");
+            $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc();");
+            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc();");
+        }elseif($this->db->getDriver()==="mysql"){
+            $pk=$table->getPk();
+            //Se inserta el trigger para cada operación si la columna tiene PK
+            if($pk){
+                $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' AFTER INSERT ON '.$table->getName().' FOR EACH ROW BEGIN DECLARE id TEXT; SELECT '.$pk->getName().' FROM '.$table->getName().' WHERE '.$pk->getName().'=NEW.'.$pk->getName().' INTO id; INSERT INTO html5sync (html5sync_table,html5sync_key,html5sync_date,html5sync_transaction) VALUES("'.$table->getName().'",id,NOW(),"INSERT"); END;');
+                $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN DECLARE id TEXT; SELECT '.$pk->getName().' FROM '.$table->getName().' WHERE '.$pk->getName().'=OLD.'.$pk->getName().' INTO id; INSERT INTO html5sync (html5sync_table,html5sync_key,html5sync_date,html5sync_transaction) VALUES("'.$table->getName().'",id,NOW(),"UPDATE"); END;');
+                $handler->query('CREATE TRIGGER html5sync_trig_delete_'.$table->getName().' BEFORE DELETE ON '.$table->getName().' FOR EACH ROW BEGIN DECLARE id TEXT; SELECT '.$pk->getName().' FROM '.$table->getName().' WHERE '.$pk->getName().'=OLD.'.$pk->getName().' INTO id; INSERT INTO html5sync (html5sync_table,html5sync_key,html5sync_date,html5sync_transaction) VALUES("'.$table->getName().'",id,NOW(),"DELETE"); END;');
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Verifica si hubo cambios en una tabla para un usuario
+     * @param Table $table Tabla que se quiere verificar
+     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
+     * @return boolean True si se detectaron cambios, False en otro caso
+     */
+//    function checkIfRowsChanged($table,$lastUpdate){
+//        $changed=false;
+//        $handler=$this->db->connect("all");
+//        $stmt = $handler->prepare("SELECT count(*) AS updated FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'");
+//        if ($stmt->execute()) {
+//            $row=$stmt->fetch();
+//            $updated=intval($row["updated"]);
+//            if($updated){
+//                $changed=true;
+//            }
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+//        }
+//        return $changed;
+//    }
+    /**
+     * Verifica si hubo eliminaciones en una tabla
+     * @param Table $table Tabla que se quiere verificar
+     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
+     * @return boolean True si se detectaron cambios, False en otro caso
+     */
+//    function checkIfRowsDeleted($table,$lastUpdate){
+//        $deleted=false;
+//        $handler=$this->db->connect("all");
+//        $sql='SELECT count(*) AS deleted FROM html5sync_deleted WHERE html5sync_table=:table AND html5sync_date>:date';
+//        $stmt = $handler->prepare($sql);
+//        $name=$table->getName();
+//        $date=$lastUpdate->format('Y-m-d H:i:s');
+//        $stmt->bindParam(':table',$name);
+//        $stmt->bindParam(':date',$date);
+//        if ($stmt->execute()) {
+//            $row=$stmt->fetch();
+//            $updated=intval($row["deleted"]);
+//            if($updated){
+//                $deleted=true;
+//            }
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+//        }
+//        return $deleted;
+//    }
+    /**
+     * Retorna los registros que han sido modificados
+     * @param string $table Nombre de la tabla que se quiere verificar
+     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
+     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
+     * @param int $maxRows [optional] Máxima cantidad de registros a cargar
+     * @return boolean True si se detectaron cambios, False en otro caso
+     */
+//    function getUpdatedRows($table,$lastUpdate,$initialRow=0,$maxRows=1000){
+//        $list=array();
+//        $handler=$this->db->connect("all");
+//        if($this->db->getDriver()==="pgsql"){
+//            $sql="SELECT * FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."' LIMIT ".$maxRows." OFFSET ".$initialRow;
+//        }elseif($this->db->getDriver()==="mysql"){
+//            $sql="SELECT * FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."' LIMIT ".$initialRow.",".$maxRows;
+//        }
+//        $stmt = $handler->prepare($sql);
+//        if ($stmt->execute()) {
+//            while ($row = $stmt->fetch()){
+//                $register=array();
+//                foreach ($table->getFields() as $field) {
+//                    array_push($register,$row[$field->getName()]);
+//                }
+//                array_push($list,$register);
+//            }
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+//        }
+//        return $list;
+//    }
+    /**
+     * Retorna un array con los datos de la tabla (un array por registro)
+     * @param Table $table Tabla con nombre y lista de campos
+     * @param int $initialRow [optional] Indica la fila desde la quedebe cargar los registros
+     * @param int $maxRows [optional] Máxima cantidad de registros a cargar
+     * @return array[] Array de arrays con los registros de la tabla
+     */
+//    function getAllRows($table,$initialRow=0,$maxRows=1000){
+//        $list=array();
+//        $handler=$this->db->connect("all");
+//        if($this->db->getDriver()==="pgsql"){
+//            $sql="SELECT * FROM ".$table->getName()." LIMIT ".$maxRows." OFFSET ".$initialRow;
+//        }elseif($this->db->getDriver()==="mysql"){
+//            $sql="SELECT * FROM ".$table->getName()." LIMIT ".$initialRow.",".$maxRows;
+//        }
+//        $stmt = $handler->prepare($sql);
+//        if ($stmt->execute()) {
+//            while ($row = $stmt->fetch()){
+//                $register=array();
+//                foreach ($table->getFields() as $field) {
+//                    array_push($register,$row[$field->getName()]);
+//                }
+//                array_push($list,$register);
+//            }
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+//        }
+//        return $list;
+//    }
     /**
      * Define el modo UpdatedColumn. Inserta una columna donde se lleva la cuenta
      * de las insersiones y/o actualizaciones en una tabla. Crea un Trigger que
      * realiza el proceso.
      * @param Table $table Tabla con nombre en la base de datos
      */
-    function setUpdatedColumnMode($table){
-        $this->addTableForDeleted();
-        $this->addColumns($table);
-        $this->addTriggers($table);
-    }
+//    function setUpdatedColumnMode($table){
+//        $this->addTableForDeleted();
+//        $this->addColumns($table);
+//        $this->addTriggers($table);
+//    }
     /**
      * Retorna la cantidad de filas para una tabla, si se pasa una fecha de última 
      * modificación se retorna la cantidad de registros por cambiar
@@ -218,98 +343,98 @@ class DaoTable{
      * @param mixed $lastUpdate (optional) fecha de la última modificación
      * @return int Cantidad de filas que tiene una tabla
      */
-    function getTotalOfRows($table,$lastUpdate=false){
-        $total=0;
-        $handler=$this->db->connect("all");
-        if($lastUpdate){
-            $sql='SELECT count(*) AS total FROM '.$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'";
-        }else{
-            $sql="SELECT count(*) AS total FROM ".$table->getName();
-        }
-        $stmt = $handler->prepare($sql);
-        if ($stmt->execute()) {
-            $row=$stmt->fetch();
-            $total=intval($row["total"]);
-        }else{
-            $error=$stmt->errorInfo();
-            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
-        }
-        return $total;
-    }
+//    function getTotalOfRows($table,$lastUpdate=false){
+//        $total=0;
+//        $handler=$this->db->connect("all");
+//        if($lastUpdate){
+//            $sql='SELECT count(*) AS total FROM '.$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'";
+//        }else{
+//            $sql="SELECT count(*) AS total FROM ".$table->getName();
+//        }
+//        $stmt = $handler->prepare($sql);
+//        if ($stmt->execute()) {
+//            $row=$stmt->fetch();
+//            $total=intval($row["total"]);
+//        }else{
+//            $error=$stmt->errorInfo();
+//            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+//        }
+//        return $total;
+//    }
     /**
      * Crea una tabla para almacenar los registros de las tablas que han sido borrados
      * @param Table $table Tabla con nombre en la base de datos
      */
-    private function addTableForDeleted(){
-        $handler=$this->db->connect("all");
-        if($this->db->getDriver()==="pgsql"){
-            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (html5sync_id SERIAL PRIMARY KEY,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date timestamp DEFAULT NULL)');
-            $sql="CREATE OR REPLACE FUNCTION html5sync_proc_delete() RETURNS TRIGGER AS $$ ".
-                "DECLARE ".
-                        "pk text; ".
-                        "id text; ".
-                        "keyText text; ".
-                        "query text; ".
-                "BEGIN  ".
-                        "keyText := TG_TABLE_NAME||'_pkey'; ".
-                        "EXECUTE 'SELECT column_name FROM information_schema.constraint_column_usage WHERE table_name='''||TG_TABLE_NAME||''' AND constraint_name='''||keyText||''';' INTO pk; ".
-                        "query := 'SELECT '||pk||' FROM '||TG_TABLE_NAME||' WHERE '||pk||'=$1.'||pk||';'; ".
-                        "EXECUTE query USING OLD INTO id; ".
-                        "INSERT INTO html5sync_deleted  ".
-                                "(html5sync_table,html5sync_key,html5sync_date)  ".
-                        "VALUES ".
-                                "(TG_TABLE_NAME,id,current_timestamp(0));  ".
-                "RETURN OLD;  ".
-                "END; $$ LANGUAGE plpgsql; ";
-            $handler->query($sql);
-        }elseif($this->db->getDriver()==="mysql"){
-            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (html5sync_id INT NOT NULL AUTO_INCREMENT,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date datetime DEFAULT NULL, PRIMARY KEY (html5sync_id))');
-        }
-    }
+//    private function addTableForDeleted(){
+//        $handler=$this->db->connect("all");
+//        if($this->db->getDriver()==="pgsql"){
+//            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (html5sync_id SERIAL PRIMARY KEY,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date timestamp DEFAULT NULL)');
+//            $sql="CREATE OR REPLACE FUNCTION html5sync_proc_delete() RETURNS TRIGGER AS $$ ".
+//                "DECLARE ".
+//                        "pk text; ".
+//                        "id text; ".
+//                        "keyText text; ".
+//                        "query text; ".
+//                "BEGIN  ".
+//                        "keyText := TG_TABLE_NAME||'_pkey'; ".
+//                        "EXECUTE 'SELECT column_name FROM information_schema.constraint_column_usage WHERE table_name='''||TG_TABLE_NAME||''' AND constraint_name='''||keyText||''';' INTO pk; ".
+//                        "query := 'SELECT '||pk||' FROM '||TG_TABLE_NAME||' WHERE '||pk||'=$1.'||pk||';'; ".
+//                        "EXECUTE query USING OLD INTO id; ".
+//                        "INSERT INTO html5sync_deleted  ".
+//                                "(html5sync_table,html5sync_key,html5sync_date)  ".
+//                        "VALUES ".
+//                                "(TG_TABLE_NAME,id,current_timestamp(0));  ".
+//                "RETURN OLD;  ".
+//                "END; $$ LANGUAGE plpgsql; ";
+//            $handler->query($sql);
+//        }elseif($this->db->getDriver()==="mysql"){
+//            $handler->query('CREATE TABLE IF NOT EXISTS html5sync_deleted (html5sync_id INT NOT NULL AUTO_INCREMENT,html5sync_table varchar(40) NOT NULL,html5sync_key varchar(20) NOT NULL,html5sync_date datetime DEFAULT NULL, PRIMARY KEY (html5sync_id))');
+//        }
+//    }
     /**
      * Agrega una columna que será alimentada con la fecha de actualización o insersión
      * por medio de un Trigger. Además crea una columna para almacenar el tipo
      * de transacción
      * @param Table $table Tabla con nombre en la base de datos
      */
-    private function addColumns($table){
-        $handler=$this->db->connect("all");
-        if($this->db->getDriver()==="pgsql"){
-            $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update timestamp DEFAULT NULL');
-        }elseif($this->db->getDriver()==="mysql"){
-            $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update datetime DEFAULT NULL');
-        }
-        $handler->query("ALTER TABLE ".$table->getName()." ADD COLUMN html5sync_transaction VARCHAR(6) DEFAULT NULL");
-    }
+//    private function addColumns($table){
+//        $handler=$this->db->connect("all");
+//        if($this->db->getDriver()==="pgsql"){
+//            $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update timestamp DEFAULT NULL');
+//        }elseif($this->db->getDriver()==="mysql"){
+//            $handler->query('ALTER TABLE '.$table->getName().' ADD COLUMN html5sync_update datetime DEFAULT NULL');
+//        }
+//        $handler->query("ALTER TABLE ".$table->getName()." ADD COLUMN html5sync_transaction VARCHAR(6) DEFAULT NULL");
+//    }
     /**
      * Función que crea un Trigger en la base de datos para almacenar la última
      * actualización y/o insersión en la tabla.
      * @param Table $table Tabla con nombre en la base de datos
      */
-    private function addTriggers($table){
-        $handler=$this->db->connect("all");
-        if($this->db->getDriver()==="pgsql"){
-            $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_insert_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'insert'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
-            $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_update_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'update'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
-            $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_insert_".$table->getName()."();");
-            $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_update_".$table->getName()."();");
-            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_delete();");
-        }elseif($this->db->getDriver()==="mysql"){
-            $pk=$table->getPk();
-            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "insert"; END;');
-            $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "update"; END;');
-            //Se inserta el trigger de borrado si la columna tiene PK
-            if($pk){
-                $sql='CREATE TRIGGER '.
-                            'html5sync_trig_delete_'.$table->getName().' '.
-                    'BEFORE DELETE ON '.$table->getName().' '.
-                    'FOR EACH ROW BEGIN '.
-                            'DECLARE id TEXT;'.
-                            'SELECT '.$pk->getName().' FROM '.$table->getName().' WHERE '.$pk->getName().'=OLD.'.$pk->getName().' INTO id;'.
-                            'INSERT INTO html5sync_deleted (html5sync_table,html5sync_key,html5sync_date) VALUES("'.$table->getName().'",id,NOW());'.
-                    'END;';
-                $handler->query($sql);
-            }
-        }
-    }
+//    private function addTriggers($table){
+//        $handler=$this->db->connect("all");
+//        if($this->db->getDriver()==="pgsql"){
+//            $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_insert_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'insert'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
+//            $handler->query("CREATE OR REPLACE FUNCTION html5sync_proc_update_".$table->getName()."() RETURNS TRIGGER AS $$ BEGIN NEW.html5sync_update := current_timestamp(0); NEW.html5sync_transaction := 'update'; RETURN NEW; END; $$ LANGUAGE plpgsql;");
+//            $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_insert_".$table->getName()."();");
+//            $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_update_".$table->getName()."();");
+//            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_delete();");
+//        }elseif($this->db->getDriver()==="mysql"){
+//            $pk=$table->getPk();
+//            $handler->query('CREATE TRIGGER html5sync_trig_insert_'.$table->getName().' BEFORE INSERT ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "insert"; END;');
+//            $handler->query('CREATE TRIGGER html5sync_trig_update_'.$table->getName().' BEFORE UPDATE ON '.$table->getName().' FOR EACH ROW BEGIN SET NEW.html5sync_update = NOW(), NEW.html5sync_transaction = "update"; END;');
+//            //Se inserta el trigger de borrado si la columna tiene PK
+//            if($pk){
+//                $sql='CREATE TRIGGER '.
+//                            'html5sync_trig_delete_'.$table->getName().' '.
+//                    'BEFORE DELETE ON '.$table->getName().' '.
+//                    'FOR EACH ROW BEGIN '.
+//                            'DECLARE id TEXT;'.
+//                            'SELECT '.$pk->getName().' FROM '.$table->getName().' WHERE '.$pk->getName().'=OLD.'.$pk->getName().' INTO id;'.
+//                            'INSERT INTO html5sync_deleted (html5sync_table,html5sync_key,html5sync_date) VALUES("'.$table->getName().'",id,NOW());'.
+//                    'END;';
+//                $handler->query($sql);
+//            }
+//        }
+//    }
 }

@@ -113,16 +113,7 @@ class BusinessDB{
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
                 $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
-                
-                
-                //PASAR ESTO AFUERA
-                
-//                //Se usa el tipo de actualización seleccionada
-//                if($this->parameter("main","updateMode")==="updatedColumn"){
-//                    //Si la columna de actualización no existe, se crea
-//                    $dao->setUpdatedColumnMode($table);
-//                }
-                $table->setTotalOfRows($dao->getTotalOfRows($table));
+                $table->setTotalOfRows($dao->countRows($table));
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);
             }
@@ -172,6 +163,32 @@ class BusinessDB{
     //>>>>>>>>>>>>>>>>>>>>>>>>   PUBLIC METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
     /**
+     * Prepara la base de datos para registrar los cambios en las tablas seleccionadas
+     * Crea las tablas necesarias y los triggers.
+     * 
+     */
+    public function prepareDatabase(){
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        if($this->parameter("main","updateMode")==="transactionsTable"){
+            //Crear la tabla de transacciones
+            $dao->createTransactionsTable();
+            //Crea los procedimientos para los triggers (solo para PostgreSQL)
+            $dao->createTransactionsProcedures();
+            //Crear los triggers para las tablas
+            foreach ($this->tables as $table) {
+                $dao->createTransactionsTriggers($table);
+            }
+            
+            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
+            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
+            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
+            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
+            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
+            
+        }
+    }
+    /**
      * Retorna todos los datos de una tablas por páginas
      * @param string $tableName Nombre de la tabla
      * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
@@ -181,10 +198,10 @@ class BusinessDB{
         //Se crea el objeto para manejar tablas con PDO
         $dao=new DaoTable($this->db);
         $table=$this->getTableByName($tableName);
-        $data=$dao->getAllRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
+        $data=$dao->getRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
         if($data){
             $table->setData($data);
-            $table->setTotalOfRows($dao->getTotalOfRows($table));
+            $table->setTotalOfRows($dao->countRows($table));
             $table->setInitialRow($initialRow);
         }
         return $table;

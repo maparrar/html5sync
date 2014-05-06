@@ -13,6 +13,9 @@ return array(
      * Parámetros de html5sync.
      *  - updateMode: Indica la forma en que se detectan los cambios en los datos
      *                de una tabla para ser sincronizada. Existen dos modos:
+     *      - transactionsTable: html5sync debe tener permiso para crear una tabla
+     *                       donde se almacenan las transacciones realizadas en las
+     *                       tablas seleccionadas.
      *      - updatedColumn: Implica que html5sync debe tener permiso para crear
      *                       una columna adicional en cada tabla a sincronizar. 
      *                       Esta columna contiene la fecha de la última actualización
@@ -22,10 +25,8 @@ return array(
      *                       insertan registros en las tablas afectadas, se definan
      *                       de manera explícita las columnas:
      *                       INSERT INTO table_a (filed1,field2) VALUES (value1,value2)
-     *                       para que se inserte automáticamente la fecha de actualización
-     *      - transactionsTable: html5sync debe tener permiso para crear una tabla
-     *                       donde se almacenan las transacciones realizadas en las
-     *                       tablas seleccionadas.
+     *                       para que se inserte automáticamente la fecha de actualización.
+     *                       [en construcción]
      *      - hashUpdate:    Se usa una función hash para convertir el contenido
      *                       de la tabla en una cadena que se compara con un estado
      *                       anterior. Este procedimiento no es invasivo en la base
