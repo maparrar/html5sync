@@ -1,3 +1,8 @@
+<?php
+session_start();
+$_SESSION['html5sync_userId']=6;
+$_SESSION['html5sync_role']="role1";
+?>
 <!--
 /*
  * html5sync Plugin v.0.0.3 (https://github.com/maparrar/html5sync)
@@ -6,12 +11,6 @@
  * - jomejia: https://github.com/jomejia
  */
  -->
- 
-<?php
-session_start();
-$_SESSION['html5sync_userId']=6;
-$_SESSION['html5sync_role']="role1";
-?>
  
 <!doctype html>
 <html manifest="cache.manifest" type="text/cache-manifest">
