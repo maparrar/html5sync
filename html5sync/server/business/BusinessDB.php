@@ -184,7 +184,6 @@ class BusinessDB{
             //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
             //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
             //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
-            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
             
         }
     }
