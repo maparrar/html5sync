@@ -82,7 +82,7 @@ class DaoTable{
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
                 $key="";
-                if($row["key"]==="t"||$row["key"]==="PRI"){
+                if($row["key"]==="t"||$row["key"]==="PRI"||$row["key"]===true){
                     $key="PK";
                 }
                 $field=new Field($row["name"],$row["type"],$key);
@@ -162,21 +162,20 @@ class DaoTable{
      * Crea el procedimiento almacenado para el trigger de la tabla de transacciones
      * Actualmente solo aplica para bases de datos PostgreSQL. Para bases de datos
      * MySQL el procedimiento se inserta directamente en el Trigger
+     * @param Table $table Tabla sobre la que se crearán los procedimientos
      */
-    public function createTransactionsProcedures(){
+    public function createTransactionsProcedures($table){
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
-            $sql="CREATE OR REPLACE FUNCTION html5sync_proc() RETURNS TRIGGER AS $$ ".
+            $pk=$table->getPk();
+            $sql="CREATE OR REPLACE FUNCTION html5sync_proc_".$table->getName()."() RETURNS TRIGGER AS $$ ".
                 "DECLARE ".
-                        "pk text; id text; keyText text; query text; ".
+                        "id text;".
                 "BEGIN  ".
-                        "keyText := TG_TABLE_NAME||'_pkey'; ".
-                        "EXECUTE 'SELECT column_name FROM information_schema.constraint_column_usage WHERE table_name='''||TG_TABLE_NAME||''' AND constraint_name='''||keyText||''';' INTO pk; ".
-                        "query := 'SELECT '||pk||' FROM '||TG_TABLE_NAME||' WHERE '||pk||'=$1.'||pk||';'; ".
                         "IF TG_OP = 'INSERT' THEN ".
-                            "EXECUTE query USING NEW INTO id; ".
+                            "id := NEW.".$pk->getName()."; ".
                         "ELSE ".
-                            "EXECUTE query USING OLD INTO id; ".
+                            "id := OLD.".$pk->getName()."; ".
                         "END IF; ".
                         "INSERT INTO html5sync  ".
                                 "(html5sync_table,html5sync_key,html5sync_date,html5sync_transaction)  ".
@@ -198,9 +197,9 @@ class DaoTable{
     public function createTransactionsTriggers($table){
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
-            $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc();");
-            $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc();");
-            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc();");
+            $handler->query("CREATE TRIGGER html5sync_trig_insert_".$table->getName()." BEFORE INSERT ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_".$table->getName()."();");
+            $handler->query("CREATE TRIGGER html5sync_trig_update_".$table->getName()." BEFORE UPDATE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_".$table->getName()."();");
+            $handler->query("CREATE TRIGGER html5sync_trig_delete_".$table->getName()." BEFORE DELETE ON ".$table->getName()." FOR EACH ROW EXECUTE PROCEDURE html5sync_proc_".$table->getName()."();");
         }elseif($this->db->getDriver()==="mysql"){
             $pk=$table->getPk();
             //Se inserta el trigger para cada operación si la columna tiene PK
