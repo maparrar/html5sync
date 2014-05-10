@@ -181,10 +181,10 @@ class DaoTable{
                                 "(html5sync_table,html5sync_key,html5sync_date,html5sync_transaction)  ".
                         "VALUES ".
                                 "(TG_TABLE_NAME,id,current_timestamp(0),TG_OP);  ".
-                "IF TG_OP = 'INSERT' THEN ".
-                    "RETURN NEW;  ".
-                "ELSE ".
+                "IF TG_OP = 'DELETE' THEN ".
                     "RETURN OLD;  ".
+                "ELSE ".
+                    "RETURN NEW;  ".
                 "END IF; ".
                 "END; $$ LANGUAGE plpgsql; ";
             $handler->query($sql);

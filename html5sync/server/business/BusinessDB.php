@@ -165,7 +165,6 @@ class BusinessDB{
     /**
      * Prepara la base de datos para registrar los cambios en las tablas seleccionadas
      * Crea las tablas necesarias y los triggers.
-     * 
      */
     public function prepareDatabase(){
         //Se crea el objeto para manejar tablas con PDO
