@@ -92,47 +92,9 @@ return array(
 //    )
     
     
-    "database" => array(
-        "name" => "sakila",
-        "driver" => "mysql",
-        "host" => "localhost",
-        "login" => "html5sync",
-        "password" => "H5FAHM98hBS8"
-    ),
-    "tables" => array(
-        array(
-            "name" => "actor",
-            "mode" => "lock",
-            "roles"=> array(
-                "role1",
-                "role2"
-            ),
-            "users"=> array(
-                101,
-                102
-            )
-        ),
-        array(
-            "name" => "city",
-            "mode" => "unlock",
-            "roles"=> array(
-                "role1"
-            )
-        ),
-        array(
-            "name" => "film",
-            "mode" => "unlock",
-            "roles"=> array(
-                "role1"
-            )
-        )
-    )
-    
-    
-    
 //    "database" => array(
-//        "name" => "pagila",
-//        "driver" => "pgsql",
+//        "name" => "sakila",
+//        "driver" => "mysql",
 //        "host" => "localhost",
 //        "login" => "html5sync",
 //        "password" => "H5FAHM98hBS8"
@@ -165,6 +127,69 @@ return array(
 //            )
 //        )
 //    )
+    
+    
+    
+//    "database" => array(
+//        "name" => "dvdrental",
+//        "driver" => "pgsql",
+//        "host" => "localhost",
+//        "login" => "html5sync",
+//        "password" => "H5FAHM98hBS8"
+//    ),
+//    "tables" => array(
+//        array(
+//            "name" => "actor",
+//            "mode" => "lock",
+//            "roles"=> array(
+//                "role1",
+//                "role2"
+//            ),
+//            "users"=> array(
+//                101,
+//                102
+//            )
+//        )
+//    )
+
+    
+    
+    
+    "database" => array(
+        "name" => "pagila",
+        "driver" => "pgsql",
+        "host" => "localhost",
+        "login" => "html5sync",
+        "password" => "H5FAHM98hBS8"
+    ),
+    "tables" => array(
+        array(
+            "name" => "actor",
+            "mode" => "lock",
+            "roles"=> array(
+                "role1",
+                "role2"
+            ),
+            "users"=> array(
+                101,
+                102
+            )
+        ),
+        array(
+            "name" => "city",
+            "mode" => "unlock",
+            "roles"=> array(
+                "role1"
+            )
+        ),
+        array(
+            "name" => "film",
+            "mode" => "unlock",
+            "roles"=> array(
+                "role1"
+            )
+        )
+    )
 
     
     

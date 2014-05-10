@@ -173,12 +173,20 @@ class DaoTable{
                         "keyText := TG_TABLE_NAME||'_pkey'; ".
                         "EXECUTE 'SELECT column_name FROM information_schema.constraint_column_usage WHERE table_name='''||TG_TABLE_NAME||''' AND constraint_name='''||keyText||''';' INTO pk; ".
                         "query := 'SELECT '||pk||' FROM '||TG_TABLE_NAME||' WHERE '||pk||'=$1.'||pk||';'; ".
-                        "EXECUTE query USING OLD INTO id; ".
+                        "IF TG_OP = 'INSERT' THEN ".
+                            "EXECUTE query USING NEW INTO id; ".
+                        "ELSE ".
+                            "EXECUTE query USING OLD INTO id; ".
+                        "END IF; ".
                         "INSERT INTO html5sync  ".
                                 "(html5sync_table,html5sync_key,html5sync_date,html5sync_transaction)  ".
                         "VALUES ".
                                 "(TG_TABLE_NAME,id,current_timestamp(0),TG_OP);  ".
-                "RETURN OLD;  ".
+                "IF TG_OP = 'INSERT' THEN ".
+                    "RETURN NEW;  ".
+                "ELSE ".
+                    "RETURN OLD;  ".
+                "END IF; ".
                 "END; $$ LANGUAGE plpgsql; ";
             $handler->query($sql);
         }
