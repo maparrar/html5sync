@@ -173,18 +173,11 @@ class BusinessDB{
         if($this->parameter("main","updateMode")==="transactionsTable"){
             //Crear la tabla de transacciones
             $dao->createTransactionsTable();
-            
             //Crear los procedimientos y los triggers para las tablas
             foreach ($this->tables as $table) {
                 $dao->createTransactionsProcedures($table);
                 $dao->createTransactionsTriggers($table);
             }
-            
-            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
-            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
-            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
-            //PROBAR LOS TRIGGERS EN MYSQL Y POSTGRESQ
-            
         }
     }
     /**
