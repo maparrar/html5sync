@@ -21,33 +21,27 @@ $businessDB=new BusinessDB($user,$config);
 $stateDB=new StateDB($user);
 
 
+//Carga las tablas en el objeto $businessDB;
+$tables=$businessDB->getTables();
 
-
-
-//Retorna si las tablas cambiaron
 
 //Retorna una lista de operaciones realizadas en la base de datos
+//$lastUpdate=$stateDB->getUserLastUpdate();
+$lastUpdate=new DateTime('2014-05-10 15:37:00');
+$transactions=$businessDB->getLastTransactions($lastUpdate);
 
-$transactions=
-'[
-    {
-        "table":"employees",
-        "operation":"insert",
-        "object":{
-            "field1":"value1",
-            "field2":"value2"
-        }
-    },
-    {
-        "table":"departments",
-        "operation":"update",
-        "object":{
-            "field3":"value3",
-            "field4":"value4"
-        }
-    }
-]
-';
+
+
+
+$transactionsJSON='[';
+
+foreach ($transactions as $transaction) {
+    $transactionsJSON.=$transaction->jsonEncode().",";
+}
+$transactionsJSON=substr($transactionsJSON,0,-1);
+
+
+$transactionsJSON.=']';
 
 
 
@@ -107,7 +101,7 @@ $transactions=
 
 //Se retorna la respuesta en JSON
 $json='{'
-        . '"transactions":'.$transactions.''
+        . '"transactions":'.$transactionsJSON.''
 //        . '"database":"'.$config->getParameter("database","name").'",'
 //        . '"lastUpdate":"'.$lastUpdate->format('Y-m-d H:i:s').'"'
     .'}';

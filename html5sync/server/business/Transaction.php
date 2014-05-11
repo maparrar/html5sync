@@ -1,183 +1,159 @@
 <?php
-/** Table File
-* @package html5sync @subpackage core */
+/** Transaction File
+* @package html5sync @subpackage business */
 require_once '../core/Object.php';
 /**
-* Table Class
+* Transaction Class
 *
 * @author https://github.com/maparrar/html5sync
 * @author maparrar <maparrar@gmail.com>
 * @package html5sync
-* @subpackage core
+* @subpackage business
 */
-class Table extends Object{
+class Transaction extends Object{
     /** 
-     * Nombre de la tabla 
+     * Transaction identificator 
+     * 
+     * @var int
+     */
+    protected $id;
+    /** 
+     * Type of transaction [INSERT|UPDATE|DELETE] 
      * 
      * @var string
      */
-    protected $name;
+    protected $type;
     /** 
-     * Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete) 
+     * Name of the table 
      * 
      * @var string
      */
-    protected $mode;
+    protected $tableName;
     /** 
-     * Array con los nombres de las columnas 
+     * Value of the PK of the transaction 
      * 
-     * @var Field[]
+     * @var string
      */
-    protected $fields;
+    protected $key;
     /** 
-     * Array con los datos de la tabla 
+     * Date and time of the transaction 
+     * 
+     * @var Date
+     */
+    protected $date;
+    /** 
+     * Row if is INSERT or UPDATE, false otherwise 
      * 
      * @var array
      */
-    protected $data;
-    /** 
-     * Número total de filas que hay en la base de datos para la tabla
-     * @var int
-     */
-    protected $totalOfRows;
-    /** 
-     * Número de filas que contiene el array data
-     * @var int
-     */
-    protected $numberOfRows;
-    /** 
-     * Indica el índice del registro inicial que contiene el array $data.
-     * Para consultas con gran cantidad de registros, se usa como paginador.
-     * @var int
-     */
-    protected $initialRow;
+    protected $row;
     /**
     * Constructor
-    * @param string $name Nombre de la tabla        
-    * @param string $mode Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete)        
-    * @param array $fields Array con los nombres de las columnas        
-    * @param array $data Array con los datos de la tabla
+    * @param int $id Transaction identificator        
+    * @param string $type Type of transaction [INSERT|UPDATE|DELETE]        
+    * @param string $tableName Name of the table        
+    * @param string $key Value of the PK of the transaction        
+    * @param Date $date Date and time of the transaction
     */
-    function __construct($name="",$mode="",$fields=array(),$data=array()){ 
-        $this->name=$name;
-        $this->mode=$mode;
-        $this->fields=$fields;
-        $this->data=$data;
-        $this->numberOfRows=0;
-        $this->initialRow=0;
+    function __construct($id=0,$type="",$tableName="",$key="",$date=""){        
+        $this->id=$id;
+        $this->type=$type;
+        $this->tableName=$tableName;
+        $this->key=$key;
+        $this->date=$date;
+        $this->row=false;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
-    * Setter name
-    * @param string $value Nombre de la tabla
+    * Setter id
+    * @param int $value Transaction identificator
     * @return void
     */
-    public function setName($value) {
-        $this->name=$value;
+    public function setId($value) {
+        $this->id=$value;
     }
     /**
-    * Setter mode
-    * @param string $value Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete)
+    * Setter type
+    * @param string $value Type of transaction [INSERT|UPDATE|DELETE]
     * @return void
     */
-    public function setMode($value) {
-        $this->mode=$value;
+    public function setType($value) {
+        $this->type=$value;
     }
     /**
-    * Setter fields
-    * @param Field[] $value Field objects of the table
+    * Setter tableName
+    * @param string $value Name of the table
     * @return void
     */
-    public function setFields($value) {
-        $this->fields=$value;
+    public function setTableName($value) {
+        $this->tableName=$value;
     }
     /**
-    * Setter data
-    * @param array $value Array con los datos de la tabla
+    * Setter key
+    * @param string $value Value of the PK of the transaction
     * @return void
     */
-    public function setData($value) {
-        $this->data=$value;
-        $this->numberOfRows=count($this->data);
+    public function setKey($value) {
+        $this->key=$value;
     }
     /**
-    * Setter totalOfRows
-    * @param int $value cantidad de datos de la tabla en la DB
+    * Setter date
+    * @param Date $value Date and time of the transaction
     * @return void
     */
-    public function setTotalOfRows($value) {
-        $this->totalOfRows=$value;
+    public function setDate($value) {
+        $this->date=$value;
     }
     /**
-    * Setter initialRow
-    * @param int $value Fila inicial para paginación
+    * Setter row
+    * @param array $value Row if is INSERT or UPDATE, false otherwise
     * @return void
     */
-    public function setInitialRow($value) {
-        $this->initialRow=$value;
+    public function setRow($value) {
+        $this->row=$value;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
-    * Getter: name
+    * Getter: id
+    * @return int
+    */
+    public function getId() {
+        return $this->id;
+    }
+    /**
+    * Getter: type
     * @return string
     */
-    public function getName() {
-        return $this->name;
+    public function getType() {
+        return $this->type;
     }
     /**
-    * Getter: mode
+    * Getter: tableName
     * @return string
     */
-    public function getMode() {
-        return $this->mode;
+    public function getTableName() {
+        return $this->tableName;
     }
     /**
-    * Getter: fields
-    * @return Field[]
+    * Getter: key
+    * @return string
     */
-    public function getFields() {
-        return $this->fields;
+    public function getKey() {
+        return $this->key;
     }
     /**
-    * Getter: data
+    * Getter: date
+    * @return Date
+    */
+    public function getDate() {
+        return $this->date;
+    }
+    /**
+    * Getter: row
     * @return array
     */
-    public function getData() {
-        return $this->data;
-    }
-    /**
-    * Getter: totalOfRows
-    * @return int
-    */
-    public function getTotalOfRows() {
-        return $this->totalOfRows;
-    }
-    /**
-    * Getter: initialRow
-    * @return int
-    */
-    public function getInitialRow() {
-        return $this->initialRow;
-    }
+    public function getRow() {
+        return $this->row;
+    }    
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    /**
-    * Return the table PK
-    * @return Field
-    */
-    public function getPk() {
-        $output=false;
-        foreach ($this->fields as $field) {
-            if($field->getKey()==="PK"){
-                $output=$field;
-            }
-        }
-        return $output;
-    }
-    /*
-     * Retorna el número de filas que contiene $data
-     * @return int Cantidad de filas en $data
-     */
-    public function getNumberOfRows(){
-        return $this->numberOfRows;
-    }
 }

@@ -6,6 +6,7 @@ include_once 'Database.php';
 include_once 'Field.php';
 include_once 'Table.php';
 include_once 'DaoTable.php';
+include_once 'Transaction.php';
 /**
 * BusinessDB Class
 * Clase para el manejo de la base de datos del negocio.
@@ -244,30 +245,76 @@ class BusinessDB{
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    public function getLastTransactions($lastUpdate){
+        $dao=new DaoTable($this->db);
+        $transactions=$dao->getLastTransactions($lastUpdate);
+        foreach ($transactions as $transaction) {
+            if($transaction->getType()!=="DELETE"){
+                $table=$this->getTableByName($transaction->getTableName());
+                $row=$dao->getRowOfTable($table,$transaction->getKey());
+                $transaction->setRow($row);
+            }
+        }
+        return $transactions;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * Verifica si la estructura de las tablas cambió.
      * @return boolean True si la estructura de las tablas cambió, False en otro caso

@@ -43,7 +43,6 @@ class DaoTable{
         $table->setFields($this->loadFields($table));
         return $table;
     }
-    
     /**
      * Retorna la lista de campos de una Tabla
      * @param Table $table Tabla con nombre en la base de datos
@@ -210,40 +209,84 @@ class DaoTable{
             }
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>>>   DATABASE QUERIES   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
     /**
-     * Verifica si hubo cambios en una tabla para un usuario
-     * @param Table $table Tabla que se quiere verificar
-     * @param DateTime $lastUpdate Objeto de fecha con la última actualización
-     * @return boolean True si se detectaron cambios, False en otro caso
+     * Retorna la lista de transacciones filtradas, es decir, si hay un delete 
+     * después de un update en un mismo registro, retorna solo el delete.
+     * @param DateTime $lastUpdate Objeto de fecha con la última fecha de actualización
+     * @return 
      */
-//    function checkIfRowsChanged($table,$lastUpdate){
-//        $changed=false;
-//        $handler=$this->db->connect("all");
-//        $stmt = $handler->prepare("SELECT count(*) AS updated FROM ".$table->getName()." WHERE html5sync_update>'".$lastUpdate->format('Y-m-d H:i:s')."'");
-//        if ($stmt->execute()) {
-//            $row=$stmt->fetch();
-//            $updated=intval($row["updated"]);
-//            if($updated){
-//                $changed=true;
-//            }
-//        }else{
-//            $error=$stmt->errorInfo();
-//            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
-//        }
-//        return $changed;
-//    }
+    public function getLastTransactions($lastUpdate){
+        $list=array();
+        $handler=$this->db->connect("all");
+        $stmt = $handler->prepare("
+            SELECT temp.*
+            FROM html5sync temp
+            INNER JOIN
+                (SELECT html5sync_table,html5sync_key, MAX(html5sync_date) AS MaxDateTime
+                FROM html5sync
+                WHERE html5sync_date>:lastUpdate GROUP BY html5sync_table,html5sync_key) tempGroup 
+            ON temp.html5sync_table = tempGroup.html5sync_table 
+            AND temp.html5sync_date = tempGroup.MaxDateTime ORDER BY temp.html5sync_date;"
+        );
+        $date=$lastUpdate->format('Y-m-d H:i:s');
+        $stmt->bindParam(':lastUpdate',$date);
+        if ($stmt->execute()) {
+            while ($row = $stmt->fetch()){
+                $transaction=new Transaction($row["html5sync_id"],$row["html5sync_transaction"],$row["html5sync_table"],$row["html5sync_key"],$row["html5sync_date"]);
+                array_push($list,$transaction);
+            }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+        }
+        return $list;
+    }
+    /**
+     * Retorna un registro de una tabla desde la base de datos del negocio BusinessDB
+     * @param Table $table Objeto de tipo tabla para retornar el registro
+     * @param mixed $key Clave del registro que se quiere cargar
+     */
+    public function getRowOfTable($table,$key){
+        $row = false;
+        $handler=$this->db->connect("all");
+        $pk=$table->getPk();
+        $stmt = $handler->prepare("SELECT * FROM ".$table->getName()." WHERE ".$pk->getName()."=:key");
+        $stmt->bindParam(':key',$key);
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+        }
+        return $row;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * Verifica si hubo eliminaciones en una tabla
      * @param Table $table Tabla que se quiere verificar
