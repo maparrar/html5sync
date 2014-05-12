@@ -6,6 +6,7 @@ include_once 'Database.php';
 include_once 'Field.php';
 include_once 'Table.php';
 include_once 'DaoTable.php';
+include_once 'Transaction.php';
 /**
 * BusinessDB Class
 * Clase para el manejo de la base de datos del negocio.
@@ -113,12 +114,7 @@ class BusinessDB{
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
                 $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
-                //Se usa el tipo de actualización seleccionada
-                if($this->parameter("main","updateMode")==="updatedColumn"){
-                    //Si la columna de actualización no existe, se crea
-                    $dao->setUpdatedColumnMode($table);
-                }
-                $table->setTotalOfRows($dao->getTotalOfRows($table));
+                $table->setTotalOfRows($dao->countRows($table));
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);
             }
@@ -168,6 +164,23 @@ class BusinessDB{
     //>>>>>>>>>>>>>>>>>>>>>>>>   PUBLIC METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
     /**
+     * Prepara la base de datos para registrar los cambios en las tablas seleccionadas
+     * Crea las tablas necesarias y los triggers.
+     */
+    public function prepareDatabase(){
+        //Se crea el objeto para manejar tablas con PDO
+        $dao=new DaoTable($this->db);
+        if($this->parameter("main","updateMode")==="transactionsTable"){
+            //Crear la tabla de transacciones
+            $dao->createTransactionsTable();
+            //Crear los procedimientos y los triggers para las tablas
+            foreach ($this->tables as $table) {
+                $dao->createTransactionsProcedures($table);
+                $dao->createTransactionsTriggers($table);
+            }
+        }
+    }
+    /**
      * Retorna todos los datos de una tablas por páginas
      * @param string $tableName Nombre de la tabla
      * @param int $initialRow [optional] Indica la fila desde la que deben cargar los registros
@@ -177,10 +190,10 @@ class BusinessDB{
         //Se crea el objeto para manejar tablas con PDO
         $dao=new DaoTable($this->db);
         $table=$this->getTableByName($tableName);
-        $data=$dao->getAllRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
+        $data=$dao->getRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
         if($data){
             $table->setData($data);
-            $table->setTotalOfRows($dao->getTotalOfRows($table));
+            $table->setTotalOfRows($dao->countRows($table));
             $table->setInitialRow($initialRow);
         }
         return $table;
@@ -227,35 +240,81 @@ class BusinessDB{
         }
         return $allowed;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    /**
+     * Retorna las últimas transacciones para actualizar las base de datos del navegador
+     * @param DateTime $lastUpdate Última fecha de actualización
+     * @return Transaction[] Lista de transacciones luego de la fecha pasada como parámetro
+     */
+    public function getLastTransactions($lastUpdate){
+        $dao=new DaoTable($this->db);
+        $transactions=$dao->getLastTransactions($lastUpdate);
+        foreach ($transactions as $transaction) {
+            if($transaction->getType()!=="DELETE"){
+                $table=$this->getTableByName($transaction->getTableName());
+                $row=$dao->getRowOfTable($table,$transaction->getKey());
+                $transaction->setRow($row);
+            }
+        }
+        return $transactions;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * Verifica si la estructura de las tablas cambió.
      * @return boolean True si la estructura de las tablas cambió, False en otro caso

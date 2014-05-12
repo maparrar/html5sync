@@ -13,6 +13,9 @@ return array(
      * Parámetros de html5sync.
      *  - updateMode: Indica la forma en que se detectan los cambios en los datos
      *                de una tabla para ser sincronizada. Existen dos modos:
+     *      - transactionsTable: html5sync debe tener permiso para crear una tabla
+     *                       donde se almacenan las transacciones realizadas en las
+     *                       tablas seleccionadas.
      *      - updatedColumn: Implica que html5sync debe tener permiso para crear
      *                       una columna adicional en cada tabla a sincronizar. 
      *                       Esta columna contiene la fecha de la última actualización
@@ -22,7 +25,8 @@ return array(
      *                       insertan registros en las tablas afectadas, se definan
      *                       de manera explícita las columnas:
      *                       INSERT INTO table_a (filed1,field2) VALUES (value1,value2)
-     *                       para que se inserte automáticamente la fecha de actualización
+     *                       para que se inserte automáticamente la fecha de actualización.
+     *                       [en construcción]
      *      - hashUpdate:    Se usa una función hash para convertir el contenido
      *                       de la tabla en una cadena que se compara con un estado
      *                       anterior. Este procedimiento no es invasivo en la base
@@ -39,7 +43,7 @@ return array(
      *  - timezone:          Zona por defecto, para manejo de la función date en PHP
      */
     "main" => array(
-        "updateMode"    => "updatedColumn",
+        "updateMode"    => "transactionsTable",
         "rowsPerPage"   => 500,
         "browser"       => array(
             "syncTimer"    => 10000
@@ -86,6 +90,69 @@ return array(
 //            )
 //        )
 //    )
+    
+    
+//    "database" => array(
+//        "name" => "sakila",
+//        "driver" => "mysql",
+//        "host" => "localhost",
+//        "login" => "html5sync",
+//        "password" => "H5FAHM98hBS8"
+//    ),
+//    "tables" => array(
+//        array(
+//            "name" => "actor",
+//            "mode" => "lock",
+//            "roles"=> array(
+//                "role1",
+//                "role2"
+//            ),
+//            "users"=> array(
+//                101,
+//                102
+//            )
+//        ),
+//        array(
+//            "name" => "city",
+//            "mode" => "unlock",
+//            "roles"=> array(
+//                "role1"
+//            )
+//        ),
+//        array(
+//            "name" => "film",
+//            "mode" => "unlock",
+//            "roles"=> array(
+//                "role1"
+//            )
+//        )
+//    )
+    
+    
+    
+//    "database" => array(
+//        "name" => "dvdrental",
+//        "driver" => "pgsql",
+//        "host" => "localhost",
+//        "login" => "html5sync",
+//        "password" => "H5FAHM98hBS8"
+//    ),
+//    "tables" => array(
+//        array(
+//            "name" => "actor",
+//            "mode" => "lock",
+//            "roles"=> array(
+//                "role1",
+//                "role2"
+//            ),
+//            "users"=> array(
+//                101,
+//                102
+//            )
+//        )
+//    )
+
+    
     
     
     "database" => array(

@@ -99,7 +99,6 @@ var Connector = function(params,callback){
             }).done(function(response) {
                 var data=JSON.parse(response);
                 if(data.error){
-                    console.debug("error");
                     debug("SERVER: "+data.error,"bad",debugLevel+1);
                     if(callback)callback(new Error("SERVER: "+data.error));
                 }else{
@@ -110,16 +109,16 @@ var Connector = function(params,callback){
                         stores:Database.tablesToStores(data.tables),
                         debugLevel:debugLevel+1
                     };
-                    var database=new Database(parameters,function(err){
-                        if(err){
-                            debug("Cannot create the database "+databaseName,"bad",debugLevel);
-                            if(callback)callback(err);
-                        }else{
-                            debug("Database "+databaseName+" created","good",debugLevel);
-                            //Si todo está bien, retorna la base de datos creada
-                            if(callback)callback(false,database,data.tables);
-                        }
-                    });
+                        var database=new Database(parameters,function(err){
+                            if(err){
+                                debug("Cannot create the database "+databaseName,"bad",debugLevel);
+                                if(callback)callback(err);
+                            }else{
+                                debug("Database "+databaseName+" created","good",debugLevel);
+                                //Si todo está bien, retorna la base de datos creada
+                                if(callback)callback(false,database,data.tables);
+                            }
+                        });
                 }
                 self.setToIdle("reloadDatabase");
                 self.showLoading(false);
@@ -189,57 +188,29 @@ var Connector = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     self.sync=function(callback){
-        
-        debug("Synchronizing...","info",1);
-        
-//        $.ajax({
-//            url: self.params.html5syncFolder+"server/ajax/sync.php"
-//        }).done(function(response) {
-//            var data=JSON.parse(response);
-//            if(data.error){
-//                debug(data.error);
-//                if(callback)callback(new Error(data.error));
-//            }else{
-//                self.userId=parseInt(data.userId);
-//                self.databaseName=data.database;
-//                var state=(data.state==="true")?true:false;
-//                var changesInStructure=(data.changesInStructure==="true")?true:false;
-//                var changesInData=(data.changesInData==="false")?false:data.changesInData;
-//                //Marca como conectado
-//                setState(state);
-//                //Si hay cambios en la estructura o en los datos se deben recargar
-//                if(changesInStructure){
-//                    updateStructure();
-//                }else{
-//                    if(changesInData){
-//                        for(var i in changesInData){
-//                            updateTable(changesInData[i],function(err){
-//                                if(err){
-//                                    if(callback)callback(err);
-//                                }
-//                            });
-//                        }
-//                    }
-//                }
-//                //Si no existe la base de datos la crea y la carga por primera vez
-//                var name=returnDBName();
-//                databaseExists(name,function(exists){
-//                    if(!exists){
-//                        updateStructure();
-//                    }else{
-//                        if(!self.database){
-//                            self.database=new Database({load:true,database:name},function(err){
-//                                if(callback)callback(err);
-//                            });
-////                            buildViewer();
-//                        }
-//                    }
-//                });
-//                if(callback)callback(false);
-//            }
-//        }).fail(function(){
-//            setState(false);
-//        });
+        if(!self.isBusy("sync")){
+            debug("Synchronizing...","info",1);
+            $.ajax({
+                url: self.params.ajaxFolder+"sync.php",
+                type: "POST"
+            }).done(function(response) {
+                var data=false;
+                try{
+                    data=JSON.parse(response);
+                    if(data.error){
+                        debug("SERVER: "+data.error,"bad",debugLevel+1);
+                        if(callback)callback(new Error("SERVER: "+data.error));
+                    }else{
+                        //Retorna las transacciones para ser procesadas
+                        if(callback)callback(false,data.transactions);
+                    }
+                }catch(e){
+                    if(callback)callback(new Error("Error parsing server data"));
+                }
+            }).fail(function(){
+                if(callback)callback(new Error("Could not sync"));
+            });
+        }
     };
     
     /**************************************************************************/

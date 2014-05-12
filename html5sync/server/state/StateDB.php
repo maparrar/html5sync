@@ -197,7 +197,24 @@ class StateDB{
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
     }
-    
+    /**
+     * Retorna la fecha de la última actualización del usuario en la base de datos de estado
+     * @return DateTime Objeto con la fecha de la última actualización
+     */
+    public function getUserLastUpdate(){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `User`");
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            if($row){
+                $response=new DateTime($row["lastUpdate"]);
+            }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $response;
+    }
     /**************************************************************************/
     /*******************************   TABLES  ********************************/
     /**************************************************************************/
@@ -332,7 +349,27 @@ class StateDB{
             error_log("[".__FILE__.":".__LINE__."]"."SQLite: ".$error[2]);
         }
     }
-    
+    /**
+     * Retorna la fecha de la última actualización de la tabla en la base de datos de estado
+     * @param Table $table Objeto Table
+     * @return DateTime Objeto con la fecha de la última actualización
+     */
+    public function getTableLastUpdate($table){
+        $response=false;
+        $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `Table` WHERE name=:name");
+        $name=$table->getName();  //For strict PHP
+        $stmt->bindParam(':name',$name);
+        if ($stmt->execute()) {
+            $row=$stmt->fetch();
+            if($row){
+                $response=new DateTime($row["lastUpdate"]);
+            }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
+        }
+        return $response;
+    }
 
 
 
@@ -380,27 +417,7 @@ class StateDB{
 ////        }
 //        return  $changed;
 //    }
-    /**
-     * Retorna la fecha de la última actualización almacenada en la base de datos de estado
-     * @param User $user Objeto Usuario
-     * @return DateTime Objeto con la fecha de la última actualización
-     */
-//    public function getLastUpdate($user){
-//        $response=false;
-//        $stmt = $this->handler->prepare("SELECT `lastUpdate` FROM `User` WHERE `id`= :id");
-//        $id=$user->getId();  //For strict PHP
-//        $stmt->bindParam(':id',$id);
-//        if ($stmt->execute()) {
-//            $row=$stmt->fetch();
-//            if($row){
-//                $response=new DateTime($row["lastUpdate"]);
-//            }
-//        }else{
-//            $error=$stmt->errorInfo();
-//            error_log("[".__FILE__.":".__LINE__."]"."Mysql: ".$error[2]);
-//        }
-//        return $response;
-//    }
+    
     
     /**
      * Verifica para cada usuario si la estructura de las tablas ha cambiado por

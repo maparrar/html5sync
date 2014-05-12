@@ -20,7 +20,7 @@ var Html5Sync = function(params,callback){
     
     self.callback=callback; //Function to return responses
     
-//    self.state;         //{bool} Estado de la conexión con el servidor.
+    self.state;         //{bool} Estado de la conexión con el servidor.
     self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
     self.userId=false;  //Identificador del usuario
     self.databaseName=false;//Nombre de la base de datos
@@ -36,6 +36,7 @@ var Html5Sync = function(params,callback){
         html5syncFolder:"html5sync/",
         stateTimer: 10000,
         showState:false,
+        syncCallback:false, //Callback que se ejecuta cada que se ejecuta connector.sync()
         viewer:false
     };
     self.params = $.extend(def, params);
@@ -74,8 +75,6 @@ var Html5Sync = function(params,callback){
                 self.config=data;
                 self.userId=data.userId;  //Identificador del usuario
                 self.databaseName=data.database;
-                
-                
                 //Se prepara la base de datos
                 prepareDatabase(function(err){
                     if(err){
@@ -85,6 +84,8 @@ var Html5Sync = function(params,callback){
                         startSync(function(err){
                             if(err){
                                 if(callback)callback(err);
+                            }else{
+                                if(callback)callback(false);
                             }
                         });
                     }
@@ -130,6 +131,8 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Funtion to return error if happens
      */
     function prepareDatabase(callback){
+        showLoading(true);
+        self.connector.setToBusy("sync");
         debug("Preparing database "+returnDBName(),"info");
         Database.databaseExists(returnDBName(),function(exists){
 //            exists=false;console.debug("Html5Sync.prepareDatabase: En pruebas, se desactiva exists <<<<<");
@@ -152,6 +155,8 @@ var Html5Sync = function(params,callback){
                         debug("");
                         if(callback)callback(false);
                     }
+                    showLoading(false);
+                    self.connector.setToIdle("sync");
                 },1);
             }else{
                 debug("Browser database "+returnDBName()+" not found","bad",1);
@@ -174,8 +179,10 @@ var Html5Sync = function(params,callback){
                                 debug("");
                                 if(callback)callback(false);
                             }
+                            self.connector.setToIdle("sync");
                         });
                     }
+                    showLoading(false);
                 },2);
             }
         });
@@ -242,19 +249,37 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     function startSync(callback){
-        self.connector.sync();
+        self.connector.setToIdle("sync");
+        self.connector.sync(function(err,transactions){
+            if(err){
+                setState(false);
+                if(callback)callback(err);
+            }else{
+                setState(true);
+                self.database.processTransactions(transactions);
+                if(self.params.syncCallback)self.params.syncCallback();
+            }
+        });
         setInterval(function(){
             try{
-                self.connector.sync(function(err){
-                    if(callback)callback(err);
+                self.connector.sync(function(err,transactions){
+                    if(err){
+                        setState(false);
+                        if(callback)callback(err);
+                    }else{
+                        setState(true);
+                        self.database.processTransactions(transactions);
+                        if(self.params.syncCallback)self.params.syncCallback();
+                    }
                 });
             }catch(e){
-//                setState(false); 
+                setState(false);
             }
         },self.params.stateTimer);
+        if(callback)callback(false);
     };
-
-
+    
+    
 
 
     
@@ -370,18 +395,18 @@ var Html5Sync = function(params,callback){
      * Establece el estado de la conexión con el servidor
      * @param {bool} state Estado de la conexión
      */
-//    function setState(state){
-//        self.state=true;
-//        if(self.params.showState){
-//            if(state){
-//                self.stateLabel.removeClass("offline").addClass("online");
-//                self.stateLabel.find("#state").text("on line");
-//            }else{
-//                self.stateLabel.removeClass("online").addClass("offline");
-//                self.stateLabel.find("#state").text("off line");
-//            }
-//        }
-//    };
+    function setState(state){
+        self.state=true;
+        if(self.params.showState){
+            if(state){
+                self.stateLabel.removeClass("offline").addClass("online");
+                self.stateLabel.find("#state").text("on line");
+            }else{
+                self.stateLabel.removeClass("online").addClass("offline");
+                self.stateLabel.find("#state").text("off line");
+            }
+        }
+    };
     /**
      * Crea la estructura de la aplicación en HTML5. Define si se muestra el área
      * de debugging y/o de estado.
@@ -424,8 +449,7 @@ var Html5Sync = function(params,callback){
                     var levelText="";
                     if(level){
                         for(var i=0;i<level;i++){
-                            levelText+="&#10140; ";
-    //                        levelText+="&#8801; ";
+                            levelText+="&#10140; ";//levelText+="&#8801; ";
                         }
                     }
                     //Especifica el tipo de mensaje
@@ -513,7 +537,11 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Función para retornar resultados
      */
     self.forceReload=function(callback){
-        self.database.db.close();
+        showLoading(true);
+        self.connector.setToBusy("sync");
+        try{
+            self.database.db.close();
+        }catch(e){};
         Database.deleteDatabase(returnDBName(),function(err){
             if(err){
                 if(callback)callback(err);
@@ -522,8 +550,10 @@ var Html5Sync = function(params,callback){
                     if(err){
                         if(callback)callback(err);
                     }
+                    self.connector.setToIdle("sync");
                 });
             }
+            showLoading(false);
         });
     };
 };

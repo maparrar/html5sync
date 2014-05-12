@@ -24,6 +24,10 @@ if($user->getId()<=0){
     
     //Renueva la lista de tablas en la base de datos estática StateDB
     $tables=$businessDB->getTables();
+    
+    //Prepara la base de datos BussinessDB: crea las tablas y los triggers
+    $businessDB->prepareDatabase();
+    
     if(count($tables)<=0){
         $error="The user has no tables to synchronize";
     }else{

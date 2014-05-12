@@ -116,6 +116,7 @@ var Database = function(params,callback){
          * datos indexedDB en el navegador.
          */
         self.request.onerror = function(e) {
+            debug("Error creating database: "+self.params.database,"bad");
             self.callback(new Error("Unable to connect to the local database"));
         };
         /*
@@ -209,14 +210,17 @@ var Database = function(params,callback){
         if(self.params.debugCrud)debug("add() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
+        var indexes=false;
+        var counter=0;
         //Evento que se dispara cuando se finaliza la transacción con éxito
         tx.oncomplete = function(e) {
-            if(callback)callback(false);
             if(self.params.debugCrud)debug("add() - Transaction ended","good",self.params.debugLevel+2);
         };
         //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
         if(Object.prototype.toString.call(data)!=="[object Array]"){
             data=new Array(data);
+        }else{
+            indexes=new Array();
         }
         for (var i in data) {
             var request = store.add(data[i]);
@@ -224,6 +228,17 @@ var Database = function(params,callback){
             request.onerror = function(e) {
                 if(self.params.debugCrud)debug("add() - One object violates the unicity. Do not add more objects","bad",self.params.debugLevel+3);
                 if(callback)callback(e.target.error);
+            };
+            request.onsuccess=function(e){
+                counter++;
+                if(!indexes){
+                    indexes=e.target.result;
+                }else{
+                    indexes.push(e.target.result);
+                }
+                if(parseInt(counter)===parseInt(data.length)){
+                    if(callback)callback(false,indexes);
+                }
             };
         }
     };
@@ -235,12 +250,43 @@ var Database = function(params,callback){
      */
     self.get=function(storeName,key,callback){
         if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
+        var output=new Array();
+        try{
+            var tx = self.db.transaction([storeName]);
+            var store = tx.objectStore(storeName);
+            var range=IDBKeyRange.only(key);
+            store.openCursor(range).onerror=function(e){
+                if(self.params.debugCrud)debug("get() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
+                if(callback)callback(e.target.error);
+            };
+            store.openCursor(range).onsuccess = function(e) {
+                var cursor = e.target.result;
+                if (cursor) {
+                    output.push(cursor.value);
+                    cursor.continue();
+                }else{
+                    if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
+                    if(callback)callback(false,output);
+                }
+            };
+        }catch(e){
+            debug("Object with key: "+key+" not found in: "+storeName);
+            if(callback)callback(false,output);
+        }
+    };
+     /**
+     * Retorna un conjunto de objetos de la base de datos
+     * @param {string} storeName Nombre del almacÃ©n de datos donde se quiere leer la informaciÃ³n
+     * @param {function} callback FunciÃ³n a la que se retornan los resultados
+     */
+    self.list=function(storeName,callback){
+        if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName]);
         var store = tx.objectStore(storeName);
-        var range=IDBKeyRange.only(key);
+        var range=IDBKeyRange.lowerBound(0);
         var output=new Array();
         store.openCursor(range).onerror=function(e){
-            if(self.params.debugCrud)debug("get() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
+            if(self.params.debugCrud)debug("lis() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
             if(callback)callback(e.target.error);
         };
         store.openCursor(range).onsuccess = function(e) {
@@ -249,7 +295,7 @@ var Database = function(params,callback){
                 output.push(cursor.value);
                 cursor.continue();
             }else{
-                if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
+                if(self.params.debugCrud)debug("list() - Transaction ended","good",self.params.debugLevel+2);
                 if(callback)callback(false,output);
             }
         };
@@ -347,6 +393,42 @@ var Database = function(params,callback){
             registers.push(register);
         }
         return registers;
+    };
+    /**
+     * Procesa la lista de transacciones retornadas por la función sync.
+     * @param {Transaction[]} transactions Lista de transacciones de sync
+     * @param {function} callback Función para retornar los resultados
+     * @todo Optimizar la insersión de transacciones para hacer una operación por tabla
+     */
+    self.processTransactions=function(transactions,callback){
+        if(transactions.length>0){
+            for(var i in transactions){
+                var transaction=transactions[i];
+                switch (transaction.type) {
+                    case "INSERT":
+                        self.add(transaction.tableName,transaction.row,function(err){
+                            if(err){
+                                if(callback)callback(err);
+                            }
+                        });
+                        break;
+                    case "UPDATE":
+                        self.update(transaction.tableName,transaction.key,transaction.row,function(err){
+                            if(err){
+                                if(callback)callback(err);
+                            }
+                        });
+                        break;
+                    case "DELETE":
+                        self.delete(transaction.tableName,transaction.key,function(err){
+                            if(err){
+                                if(callback)callback(err);
+                            }
+                        });
+                        break;
+                };
+            }
+        }
     };
 };
 
