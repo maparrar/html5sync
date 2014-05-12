@@ -99,7 +99,6 @@ var Connector = function(params,callback){
             }).done(function(response) {
                 var data=JSON.parse(response);
                 if(data.error){
-                    console.debug("error");
                     debug("SERVER: "+data.error,"bad",debugLevel+1);
                     if(callback)callback(new Error("SERVER: "+data.error));
                 }else{
@@ -110,16 +109,16 @@ var Connector = function(params,callback){
                         stores:Database.tablesToStores(data.tables),
                         debugLevel:debugLevel+1
                     };
-                    var database=new Database(parameters,function(err){
-                        if(err){
-                            debug("Cannot create the database "+databaseName,"bad",debugLevel);
-                            if(callback)callback(err);
-                        }else{
-                            debug("Database "+databaseName+" created","good",debugLevel);
-                            //Si todo está bien, retorna la base de datos creada
-                            if(callback)callback(false,database,data.tables);
-                        }
-                    });
+                        var database=new Database(parameters,function(err){
+                            if(err){
+                                debug("Cannot create the database "+databaseName,"bad",debugLevel);
+                                if(callback)callback(err);
+                            }else{
+                                debug("Database "+databaseName+" created","good",debugLevel);
+                                //Si todo está bien, retorna la base de datos creada
+                                if(callback)callback(false,database,data.tables);
+                            }
+                        });
                 }
                 self.setToIdle("reloadDatabase");
                 self.showLoading(false);

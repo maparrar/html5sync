@@ -116,6 +116,7 @@ var Database = function(params,callback){
          * datos indexedDB en el navegador.
          */
         self.request.onerror = function(e) {
+            debug("Error creating database: "+self.params.database,"bad");
             self.callback(new Error("Unable to connect to the local database"));
         };
         /*
