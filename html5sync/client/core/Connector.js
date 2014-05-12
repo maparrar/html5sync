@@ -194,8 +194,9 @@ var Connector = function(params,callback){
                 url: self.params.ajaxFolder+"sync.php",
                 type: "POST"
             }).done(function(response) {
+                var data=false;
                 try{
-                    var data=JSON.parse(response);
+                    data=JSON.parse(response);
                     if(data.error){
                         debug("SERVER: "+data.error,"bad",debugLevel+1);
                         if(callback)callback(new Error("SERVER: "+data.error));

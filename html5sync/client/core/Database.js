@@ -250,24 +250,29 @@ var Database = function(params,callback){
      */
     self.get=function(storeName,key,callback){
         if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
-        var tx = self.db.transaction([storeName]);
-        var store = tx.objectStore(storeName);
-        var range=IDBKeyRange.only(key);
         var output=new Array();
-        store.openCursor(range).onerror=function(e){
-            if(self.params.debugCrud)debug("get() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
-            if(callback)callback(e.target.error);
-        };
-        store.openCursor(range).onsuccess = function(e) {
-            var cursor = e.target.result;
-            if (cursor) {
-                output.push(cursor.value);
-                cursor.continue();
-            }else{
-                if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
-                if(callback)callback(false,output);
-            }
-        };
+        try{
+            var tx = self.db.transaction([storeName]);
+            var store = tx.objectStore(storeName);
+            var range=IDBKeyRange.only(key);
+            store.openCursor(range).onerror=function(e){
+                if(self.params.debugCrud)debug("get() Couldn't access object with key '"+key+"' in database.","bad",self.params.debugLevel+2);
+                if(callback)callback(e.target.error);
+            };
+            store.openCursor(range).onsuccess = function(e) {
+                var cursor = e.target.result;
+                if (cursor) {
+                    output.push(cursor.value);
+                    cursor.continue();
+                }else{
+                    if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
+                    if(callback)callback(false,output);
+                }
+            };
+        }catch(e){
+            debug("Object with key: "+key+" not found in: "+storeName);
+            if(callback)callback(false,output);
+        }
     };
      /**
      * Retorna un conjunto de objetos de la base de datos
@@ -415,7 +420,7 @@ var Database = function(params,callback){
                         });
                         break;
                     case "DELETE":
-                        self.update(transaction.tableName,transaction.key,function(err){
+                        self.delete(transaction.tableName,transaction.key,function(err){
                             if(err){
                                 if(callback)callback(err);
                             }
