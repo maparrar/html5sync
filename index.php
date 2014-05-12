@@ -29,7 +29,7 @@ $_SESSION['html5sync_role']="role1";
                 var html5Sync=new Html5Sync({
                     debugging:true,
                     showState:true,
-                    syncFunction:functionToExecEachSync
+                    syncCallback:functionToExecEachSync
                 },function(err){
                     if(err){
                         console.debug(err);

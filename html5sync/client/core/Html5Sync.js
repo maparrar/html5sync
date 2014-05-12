@@ -36,6 +36,7 @@ var Html5Sync = function(params,callback){
         html5syncFolder:"html5sync/",
         stateTimer: 10000,
         showState:false,
+        syncCallback:false, //Callback que se ejecuta cada que se ejecuta connector.sync()
         viewer:false
     };
     self.params = $.extend(def, params);
@@ -256,7 +257,7 @@ var Html5Sync = function(params,callback){
             }else{
                 setState(true);
                 self.database.processTransactions(transactions);
-                if(self.params.syncFunction)self.params.syncFunction();
+                if(self.params.syncCallback)self.params.syncCallback();
             }
         });
         setInterval(function(){
@@ -268,7 +269,7 @@ var Html5Sync = function(params,callback){
                     }else{
                         setState(true);
                         self.database.processTransactions(transactions);
-                        if(self.params.syncFunction)self.params.syncFunction();
+                        if(self.params.syncCallback)self.params.syncCallback();
                     }
                 });
             }catch(e){
