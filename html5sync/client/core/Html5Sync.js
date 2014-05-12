@@ -256,7 +256,7 @@ var Html5Sync = function(params,callback){
             }else{
                 setState(true);
                 self.database.processTransactions(transactions);
-                if(callback)callback(false);
+                if(self.params.syncFunction)self.params.syncFunction();
             }
         });
         setInterval(function(){
@@ -268,13 +268,14 @@ var Html5Sync = function(params,callback){
                     }else{
                         setState(true);
                         self.database.processTransactions(transactions);
-                        if(callback)callback(false);
+                        if(self.params.syncFunction)self.params.syncFunction();
                     }
                 });
             }catch(e){
                 setState(false);
             }
         },self.params.stateTimer);
+        if(callback)callback(false);
     };
     
     

@@ -397,8 +397,6 @@ var Database = function(params,callback){
         if(transactions.length>0){
             for(var i in transactions){
                 var transaction=transactions[i];
-                console.debug(transaction);
-                
                 switch (transaction.type) {
                     case "INSERT":
                         self.add(transaction.tableName,transaction.row,function(err){
