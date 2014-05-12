@@ -28,7 +28,20 @@ $transactions=$businessDB->getLastTransactions($lastUpdate);
 
 $transactionsJSON='[';
 foreach ($transactions as $transaction) {
-    $transactionsJSON.=$transaction->jsonEncode().",";
+    $register="";
+    $row=$transaction->getRow();
+    foreach ($row as $name => $value) {
+        $register.='"'.$name.'":"'.$value.'",';
+    }
+    $register=substr($register,0,-1);
+    $transactionsJSON.='{'
+        .'"id":"'.$transaction->getId().'",'
+        .'"type":"'.$transaction->getType().'",'
+        .'"tableName":"'.$transaction->getTableName().'",'
+        .'"key":"'.$transaction->getKey().'",'
+        .'"date":"'.$transaction->getDate().'",'
+        .'"row":{'.$register.'}'
+    .'},';
 }
 if(count($transactions)>0){
     $transactionsJSON=substr($transactionsJSON,0,-1);

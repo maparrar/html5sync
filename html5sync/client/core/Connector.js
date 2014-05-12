@@ -194,13 +194,17 @@ var Connector = function(params,callback){
                 url: self.params.ajaxFolder+"sync.php",
                 type: "POST"
             }).done(function(response) {
-                var data=JSON.parse(response);
-                if(data.error){
-                    debug("SERVER: "+data.error,"bad",debugLevel+1);
-                    if(callback)callback(new Error("SERVER: "+data.error));
-                }else{
-                    //Retorna las transacciones para ser procesadas
-                    if(callback)callback(false,data.transactions);
+                try{
+                    var data=JSON.parse(response);
+                    if(data.error){
+                        debug("SERVER: "+data.error,"bad",debugLevel+1);
+                        if(callback)callback(new Error("SERVER: "+data.error));
+                    }else{
+                        //Retorna las transacciones para ser procesadas
+                        if(callback)callback(false,data.transactions);
+                    }
+                }catch(e){
+                    if(callback)callback(new Error("Error parsing server data"));
                 }
             }).fail(function(){
                 if(callback)callback(new Error("Could not sync"));

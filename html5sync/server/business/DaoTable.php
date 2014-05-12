@@ -250,18 +250,21 @@ class DaoTable{
      * @param mixed $key Clave del registro que se quiere cargar
      */
     public function getRowOfTable($table,$key){
-        $row = false;
+        $register = false;
         $handler=$this->db->connect("all");
         $pk=$table->getPk();
         $stmt = $handler->prepare("SELECT * FROM ".$table->getName()." WHERE ".$pk->getName()."=:key");
         $stmt->bindParam(':key',$key);
         if ($stmt->execute()) {
-            $row=$stmt->fetch();
+            $row=$stmt->fetch(PDO::FETCH_ASSOC);
+            if($row){
+                $register=$row;
+            }
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
-        return $row;
+        return $register;
     }
 
 

@@ -393,6 +393,7 @@ var Database = function(params,callback){
      * Procesa la lista de transacciones retornadas por la función sync.
      * @param {Transaction[]} transactions Lista de transacciones de sync
      * @param {function} callback Función para retornar los resultados
+     * @todo Optimizar la insersión de transacciones para hacer una operación por tabla
      */
     self.processTransactions=function(transactions,callback){
         if(transactions.length>0){
@@ -401,17 +402,23 @@ var Database = function(params,callback){
                 switch (transaction.type) {
                     case "INSERT":
                         self.add(transaction.tableName,transaction.row,function(err){
-                            
+                            if(err){
+                                if(callback)callback(err);
+                            }
                         });
                         break;
                     case "UPDATE":
                         self.update(transaction.tableName,transaction.key,transaction.row,function(err){
-                            
+                            if(err){
+                                if(callback)callback(err);
+                            }
                         });
                         break;
                     case "DELETE":
                         self.update(transaction.tableName,transaction.key,function(err){
-                            
+                            if(err){
+                                if(callback)callback(err);
+                            }
                         });
                         break;
                 };

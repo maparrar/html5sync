@@ -59,7 +59,7 @@ $_SESSION['html5sync_role']="role1";
                         html5Sync.database.get(store,key,function(err,objects){
                             if(!err){
                                 for(var i in objects){
-                                    $("#objects").text(objToString(objects[i])+"<br>");
+                                    $("#objects").text(objToString(objects[i]));
                                 }
                             }
                         });

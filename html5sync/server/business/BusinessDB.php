@@ -240,11 +240,11 @@ class BusinessDB{
         }
         return $allowed;
     }
-    
-    
-    
-    
-    
+    /**
+     * Retorna las últimas transacciones para actualizar las base de datos del navegador
+     * @param DateTime $lastUpdate Última fecha de actualización
+     * @return Transaction[] Lista de transacciones luego de la fecha pasada como parámetro
+     */
     public function getLastTransactions($lastUpdate){
         $dao=new DaoTable($this->db);
         $transactions=$dao->getLastTransactions($lastUpdate);
