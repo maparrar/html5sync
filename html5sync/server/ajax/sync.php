@@ -38,8 +38,9 @@ $transactionsJSON='[';
 foreach ($transactions as $transaction) {
     $transactionsJSON.=$transaction->jsonEncode().",";
 }
-$transactionsJSON=substr($transactionsJSON,0,-1);
-
+if(count($transactions)>0){
+    $transactionsJSON=substr($transactionsJSON,0,-1);
+}
 
 $transactionsJSON.=']';
 
