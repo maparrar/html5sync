@@ -131,6 +131,7 @@ var Html5Sync = function(params,callback){
      */
     function prepareDatabase(callback){
         showLoading(true);
+        self.connector.setToBusy("sync");
         debug("Preparing database "+returnDBName(),"info");
         Database.databaseExists(returnDBName(),function(exists){
 //            exists=false;console.debug("Html5Sync.prepareDatabase: En pruebas, se desactiva exists <<<<<");
@@ -154,6 +155,7 @@ var Html5Sync = function(params,callback){
                         if(callback)callback(false);
                     }
                     showLoading(false);
+                    self.connector.setToIdle("sync");
                 },1);
             }else{
                 debug("Browser database "+returnDBName()+" not found","bad",1);
@@ -176,6 +178,7 @@ var Html5Sync = function(params,callback){
                                 debug("");
                                 if(callback)callback(false);
                             }
+                            self.connector.setToIdle("sync");
                         });
                     }
                     showLoading(false);
@@ -529,7 +532,10 @@ var Html5Sync = function(params,callback){
      */
     self.forceReload=function(callback){
         showLoading(true);
-        self.database.db.close();
+        self.connector.setToBusy("sync");
+        try{
+            self.database.db.close();
+        }catch(e){};
         Database.deleteDatabase(returnDBName(),function(err){
             if(err){
                 if(callback)callback(err);
@@ -538,6 +544,7 @@ var Html5Sync = function(params,callback){
                     if(err){
                         if(callback)callback(err);
                     }
+                    self.connector.setToIdle("sync");
                 });
             }
             showLoading(false);

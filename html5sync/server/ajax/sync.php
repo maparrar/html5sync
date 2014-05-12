@@ -26,15 +26,13 @@ $tables=$businessDB->getTables();
 
 
 //Retorna una lista de operaciones realizadas en la base de datos
-//$lastUpdate=$stateDB->getUserLastUpdate();
-$lastUpdate=new DateTime('2014-05-10 15:37:00');
+$lastUpdate=$stateDB->getUserLastUpdate();
 $transactions=$businessDB->getLastTransactions($lastUpdate);
 
 
 
 
 $transactionsJSON='[';
-
 foreach ($transactions as $transaction) {
     $transactionsJSON.=$transaction->jsonEncode().",";
 }
