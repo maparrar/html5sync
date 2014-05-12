@@ -30,7 +30,12 @@ $_SESSION['html5sync_role']="role1";
                     debugging:true,
                     showState:true
                 },function(err){
-                    console.debug(err);
+                    if(err){
+                        console.debug(err);
+                    }else{
+                        console.debug("Sin errores");
+                    }
+                    
                 });
                 
                
@@ -46,5 +51,8 @@ $_SESSION['html5sync_role']="role1";
     </head>
     <body>
         <input type="button" id="reloadData" value="Recargar datos"/>
+        <div id="example">
+            
+        </div>
     </body>
 </html>

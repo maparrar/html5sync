@@ -74,8 +74,6 @@ var Html5Sync = function(params,callback){
                 self.config=data;
                 self.userId=data.userId;  //Identificador del usuario
                 self.databaseName=data.database;
-                
-                
                 //Se prepara la base de datos
                 prepareDatabase(function(err){
                     if(err){
@@ -85,6 +83,8 @@ var Html5Sync = function(params,callback){
                         startSync(function(err){
                             if(err){
                                 if(callback)callback(err);
+                            }else{
+                                if(callback)callback(false);
                             }
                         });
                     }
@@ -248,22 +248,27 @@ var Html5Sync = function(params,callback){
      * @param {function} callback Función para retornar los resultados
      */
     function startSync(callback){
-        self.connector.sync(function(err){
+        self.connector.setToIdle("sync");
+        self.connector.sync(function(err,transactions){
             if(err){
                 setState(false);
                 if(callback)callback(err);
             }else{
                 setState(true);
+                self.database.processTransactions(transactions);
+                if(callback)callback(false);
             }
         });
         setInterval(function(){
             try{
-                self.connector.sync(function(err){
+                self.connector.sync(function(err,transactions){
                     if(err){
                         setState(false);
                         if(callback)callback(err);
                     }else{
                         setState(true);
+                        self.database.processTransactions(transactions);
+                        if(callback)callback(false);
                     }
                 });
             }catch(e){
@@ -271,8 +276,8 @@ var Html5Sync = function(params,callback){
             }
         },self.params.stateTimer);
     };
-
-
+    
+    
 
 
     
@@ -442,8 +447,7 @@ var Html5Sync = function(params,callback){
                     var levelText="";
                     if(level){
                         for(var i=0;i<level;i++){
-                            levelText+="&#10140; ";
-    //                        levelText+="&#8801; ";
+                            levelText+="&#10140; ";//levelText+="&#8801; ";
                         }
                     }
                     //Especifica el tipo de mensaje
