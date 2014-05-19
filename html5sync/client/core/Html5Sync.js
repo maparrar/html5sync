@@ -325,56 +325,6 @@ var Html5Sync = function(params,callback){
 //            });
 //        }
 //    };
-    /**
-     * Verifica si se actualizaron todos los datos de una tabla, si faltan, carga la
-     * siguiente página
-     * @param {string} table Tabla proveniente del servidor en JSON
-     * @param {function} callback Función para retornar los resultados
-     */
-//    function updateTable(table,callback){
-//        var initialRow=parseInt(table.initialRow);
-//        var numberOfRows=parseInt(table.numberOfRows);
-//        var totalOfRows=parseInt(table.totalOfRows);
-//        if((initialRow+numberOfRows)<totalOfRows){
-//            $.ajax({
-//                url: self.params.html5syncFolder+"server/ajax/updateTable.php",
-//                data:{
-//                    tableName:table.name,
-//                    initialRow:initialRow+numberOfRows
-//                },
-//                type: "POST"
-//            }).done(function(response) {
-//                var data=JSON.parse(response);
-//                var table=data.table;
-//                debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+(parseInt(table.initialRow)+1)+" de "+totalOfRows+" registros");
-//                var rows=serverTableToJSON(table);
-//                for(var j in rows){
-//                    var row=rows[j];
-//                    var pk=serverTableGetPK(table);
-//                    //Si encuentra un campo que sea PK, actualiza el registro, sino lo inserta
-//                    if(pk){
-//                        self.database.update(table.name,pk.key,row,function(err){
-//                            if(err){console.debug(err);}
-//                        });
-//                    }else{
-//                        self.database.add(table.name,row,function(err){
-//                            if(err){console.debug(err);}
-//                        });
-//                    }
-//                }
-//                //Si detecta que quedan datos por cargar de la tabla, los solicita
-//                updateTable(table,function(err){
-//                    if(callback)callback(err);
-//                });
-//                if(callback)callback(false);
-//            }).fail(function(){
-//                if(callback)callback(new Error("Unable to reload data from the server"));
-//                setState(false);
-//            });
-//        }else{
-////            showLoading(false);
-//        }
-//    };
     
     /**
      * Retorna la PK de una tabla recibida del servidor, si no tiene, retorna false
