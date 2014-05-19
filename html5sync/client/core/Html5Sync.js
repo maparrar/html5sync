@@ -138,7 +138,12 @@ var Html5Sync = function(params,callback){
 //            exists=false;console.debug("Html5Sync.prepareDatabase: En pruebas, se desactiva exists <<<<<");
             if(exists){
                 debug("Loading database "+returnDBName(),"info",1);
-                Database.loadDatabase(returnDBName(),function(err,browserDatabase){
+                var parameters={
+                    name:returnDBName(),
+                    debugLevel:1,
+                    storeTransactions:true
+                };
+                Database.loadDatabase(parameters,function(err,browserDatabase){
                     if(err){
                         debug("Cannot load the database "+returnDBName()+" trying delete...","bad",2);
                         Database.deleteDatabase(returnDBName(),function(err){
@@ -157,7 +162,7 @@ var Html5Sync = function(params,callback){
                     }
                     showLoading(false);
                     self.connector.setToIdle("sync");
-                },1);
+                });
             }else{
                 debug("Browser database "+returnDBName()+" not found","bad",1);
                 debug("Trying reload database from server...","info",1);

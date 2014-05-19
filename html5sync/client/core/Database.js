@@ -77,6 +77,7 @@ var Database = function(params,callback){
         database: "html5db",
         load: false,    //True si solo se debe cargar la base de datos (no crear)
         version: 1,
+        storeTransactions:false,    //True si se deben almacenar las transacciones realizadas en la base de datos
         options: {
             overwriteObjectStores: true
         },
@@ -274,11 +275,11 @@ var Database = function(params,callback){
             if(callback)callback(false,output);
         }
     };
-     /**
-     * Retorna un conjunto de objetos de la base de datos
-     * @param {string} storeName Nombre del almacÃ©n de datos donde se quiere leer la informaciÃ³n
-     * @param {function} callback FunciÃ³n a la que se retornan los resultados
-     */
+    /**
+    * Retorna un conjunto de objetos de la base de datos
+    * @param {string} storeName Nombre del almacén de datos donde se quiere leer la información
+    * @param {function} callback Función a la que se retornan los resultados
+    */
     self.list=function(storeName,callback){
         if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName]);
@@ -461,18 +462,25 @@ Database.databaseExists=function(name,callback){
 };
 /**
 * Static method. Return a database (the database must exists)
-* @param {string} name Database name
+* @param {object} parameters Database parameters
 * @param {function} callback Function to return the response
 * @param {int} debugLevel Nivel de debug
 */
-Database.loadDatabase=function(name,callback,debugLevel){
-   if(!debugLevel)debugLevel=0;
-   var request = window.indexedDB.open(name);
+Database.loadDatabase=function(parameters,callback){
+   if(!parameters.debugLevel)parameters.debugLevel=0;
+   if(!parameters.storeTransactions)parameters.storeTransactions=false;
+   var request = window.indexedDB.open(parameters.name);
    request.onerror = function(e) {
-       callback(new Error("Unable to connect to the local database "+name));
+       callback(new Error("Unable to connect to the local database "+parameters.name));
    };
    request.onsuccess = function(e) {
-        var database=new Database({load:true,database:name,debugLevel:debugLevel},function(err){
+        var dbParams={
+            load:true,
+            database:parameters.name,
+            debugLevel:parameters.debugLevel,
+            storeTransactions:parameters.storeTransactions
+        };
+        var database=new Database(dbParams,function(err){
             if(err){
                 if(callback)callback(err);
             }else{
