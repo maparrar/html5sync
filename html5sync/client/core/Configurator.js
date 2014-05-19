@@ -55,7 +55,8 @@ var Configurator = function(params,callback){
                     {name:"table",key:"table",params:{unique:false}},
                     {name:"key",key:"key",params:{unique:false}},
                     {name:"date",key:"date",params:{unique:false}},
-                    {name:"transaction",key:"transaction",params:{unique:false}}
+                    {name:"transaction",key:"transaction",params:{unique:false}},
+                    {name:"row",key:"row",params:{unique:false}}
                 ]
             }
         ];
