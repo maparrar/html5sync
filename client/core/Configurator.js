@@ -22,7 +22,7 @@ var Configurator = function(params,callback){
     //Se mezclan los parámetros por defecto con los proporcionados por el usuario
     //y se agregan a la variable self (this del objeto)
     var def = {
-        ajaxFolder:"html5sync/server/ajax/",
+        ajaxFolder:"server/ajax/",
         showLoading: false          //Function passed like parameter that shows the Loading gift.
     };
     self.params = $.extend(def, params);
