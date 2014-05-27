@@ -80,6 +80,8 @@ var Html5Sync = function(params,callback){
                     if(err){
                         if(callback)callback(err);
                     }else{
+                        //Cuando la base de datos está preparada, se agrega el acceso a la base de datos de configuración
+                        self.database.configurator=self.configurator;
                         //Cuando se cargue, inicia la sincronización
                         startSync(function(err){
                             if(err){
@@ -138,7 +140,12 @@ var Html5Sync = function(params,callback){
 //            exists=false;console.debug("Html5Sync.prepareDatabase: En pruebas, se desactiva exists <<<<<");
             if(exists){
                 debug("Loading database "+returnDBName(),"info",1);
-                Database.loadDatabase(returnDBName(),function(err,browserDatabase){
+                var parameters={
+                    name:returnDBName(),
+                    debugLevel:1,
+                    storeTransactions:true
+                };
+                Database.loadDatabase(parameters,function(err,browserDatabase){
                     if(err){
                         debug("Cannot load the database "+returnDBName()+" trying delete...","bad",2);
                         Database.deleteDatabase(returnDBName(),function(err){
@@ -157,7 +164,7 @@ var Html5Sync = function(params,callback){
                     }
                     showLoading(false);
                     self.connector.setToIdle("sync");
-                },1);
+                });
             }else{
                 debug("Browser database "+returnDBName()+" not found","bad",1);
                 debug("Trying reload database from server...","info",1);
@@ -320,56 +327,6 @@ var Html5Sync = function(params,callback){
 //            });
 //        }
 //    };
-    /**
-     * Verifica si se actualizaron todos los datos de una tabla, si faltan, carga la
-     * siguiente página
-     * @param {string} table Tabla proveniente del servidor en JSON
-     * @param {function} callback Función para retornar los resultados
-     */
-//    function updateTable(table,callback){
-//        var initialRow=parseInt(table.initialRow);
-//        var numberOfRows=parseInt(table.numberOfRows);
-//        var totalOfRows=parseInt(table.totalOfRows);
-//        if((initialRow+numberOfRows)<totalOfRows){
-//            $.ajax({
-//                url: self.params.html5syncFolder+"server/ajax/updateTable.php",
-//                data:{
-//                    tableName:table.name,
-//                    initialRow:initialRow+numberOfRows
-//                },
-//                type: "POST"
-//            }).done(function(response) {
-//                var data=JSON.parse(response);
-//                var table=data.table;
-//                debug(new Date().getTime()+"=><= Actualizando la tabla "+table.name+": "+(parseInt(table.initialRow)+1)+" de "+totalOfRows+" registros");
-//                var rows=serverTableToJSON(table);
-//                for(var j in rows){
-//                    var row=rows[j];
-//                    var pk=serverTableGetPK(table);
-//                    //Si encuentra un campo que sea PK, actualiza el registro, sino lo inserta
-//                    if(pk){
-//                        self.database.update(table.name,pk.key,row,function(err){
-//                            if(err){console.debug(err);}
-//                        });
-//                    }else{
-//                        self.database.add(table.name,row,function(err){
-//                            if(err){console.debug(err);}
-//                        });
-//                    }
-//                }
-//                //Si detecta que quedan datos por cargar de la tabla, los solicita
-//                updateTable(table,function(err){
-//                    if(callback)callback(err);
-//                });
-//                if(callback)callback(false);
-//            }).fail(function(){
-//                if(callback)callback(new Error("Unable to reload data from the server"));
-//                setState(false);
-//            });
-//        }else{
-////            showLoading(false);
-//        }
-//    };
     
     /**
      * Retorna la PK de una tabla recibida del servidor, si no tiene, retorna false
@@ -470,6 +427,39 @@ var Html5Sync = function(params,callback){
                     $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
                 }
             }
+        };
+        //Agrega las funciones de fecha
+        window.now=function(){
+            var now=new Date();
+            var string="";
+            string+=now.getFullYear()+"-";
+            if(now.getMonth()<10){
+                string+="0"+now.getMonth()+"-";
+            }else{
+                string+=now.getMonth()+"-";
+            }
+            if(now.getDate()<10){
+                string+="0"+now.getDate()+" ";
+            }else{
+                string+=now.getDate()+" ";
+            }
+            if(now.getHours()<10){
+                string+="0"+now.getHours()+":";
+            }else{
+                string+=now.getHours()+":";
+            }
+            if(now.getMinutes()<10){
+                string+="0"+now.getMinutes()+":";
+            }else{
+                string+=now.getMinutes()+":";
+            }
+            if(now.getSeconds()<10){
+                string+="0"+now.getSeconds()+".";
+            }else{
+                string+=now.getSeconds()+".";
+            }
+            string+=now.getMilliseconds();
+            return string;
         };
         //Agrega el visor de la base de datos
         if(self.params.viewer){
