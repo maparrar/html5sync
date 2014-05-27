@@ -50,7 +50,7 @@ var Configurator = function(params,callback){
             },
             {
                 name:"Transactions",
-                key:{keyPath:"id"},
+                key:{keyPath:"id",autoIncrement:true},
                 indexes:[
                     {name:"table",key:"table",params:{unique:false}},
                     {name:"key",key:"key",params:{unique:false}},

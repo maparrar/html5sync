@@ -199,7 +199,7 @@ var Database = function(params,callback){
     };
     
     /**************************************************************************/
-    /***************************** PUBLIC METHODS *****************************/
+    /****************************** CRUD METHODS ******************************/
     /**************************************************************************/
     /**
      * Inserta objetos en un almacén. Recibe un objeto o un array de objetos
@@ -267,6 +267,8 @@ var Database = function(params,callback){
                     cursor.continue();
                 }else{
                     if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
+                    //Si es solo un objeto, lo retorna como elemento, no como matriz
+                    if(output.length===1)output=output[0];
                     if(callback)callback(false,output);
                 }
             };
@@ -347,13 +349,64 @@ var Database = function(params,callback){
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         var request = store.delete(key);
-        request.onerror = function(e) {
+        request.onerror = function(e){
             if(self.params.debugCrud)debug("del() - Cannot delete the object: "+key,"bad",self.params.debugLevel+2);
             if(callback)callback(e.target.error);
         };
         request.onsuccess = function(e) {
             if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
+            if(callback)callback(false);
+            //Agrega el objeto a la tabla de transacciones
+            if(self.params.storeTransactions){
+                self.get(storeName,key,function(err,row){
+                    if(!err){
+                        var transaction={
+                            table:storeName,
+                            key:key,
+                            date:now(),
+                            transaction:"DELETE",
+                            row:row
+                        };
+                        self.configurator.db.add("Transactions",transaction,function(err){
+                            if(err){
+                                if(self.params.debugCrud)debug("Add deletd to transactions failed","bad",self.params.debugLevel+3);
+                            }else{
+                                if(self.params.debugCrud)debug("Add deletd to transactions success","good",self.params.debugLevel+3);
+                            }
+                        });
+                    }
+                });
+                
+            }
         };
+    };
+    /**************************************************************************/
+    /******************************* DB METHODS *******************************/
+    /**************************************************************************/
+    /**
+     * Retorna la lista de objectStores de la base de datos
+     * @returns {array} Lista de nombres de objectStores
+     */
+    self.getStoreNames=function(){
+        return self.db.objectStoreNames;
+    };
+    /**
+     * Retorna la lista de objectStores de la base de datos
+     * @param {string} storeName Nombre del almacén de datos
+     * @returns {array} Lista de índices del objectStore
+     */
+    self.getIndexNames=function(storeName){
+        return self.getStore(storeName).indexNames;
+    };
+    /**
+     * Retorna un almacén de datos de la base de datos
+     * @param {string} storeName Nombre del almacén de datos
+     * @returns {store} almacén de objetos
+     */
+    self.getStore=function(storeName){
+        var tx = self.db.transaction([storeName],"readwrite");
+        var store = tx.objectStore(storeName);
+        return store;
     };
     /**************************************************************************/
     /*************************** HTML5SYNC METHODS ****************************/

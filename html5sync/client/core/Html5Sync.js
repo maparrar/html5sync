@@ -80,6 +80,8 @@ var Html5Sync = function(params,callback){
                     if(err){
                         if(callback)callback(err);
                     }else{
+                        //Cuando la base de datos está preparada, se agrega el acceso a la base de datos de configuración
+                        self.database.configurator=self.configurator;
                         //Cuando se cargue, inicia la sincronización
                         startSync(function(err){
                             if(err){
@@ -425,6 +427,39 @@ var Html5Sync = function(params,callback){
                     $("#html5sync_debug").scrollTop($('#html5sync_debug').get(0).scrollHeight);
                 }
             }
+        };
+        //Agrega las funciones de fecha
+        window.now=function(){
+            var now=new Date();
+            var string="";
+            string+=now.getFullYear()+"-";
+            if(now.getMonth()<10){
+                string+="0"+now.getMonth()+"-";
+            }else{
+                string+=now.getMonth()+"-";
+            }
+            if(now.getDate()<10){
+                string+="0"+now.getDate()+" ";
+            }else{
+                string+=now.getDate()+" ";
+            }
+            if(now.getHours()<10){
+                string+="0"+now.getHours()+":";
+            }else{
+                string+=now.getHours()+":";
+            }
+            if(now.getMinutes()<10){
+                string+="0"+now.getMinutes()+":";
+            }else{
+                string+=now.getMinutes()+":";
+            }
+            if(now.getSeconds()<10){
+                string+="0"+now.getSeconds()+".";
+            }else{
+                string+=now.getSeconds()+".";
+            }
+            string+=now.getMilliseconds();
+            return string;
         };
         //Agrega el visor de la base de datos
         if(self.params.viewer){
