@@ -1,4 +1,4 @@
-# ![html5sync](html5sync/resources/images/sync_48.png) html5sync
+# ![html5sync](resources/images/sync_48.png) html5sync
 
 Herramienta para sincronizar una base de datos del servidor con una base de datos en el cliente (HTML5) y viceversa. Actualmente soporta:
 * PostgreSQL

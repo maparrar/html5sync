@@ -33,7 +33,6 @@ var Html5Sync = function(params,callback){
     var def = {
         debugging:false,
         debugLevel:0,       //Nivel de mensajes de debug que se muestran. 0 para mostrar todos
-        html5syncFolder:"html5sync/",
         stateTimer: 10000,
         showState:false,
         syncCallback:false, //Callback que se ejecuta cada que se ejecuta connector.sync()
@@ -285,66 +284,6 @@ var Html5Sync = function(params,callback){
         },self.params.stateTimer);
         if(callback)callback(false);
     };
-    
-    
-
-
-    
-    
-    /**
-     * Carga toda la información de las tablas
-     * @param {function} callback Función para retornar los resultados
-     */
-//    function reloadData(callback){
-//        if(!isBusy("reloadData")){
-////            showLoading(true);
-//            setToBusy("reloadData");
-//            $.ajax({
-//                url: self.params.html5syncFolder+"server/ajax/reloadData.php",
-//                type: "POST"
-//            }).done(function(response) {
-//                var data=JSON.parse(response);
-//                var tables=data.tables;
-//                //Revisa si para cada tabla faltan datos, solicita los nuevos
-//                for(var i in tables){
-//                    var table=tables[i];
-////                    showLoading(true);
-//                    self.database.clearStore(table,function(err,table){
-//                        if(!err){
-//                            //Empieza a cargar los datos
-//                            reloadTable(table);
-//                        }
-//                    });
-//                }
-//                if(callback)callback(false);
-////                showLoading(false);
-//                setToIdle("reloadData");
-//            }).fail(function(){
-//                if(callback)callback(new Error("Unable to reload data from the server"));
-//                setState(false);
-////                showLoading(false);
-//                setToIdle("reloadData");
-//            });
-//        }
-//    };
-    
-    /**
-     * Retorna la PK de una tabla recibida del servidor, si no tiene, retorna false
-     * @param {string} table Tabla proveniente del servidor en JSON
-     * @returns {mixed} False si no hay pk, objeto Field si la encuentra
-     */
-//    function serverTableGetPK(table){
-//        var fields=table.fields;
-//        var pk=false;
-//        for(var i in fields){
-//            if(fields[i].key==="PK"){
-//                pk=fields[i];
-//            }
-//        }
-//        return pk;
-//    }
-    
-    
     /**************************************************************************/
     /***************************** OTHER METHODS ******************************/
     /**************************************************************************/
@@ -523,7 +462,7 @@ var Html5Sync = function(params,callback){
     /**
      * Recarga los datos de las tablas permitidas. Toda la información de carga
      * está especificada en el archivo de configuración:
-     * html5sync/server/config.php
+     * server/config.php
      * @param {function} callback Función para retornar resultados
      */
     self.forceReload=function(callback){
