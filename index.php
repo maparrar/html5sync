@@ -17,13 +17,13 @@ $_SESSION['html5sync_role']="role1";
     <head>
         <title>html5sync</title>
         <meta charset="utf-8"/>
-        <link rel="stylesheet" type="text/css" href="html5sync/client/css/base.css">
+        <link rel="stylesheet" type="text/css" href="client/css/base.css">
         <link rel="stylesheet" type="text/css" href="exampleFiles/example.css">
-        <script src="html5sync/client/jquery/jquery-2.1.0.min.js"></script>
-        <script src="html5sync/client/core/Configurator.js"></script>
-        <script src="html5sync/client/core/Connector.js"></script>
-        <script src="html5sync/client/core/Html5Sync.js"></script>
-        <script src="html5sync/client/core/Database.js"></script>
+        <script src="client/jquery/jquery-2.1.0.min.js"></script>
+        <script src="client/core/Configurator.js"></script>
+        <script src="client/core/Connector.js"></script>
+        <script src="client/core/Html5Sync.js"></script>
+        <script src="client/core/Database.js"></script>
         <script type="text/javascript">
             $( document ).ready(function(){
                 var html5Sync=new Html5Sync({

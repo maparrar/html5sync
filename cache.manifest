@@ -1,10 +1,10 @@
 CACHE MANIFEST
-#html5sync/client/core/Configurator.js
-#html5sync/client/core/Connector.js
-#html5sync/client/core/Database.js
-#html5sync/client/core/Html5Sync.js
-#html5sync/client/css/base.css
-#html5sync/client/jquery/jquery-2.1.0.min.js
+#client/core/Configurator.js
+#client/core/Connector.js
+#client/core/Database.js
+#client/core/Html5Sync.js
+#client/css/base.css
+#client/jquery/jquery-2.1.0.min.js
 NETWORK:
 *
 FALLBACK:
