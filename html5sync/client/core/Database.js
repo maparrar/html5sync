@@ -77,6 +77,7 @@ var Database = function(params,callback){
         database: "html5db",
         load: false,    //True si solo se debe cargar la base de datos (no crear)
         version: 1,
+        storeTransactions:false,    //True si se deben almacenar las transacciones realizadas en la base de datos
         options: {
             overwriteObjectStores: true
         },
@@ -198,7 +199,7 @@ var Database = function(params,callback){
     };
     
     /**************************************************************************/
-    /***************************** PUBLIC METHODS *****************************/
+    /****************************** CRUD METHODS ******************************/
     /**************************************************************************/
     /**
      * Inserta objetos en un almacén. Recibe un objeto o un array de objetos
@@ -266,6 +267,8 @@ var Database = function(params,callback){
                     cursor.continue();
                 }else{
                     if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
+                    //Si es solo un objeto, lo retorna como elemento, no como matriz
+                    if(output.length===1)output=output[0];
                     if(callback)callback(false,output);
                 }
             };
@@ -274,11 +277,11 @@ var Database = function(params,callback){
             if(callback)callback(false,output);
         }
     };
-     /**
-     * Retorna un conjunto de objetos de la base de datos
-     * @param {string} storeName Nombre del almacÃ©n de datos donde se quiere leer la informaciÃ³n
-     * @param {function} callback FunciÃ³n a la que se retornan los resultados
-     */
+    /**
+    * Retorna un conjunto de objetos de la base de datos
+    * @param {string} storeName Nombre del almacén de datos donde se quiere leer la información
+    * @param {function} callback Función a la que se retornan los resultados
+    */
     self.list=function(storeName,callback){
         if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
         var tx = self.db.transaction([storeName]);
@@ -346,13 +349,64 @@ var Database = function(params,callback){
         var tx = self.db.transaction([storeName],"readwrite");
         var store = tx.objectStore(storeName);
         var request = store.delete(key);
-        request.onerror = function(e) {
+        request.onerror = function(e){
             if(self.params.debugCrud)debug("del() - Cannot delete the object: "+key,"bad",self.params.debugLevel+2);
             if(callback)callback(e.target.error);
         };
         request.onsuccess = function(e) {
             if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
+            if(callback)callback(false);
+            //Agrega el objeto a la tabla de transacciones
+            if(self.params.storeTransactions){
+                self.get(storeName,key,function(err,row){
+                    if(!err){
+                        var transaction={
+                            table:storeName,
+                            key:key,
+                            date:now(),
+                            transaction:"DELETE",
+                            row:row
+                        };
+                        self.configurator.db.add("Transactions",transaction,function(err){
+                            if(err){
+                                if(self.params.debugCrud)debug("Add deletd to transactions failed","bad",self.params.debugLevel+3);
+                            }else{
+                                if(self.params.debugCrud)debug("Add deletd to transactions success","good",self.params.debugLevel+3);
+                            }
+                        });
+                    }
+                });
+                
+            }
         };
+    };
+    /**************************************************************************/
+    /******************************* DB METHODS *******************************/
+    /**************************************************************************/
+    /**
+     * Retorna la lista de objectStores de la base de datos
+     * @returns {array} Lista de nombres de objectStores
+     */
+    self.getStoreNames=function(){
+        return self.db.objectStoreNames;
+    };
+    /**
+     * Retorna la lista de objectStores de la base de datos
+     * @param {string} storeName Nombre del almacén de datos
+     * @returns {array} Lista de índices del objectStore
+     */
+    self.getIndexNames=function(storeName){
+        return self.getStore(storeName).indexNames;
+    };
+    /**
+     * Retorna un almacén de datos de la base de datos
+     * @param {string} storeName Nombre del almacén de datos
+     * @returns {store} almacén de objetos
+     */
+    self.getStore=function(storeName){
+        var tx = self.db.transaction([storeName],"readwrite");
+        var store = tx.objectStore(storeName);
+        return store;
     };
     /**************************************************************************/
     /*************************** HTML5SYNC METHODS ****************************/
@@ -461,18 +515,25 @@ Database.databaseExists=function(name,callback){
 };
 /**
 * Static method. Return a database (the database must exists)
-* @param {string} name Database name
+* @param {object} parameters Database parameters
 * @param {function} callback Function to return the response
 * @param {int} debugLevel Nivel de debug
 */
-Database.loadDatabase=function(name,callback,debugLevel){
-   if(!debugLevel)debugLevel=0;
-   var request = window.indexedDB.open(name);
+Database.loadDatabase=function(parameters,callback){
+   if(!parameters.debugLevel)parameters.debugLevel=0;
+   if(!parameters.storeTransactions)parameters.storeTransactions=false;
+   var request = window.indexedDB.open(parameters.name);
    request.onerror = function(e) {
-       callback(new Error("Unable to connect to the local database "+name));
+       callback(new Error("Unable to connect to the local database "+parameters.name));
    };
    request.onsuccess = function(e) {
-        var database=new Database({load:true,database:name,debugLevel:debugLevel},function(err){
+        var dbParams={
+            load:true,
+            database:parameters.name,
+            debugLevel:parameters.debugLevel,
+            storeTransactions:parameters.storeTransactions
+        };
+        var database=new Database(dbParams,function(err){
             if(err){
                 if(callback)callback(err);
             }else{

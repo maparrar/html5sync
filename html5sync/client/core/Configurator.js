@@ -42,10 +42,22 @@ var Configurator = function(params,callback){
     function createDatabase(callback,debugLevel){
         self.showLoading(true);
         debug("Creating configuration database...","info",debugLevel+0);
-        var stores=[{
+        var stores=[
+            {
                 name:"Parameters",
                 key:{keyPath:"id"},
                 indexes:[{name:"id",key:"id",params:{unique:true}}]
+            },
+            {
+                name:"Transactions",
+                key:{keyPath:"id",autoIncrement:true},
+                indexes:[
+                    {name:"table",key:"table",params:{unique:false}},
+                    {name:"key",key:"key",params:{unique:false}},
+                    {name:"date",key:"date",params:{unique:false}},
+                    {name:"transaction",key:"transaction",params:{unique:false}},
+                    {name:"row",key:"row",params:{unique:false}}
+                ]
             }
         ];
         var parameters={
@@ -81,7 +93,7 @@ var Configurator = function(params,callback){
         debug("Saving configuration in local database...","info",debugLevel+0);
         Database.databaseExists("html5sync",function(exists){
             if(exists){
-                Database.loadDatabase("html5sync",function(err,configDatabase){
+                Database.loadDatabase({name:"html5sync",debugLevel:debugLevel+1},function(err,configDatabase){
                     self.db=configDatabase;
                     if(err){
                         debug("Cannot load the configuration database","bad",debugLevel+1);
@@ -89,7 +101,7 @@ var Configurator = function(params,callback){
                     }else{
                         addDataToDB(data);
                     }
-                },debugLevel+1);
+                });
             }else{
                 createDatabase(function(err){
                     if(err){
@@ -98,7 +110,7 @@ var Configurator = function(params,callback){
                     }else{
                         addDataToDB(data);
                     }
-                },debugLevel+1);
+                });
             }
             self.showLoading(false);
             function addDataToDB(data){
@@ -138,7 +150,7 @@ var Configurator = function(params,callback){
         Database.databaseExists("html5sync",function(exists){
             if(exists){
                 debug("Configuration data found, loading...","good",debugLevel+1);
-                Database.loadDatabase("html5sync",function(err,configDatabase){
+                Database.loadDatabase({name:"html5sync",debugLevel:debugLevel+1},function(err,configDatabase){
                     if(err){
                         returnErrors();
                     }else{
@@ -157,7 +169,7 @@ var Configurator = function(params,callback){
                             }
                         });
                     }
-                },debugLevel+1);
+                });
             }else{
                 returnErrors();
             }

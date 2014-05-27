@@ -1,0 +1,35 @@
+#html5sync_store table,#html5sync_store th,#html5sync_store td{
+    border:1px solid black;
+    border-collapse:collapse
+}
+#html5sync_store{
+    border: solid 1px orange;
+    height: 400px;
+    width: 700px;
+}
+#html5sync_store #html5sync_caption{
+    background: orange;
+    height: 35px;
+    line-height: 30px;
+    text-indent: 10px;
+}
+#html5sync_store #html5sync_store_titles{
+    background: green;
+    color: #fff;
+}
+#html5sync_store #html5sync_content{
+    font-size: 10px;
+    height: 360px;
+    overflow: auto;
+}
+#html5sync_store .html5sync_edit_row, #html5sync_store .html5sync_delete_row{
+    cursor: pointer;
+}
+#html5sync_store .html5sync_edit_row:hover{
+    background: blue;
+    color: white;
+}
+#html5sync_store .html5sync_delete_row:hover{
+    background: red;
+    color: white;
+}

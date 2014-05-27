@@ -107,18 +107,19 @@ var Connector = function(params,callback){
                         database: databaseName,
                         version: parseInt(data.version),                //Versión de la base de datos
                         stores:Database.tablesToStores(data.tables),
-                        debugLevel:debugLevel+1
+                        debugLevel:debugLevel+1,
+                        storeTransactions:true
                     };
-                        var database=new Database(parameters,function(err){
-                            if(err){
-                                debug("Cannot create the database "+databaseName,"bad",debugLevel);
-                                if(callback)callback(err);
-                            }else{
-                                debug("Database "+databaseName+" created","good",debugLevel);
-                                //Si todo está bien, retorna la base de datos creada
-                                if(callback)callback(false,database,data.tables);
-                            }
-                        });
+                    var database=new Database(parameters,function(err){
+                        if(err){
+                            debug("Cannot create the database "+databaseName,"bad",debugLevel);
+                            if(callback)callback(err);
+                        }else{
+                            debug("Database "+databaseName+" created","good",debugLevel);
+                            //Si todo está bien, retorna la base de datos creada
+                            if(callback)callback(false,database,data.tables);
+                        }
+                    });
                 }
                 self.setToIdle("reloadDatabase");
                 self.showLoading(false);
