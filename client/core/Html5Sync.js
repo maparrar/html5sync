@@ -171,6 +171,7 @@ var Html5Sync = function(params,callback){
                     if(err){
                         debug("Clear the browser history and reload","bad",1);
                         debug("Check the Internet connection to reload the database","bad");
+                        debug(err,"bad");
                         if(callback)callback(err);
                     }else{
                         debug("Database loaded from server","good",1);
@@ -360,6 +361,12 @@ var Html5Sync = function(params,callback){
                     }else{
                         typeText="html5sync_message_info";
                     }
+                    $("#html5sync_state").find("#state")
+                            .removeClass("html5sync_message_good")
+                            .removeClass("html5sync_message_bad")
+                            .removeClass("html5sync_message_wait")
+                            .removeClass("html5sync_message_info")
+                            .addClass(typeText);
                     if(!$("#html5sync_debug").exist()){
                         $("body").prepend('<div id="html5sync_debug"></div>');
                     }

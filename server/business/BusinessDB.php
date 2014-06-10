@@ -257,6 +257,14 @@ class BusinessDB{
         }
         return $transactions;
     }
+    /**
+     * Prueba la conexión con la base de datos
+     * @return bool Retorna true si la conexión fue exitosa, false en otro caso
+     */
+    public function testConnection(){
+        $connection=$this->db->connect();
+        return $connection;
+    }
 
 
 

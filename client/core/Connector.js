@@ -99,8 +99,7 @@ var Connector = function(params,callback){
             }).done(function(response) {
                 var data=JSON.parse(response);
                 if(data.error){
-                    debug("SERVER: "+data.error,"bad",debugLevel+1);
-                    if(callback)callback(new Error("SERVER: "+data.error));
+                    if(callback)callback(new Error(data.error));
                 }else{
                     //Configura los parámetros para crear la base de datos
                     var parameters={

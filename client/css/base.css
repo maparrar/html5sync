@@ -93,6 +93,18 @@
     float: left;
     margin: 3px 7px -2px;
 }
+#html5sync_state .html5sync_message_info{
+    color: #AFAFAF;
+}
+#html5sync_state .html5sync_message_good{
+    color: #38AC38;
+}
+#html5sync_state .html5sync_message_bad{
+    color: #AC3838;
+}
+#html5sync_state .html5sync_message_wait{
+    color: #FD8D4D;
+}
 /*********************************** LOADER ***********************************/
 .html5sync_spinner {
     -webkit-animation: spin 1s infinite linear;
