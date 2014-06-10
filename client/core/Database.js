@@ -556,7 +556,7 @@ Database.deleteDatabase=function(name,callback,debugLevel){
         db.close();
         var request=window.indexedDB.deleteDatabase(name);
         debug("Trying to delete database: "+name,"info",debugLevel);
-        debug("THIS MAY TAKE A WHILE","wait",debugLevel);
+        debug("This may take a while","wait",debugLevel);
         request.onsuccess = function () {
             debug("Database deleted: "+name,"good",debugLevel+1);
             if(callback)callback(false);

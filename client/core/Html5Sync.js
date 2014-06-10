@@ -363,7 +363,7 @@ var Html5Sync = function(params,callback){
                     }else{
                         typeText="html5sync_message_info";
                     }
-                    $("#html5sync_state").find("#state").removeClass().addClass(typeText);
+                    self.stateLabel.find("#state").removeClass().addClass(typeText);
                     if(!$("#html5sync_debug").exist()){
                         $("body").prepend('<div id="html5sync_debug"></div>');
                     }
@@ -409,6 +409,10 @@ var Html5Sync = function(params,callback){
         if(self.params.viewer){
             $("body").append('<div id="html5sync_viewer"></div>');
         }
+        //Agrega los eventos del visor de estado
+        self.stateLabel.click(function(){
+            $("#html5sync_debug").toggle();
+        });
         showLoading(false);
     };
     /**

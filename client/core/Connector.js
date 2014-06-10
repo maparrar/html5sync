@@ -92,7 +92,7 @@ var Connector = function(params,callback){
         if(!self.isBusy("reloadDatabase")){
             self.setToBusy("reloadDatabase");
             debug("Reloading database from server...","info",debugLevel);
-            debug("THIS MAY TAKE A WHILE","wait",debugLevel);
+            debug("This may take a while","wait",debugLevel);
             $.ajax({
                 url: self.params.ajaxFolder+"reloadDatabase.php",
                 type: "POST"
