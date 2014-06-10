@@ -34,7 +34,7 @@ $_SESSION['html5sync_role']="role1";
                     if(err){
                         console.debug(err);
                     }else{
-                        debug("----------- HTML5SYNC - NO ERRORS -----------","good");
+                        debug("html5sync, without errors","good");
                         functionToExecuteWhenDatabaseLoaded();
                     }
                 });

@@ -296,10 +296,12 @@ var Html5Sync = function(params,callback){
         self.state=true;
         if(self.params.showState){
             if(state){
-                self.stateLabel.removeClass("offline").addClass("online");
+                self.stateLabel.removeClass().addClass("online");
+                self.stateLabel.children().removeClass();
                 self.stateLabel.find("#state").text("on line");
             }else{
-                self.stateLabel.removeClass("online").addClass("offline");
+                self.stateLabel.removeClass().addClass("offline");
+                self.stateLabel.children().removeClass();
                 self.stateLabel.find("#state").text("off line");
             }
         }
@@ -361,12 +363,7 @@ var Html5Sync = function(params,callback){
                     }else{
                         typeText="html5sync_message_info";
                     }
-                    $("#html5sync_state").find("#state")
-                            .removeClass("html5sync_message_good")
-                            .removeClass("html5sync_message_bad")
-                            .removeClass("html5sync_message_wait")
-                            .removeClass("html5sync_message_info")
-                            .addClass(typeText);
+                    $("#html5sync_state").find("#state").removeClass().addClass(typeText);
                     if(!$("#html5sync_debug").exist()){
                         $("body").prepend('<div id="html5sync_debug"></div>');
                     }
