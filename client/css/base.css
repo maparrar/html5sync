@@ -1,8 +1,8 @@
 #html5sync_info{
-    padding: 10px;
     position: absolute;
-    right: 0;
-    top: 0;
+    right: -5px;
+    top: -5px;
+    z-index: 998;
 }
 #html5sync_debug{
     background: black;
@@ -15,6 +15,8 @@
     padding: 5px;
     position: absolute;
     right: 10px;
+    text-shadow: none;
+    z-index: 999;
 }
 #html5sync_debug .html5sync_message_info{
     color: orange;
@@ -32,22 +34,23 @@
     -moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
     -webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
     box-shadow:inset 0px 1px 0px 0px #ffffff;
-    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ededed), color-stop(1, #dfdfdf));
+/*    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #ededed), color-stop(1, #dfdfdf));
     background:-moz-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
     background:-webkit-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
     background:-o-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
     background:-ms-linear-gradient(top, #ededed 5%, #dfdfdf 100%);
     background:linear-gradient(to bottom, #ededed 5%, #dfdfdf 100%);
     filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#dfdfdf',GradientType=0);
-    background-color:#ededed;
+    background-color:#ededed;*/
     -moz-border-radius:4px;
     -webkit-border-radius:4px;
     border-radius:4px;
     border:1px solid #dcdcdc;
     display:inline-block;
-    color:#777777;
+    /*color:#777777;*/
+    color:#AFAFAF;
     font-family:arial;
-    font-size:12px;
+    font-size:10px;
     font-weight:bold;
     text-align: center;
     text-decoration:none;
@@ -88,7 +91,7 @@
 }
 #html5sync_state #state{
     float: left;
-    margin: 6px 10px;
+    margin: 3px 7px -2px;
 }
 /*********************************** LOADER ***********************************/
 .html5sync_spinner {
@@ -138,12 +141,6 @@
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-
-
-
-
-
-
 #html5sync_loading{
     width:50px;
     height:4px;
@@ -186,7 +183,6 @@
     width:50px;
     height:4px;
 }
-
 @-moz-keyframes bounce_html5sync_loading{
 0%{
 margin-left:-50px;

@@ -315,7 +315,7 @@ var Html5Sync = function(params,callback){
         var state='';
         if(self.params.showState){
             state='<div id="html5sync_state">'+
-                        '<div class="html5sync_spinner"></div>'+
+//                        '<div class="html5sync_spinner"></div>'+
                         '<div id="state">starting</div>'+
                     '</div>';
         }
@@ -330,6 +330,7 @@ var Html5Sync = function(params,callback){
             if(level===undefined){
                 level=0;
             }
+            $("#html5sync_state").find("#state").text(message);
             if(self.params.debugging){
                 //Se verifica el nivel de debug
                 var showable=false;
