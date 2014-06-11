@@ -232,13 +232,35 @@ var Database = function(params,callback){
             };
             request.onsuccess=function(e){
                 counter++;
+                var index=e.target.result;
                 if(!indexes){
-                    indexes=e.target.result;
+                    indexes=index;
                 }else{
-                    indexes.push(e.target.result);
+                    indexes.push(index);
                 }
                 if(parseInt(counter)===parseInt(data.length)){
                     if(callback)callback(false,indexes);
+                }
+                //Se agrega cada uno de los objetos agregados a la tabla de transacciones
+                if(self.params.storeTransactions){
+                    self.get(storeName,index,function(err,row){
+                        if(!err){
+                            var transaction={
+                                table:storeName,
+                                key:index,
+                                date:now(),
+                                transaction:"INSERT",
+                                row:row
+                            };
+                            self.configurator.db.add("Transactions",transaction,function(err){
+                                if(err){
+                                    if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
+                                }else{
+                                    if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
+                                }
+                            });
+                        }
+                    });
                 }
             };
         }
@@ -335,6 +357,27 @@ var Database = function(params,callback){
             requestUpdate.onsuccess = function(e) {
                 if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
                 if(callback)callback(false,newer);
+                //Agrega el objeto a la tabla de transacciones
+                if(self.params.storeTransactions){
+                    self.get(storeName,key,function(err,row){
+                        if(!err){
+                            var transaction={
+                                table:storeName,
+                                key:key,
+                                date:now(),
+                                transaction:"UPDATE",
+                                row:row
+                            };
+                            self.configurator.db.add("Transactions",transaction,function(err){
+                                if(err){
+                                    if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
+                                }else{
+                                    if(self.params.debugCrud)debug("Add updated to transactions success","good",self.params.debugLevel+3);
+                                }
+                            });
+                        }
+                    });
+                }
             };
         };
     };
@@ -369,14 +412,13 @@ var Database = function(params,callback){
                         };
                         self.configurator.db.add("Transactions",transaction,function(err){
                             if(err){
-                                if(self.params.debugCrud)debug("Add deletd to transactions failed","bad",self.params.debugLevel+3);
+                                if(self.params.debugCrud)debug("Add deleted to transactions failed","bad",self.params.debugLevel+3);
                             }else{
-                                if(self.params.debugCrud)debug("Add deletd to transactions success","good",self.params.debugLevel+3);
+                                if(self.params.debugCrud)debug("Add deleted to transactions success","good",self.params.debugLevel+3);
                             }
                         });
                     }
                 });
-                
             }
         };
     };
@@ -595,7 +637,11 @@ Database.tableToStore=function(table){
         var unique=false;
         if(field.key==="PK"){
             unique=true;
-            key={keyPath:field.name};
+            if(table.mode==="unlock"){
+                key={keyPath:field.name,autoIncrement:true};
+            }else{
+                key={keyPath:field.name};
+            }
         }
         var index={
             name:field.name,

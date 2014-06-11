@@ -33,3 +33,20 @@
     background: red;
     color: white;
 }
+
+#html5sync_new {
+    background: #ddd;
+    border: solid 1px orange;
+    display: table;
+    float: left;
+    margin: 5px;
+    padding: 5px;
+}
+#html5sync_edit {
+    background: #ddd;
+    border: solid 1px orange;
+    display: table;
+    float: left;
+    margin: 5px;
+    padding: 5px;
+}
