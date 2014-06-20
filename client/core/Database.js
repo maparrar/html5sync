@@ -224,6 +224,15 @@ var Database = function(params,callback){
             indexes=new Array();
         }
         for (var i in data) {
+            
+            //Si es una tabla con autoincrement, se inserta aumentando la PK
+            
+            //sino, se verifica que la PK no exista antes en la base de datos
+            
+            
+            
+            
+            
             var request = store.add(data[i]);
             if(self.params.debugCrud)debug("add()","info",self.params.debugLevel+3);
             request.onerror = function(e) {
