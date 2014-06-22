@@ -1,44 +1,78 @@
 <?php
-/** Field File
+/** Column File
 * @package html5sync @subpackage core */
 require_once '../core/Object.php';
 /**
-* Field Class
+* Column Class
 *
 * @author https://github.com/maparrar/html5sync
 * @author maparrar <maparrar@gmail.com>
 * @package html5sync
 * @subpackage core
 */
-class Field extends Object{
+class Column extends Object{
     /** 
-     * Field Name 
+     * Column Name 
      * 
      * @var string
      */
     protected $name;
     /** 
-     * Field type 
+     * Column type 
      * 
      * @var string
      */
     protected $type;
     /** 
-     * Kind of key of the field 
-     * 
+     * True if is Not null
+     * @var bool
+     */
+    protected $notNull;
+    /** 
+     * True if is autoincrement
+     * @var bool
+     */
+    protected $autoIncrement;
+    /** 
+     * True if is pk
+     * @var bool
+     */
+    protected $pk;
+    /** 
+     * True if is fk
+     * @var bool
+     */
+    protected $fk;
+    /** 
+     * Name of the FK table
      * @var string
      */
-    protected $key;
+    protected $fkTable;
+    /** 
+     * Name of the FK column related to
+     * @var string
+     */
+    protected $fkColumn;
+    /** 
+     * Order in table
+     * @var int
+     */
+    protected $order;
     /**
     * Constructor
-    * @param string $name Field Name        
-    * @param string $type Field type        
-    * @param string $key Kind of key of the field        
+    * @param string $name Field Name
+    * @param string $type Field type     
     */
-    function __construct($name="",$type="",$key=""){        
+    function __construct($name="",$type=""){        
         $this->name=$name;
         $this->type=$type;
-        $this->key=$key;
+        $this->notNull=false;
+        $this->autoIncrement=false;
+        $this->pk=false;
+        $this->fk=false;
+        $this->fkTable="";
+        $this->fkColumn="";
+        $this->order=0;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -58,12 +92,60 @@ class Field extends Object{
         $this->type=$value;
     }
     /**
-    * Setter key
-    * @param string $value Kind of key of the field
+    * Setter Not null
+    * @param bool $value If is not null
     * @return void
     */
-    public function setKey($value) {
-        $this->key=$value;
+    public function setNotNull($value) {
+        $this->notNull=$value;
+    }
+    /**
+    * Setter Auto Increment
+    * @param bool $value If is Auto Increment or not
+    * @return void
+    */
+    public function setAutoIncrement($value) {
+        $this->autoIncrement=$value;
+    }
+    /**
+    * Setter PK
+    * @param bool $value If is PK or not
+    * @return void
+    */
+    public function setPk($value) {
+        $this->pk=$value;
+    }
+    /**
+    * Setter FK
+    * @param bool $value If is FK or not
+    * @return void
+    */
+    public function setFk($value) {
+        $this->fk=$value;
+    }
+    /**
+    * Setter type
+    * @param string $value FK Table referenced to
+    * @return void
+    */
+    public function setFkTable($value) {
+        $this->fkTable=$value;
+    }
+    /**
+    * Setter type
+    * @param string $value FK Column referenced to
+    * @return void
+    */
+    public function setFkColumn($value) {
+        $this->fkColumn=$value;
+    }
+    /**
+    * Setter order
+    * @param int $value Order in table
+    * @return void
+    */
+    public function setOrder($value) {
+        $this->order=$value;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -81,11 +163,81 @@ class Field extends Object{
         return $this->type;
     }
     /**
-    * Getter: key
+    * Getter: notNull
+    * @return bool
+    */
+    public function getNotNull() {
+        return $this->notNull;
+    }
+    /**
+    * Getter: autoIncrement
+    * @return bool
+    */
+    public function getAutoIncrement() {
+        return $this->autoIncrement;
+    }
+    /**
+    * Getter: PK
+    * @return bool
+    */
+    public function getPk() {
+        return $this->pk;
+    }
+    /**
+    * Getter: FK
+    * @return bool
+    */
+    public function getFk() {
+        return $this->fk;
+    }
+    /**
+    * Getter: fkTable
     * @return string
     */
-    public function getKey() {
-        return $this->key;
-    }    
+    public function getFkTable() {
+        return $this->fkTable;
+    }
+    /**
+    * Getter: fkColumn
+    * @return string
+    */
+    public function getFkColumn() {
+        return $this->fkColumn;
+    }
+    /**
+    * Getter: order
+    * @return int
+    */
+    public function getOrder() {
+        return $this->order;
+    }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    /**
+     * Return if is Not Null
+     * @return bool Return true if the column is Not Null
+     */
+    public function isNN() {
+        return $this->getNotNull();
+    }
+    /**
+     * Return if is AutoIncrement
+     * @return bool Return true if the column is AutoIncrement
+     */
+    public function isAI() {
+        return $this->getAutoIncrement();
+    }
+    /**
+     * Return if is PK
+     * @return bool Return true if the column is PK
+     */
+    public function isPK() {
+        return $this->getPk();
+    }
+    /**
+     * Return if is FK
+     * @return bool Return true if the column is FK
+     */
+    public function isFK() {
+        return $this->fk;
+    }
 }

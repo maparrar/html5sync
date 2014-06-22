@@ -33,28 +33,31 @@ class DaoTable{
     //**************************************************************************
     /**
      * Carga una tabla de la base de datos
+     * @param string $schema Nombre de la base de datos
      * @param string $tableName Nombre de la tabla que se quiere cargar
      * @param string $mode Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete)
      * @return Table
      */
-    function loadTable($tableName,$mode){
+    function loadTable($schema,$tableName,$mode){
         $table=new Table($tableName);
         $table->setMode($mode);
-        $table->setFields($this->loadFields($table));
+        $table->setColumns($this->loadColumns($schema,$table));
+        $this->loadFKs($schema,$table);
         return $table;
     }
     /**
      * Retorna la lista de campos de una Tabla
+     * @param string $schema Nombre de la base de datos
      * @param Table $table Tabla con nombre en la base de datos
-     * @return Field[] Lista de campos de la tabla
+     * @return Column[] Lista de campos de la tabla
      */
-    private function loadFields($table){
+    private function loadColumns($schema,$table){
         $list=array();
         $handler=$this->db->connect("all");
         if($this->db->getDriver()==="pgsql"){
             $sql="
                 SELECT DISTINCT
-                    a.attnum as num,
+                    a.attnum as order,
                     a.attname as name,
                     format_type(a.atttypid, a.atttypmod) as type,
                     a.attnotnull as notnull, 
@@ -75,23 +78,116 @@ class DaoTable{
                 AND pgc.relname = '".$table->getName()."' 
                 ORDER BY a.attnum;";
         }elseif($this->db->getDriver()==="mysql"){
-            $sql='SELECT COLUMN_NAME AS `name`,DATA_TYPE AS `type`,COLUMN_KEY AS `key` FROM information_schema.columns WHERE TABLE_NAME = "'.$table->getName().'"';
+            $sql='
+                SELECT 
+                    ORDINAL_POSITION AS `order`,
+                    COLUMN_NAME AS `name`,
+                    DATA_TYPE AS `type`,
+                    IS_NULLABLE AS `nullable`,
+                    EXTRA AS `autoincrement`,
+                    COLUMN_KEY AS `key` 
+                FROM 
+                    information_schema.columns 
+                WHERE 
+                    TABLE_SCHEMA="'.$schema.'" AND 
+                    TABLE_NAME = "'.$table->getName().'"
+                ';
         }
         $stmt = $handler->prepare($sql);
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
-                $key="";
+                $column=new Column($row["name"],$row["type"]);
+                $column->setOrder($row["order"]);
                 if($row["key"]==="t"||$row["key"]==="PRI"||$row["key"]===true){
-                    $key="PK";
+                    $column->setPk(true);
                 }
-                $field=new Field($row["name"],$row["type"],$key);
-                array_push($list,$field);
+                if(strpos($row["type"],"int")!==false||strpos($row["type"],"numeric")!==false){
+                    $column->setType("int");
+                }elseif(strpos($row["type"],"double")!==false||strpos($row["type"],"real")!==false){
+                    $column->setType("double");
+                }elseif(strpos($row["type"],"char")!==false){
+                    $column->setType("varchar");
+                }elseif(strpos($row["type"],"timestamp")!==false||strpos($row["type"],"date")!==false){
+                    $column->setType("datetime");
+                }else{
+                    $column->setType($row["type"]);
+                }
+                if($this->db->getDriver()==="pgsql"){
+                    if($row["notnull"]===true){
+                        $column->setNotNull(true);
+                    }
+                    if(strpos($row["default"],"nextval")!==false){
+                        $column->setAutoIncrement(true);
+                    }
+                }elseif($this->db->getDriver()==="mysql"){
+                    if($row["nullable"]==="NO"){
+                        $column->setNotNull(true);
+                    }
+                    if(strpos($row["autoincrement"],"auto_increment")!==false){
+                        $column->setAutoIncrement(true);
+                    }
+                }
+                if($row["key"]==="t"||$row["key"]==="PRI"||$row["key"]===true){
+                    $column->setPk(true);
+                }
+                array_push($list,$column);
             }
         }else{
             $error=$stmt->errorInfo();
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
         }
         return $list;
+    }
+    /**
+     * Carga la tabla con los datos de las FK
+     * @param string $schema Nombre de la base de datos
+     * @param Table $table Tabla con nombre en la base de datos
+     * @return Table byREF: Tabla con la FK's cargadas
+     */
+    private function loadFKs($schema,$table){
+        $handler=$this->db->connect("all");
+        if($this->db->getDriver()==="pgsql"){
+            $sql="
+                SELECT
+                    tc.constraint_name, tc.table_name, kcu.column_name, 
+                    ccu.table_name AS foreign_table_name,
+                    ccu.column_name AS foreign_column_name 
+                FROM 
+                    information_schema.table_constraints AS tc 
+                    JOIN information_schema.key_column_usage AS kcu
+                      ON tc.constraint_name = kcu.constraint_name
+                    JOIN information_schema.constraint_column_usage AS ccu
+                      ON ccu.constraint_name = tc.constraint_name
+                WHERE constraint_type = 'FOREIGN KEY' AND tc.table_name='".$table->getName()."';
+                ";
+        }elseif($this->db->getDriver()==="mysql"){
+            $sql='
+                SELECT 
+                    column_name,
+                    referenced_table_name AS foreign_table_name,
+                    referenced_column_name AS foreign_column_name 
+                FROM 
+                    information_schema.key_column_usage 
+                WHERE 
+                    referenced_table_name IS NOT NULL AND 
+                    table_name="'.$table->getName().'"
+                ';
+        }
+        $stmt = $handler->prepare($sql);
+        if ($stmt->execute()) {
+            while ($row = $stmt->fetch()){
+                foreach ($table->getColumns() as $column) {
+                    if($row["column_name"]===$column->getName()){
+                        $column->setFk(true);
+                        $column->setFkTable($row["foreign_table_name"]);
+                        $column->setFkColumn($row["foreign_column_name"]);
+                    }
+                }
+            }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+        }
     }
     /**
      * Retorna la cantidad de filas de una tabla.
