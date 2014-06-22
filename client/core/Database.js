@@ -487,13 +487,13 @@ var Database = function(params,callback){
      */
     function serverTableToJSON(table){
         var rows=table.data;
-        var fields=table.fields;
+        var columns=table.columns;
         var registers=new Array();
         for(var i in rows){
             var row=rows[i];
             var register=new Object();
             for(var j in row){
-                register[fields[j].name]=row[j];
+                register[columns[j].name]=row[j];
             }
             registers.push(register);
         }
@@ -641,20 +641,20 @@ Database.tablesToStores=function(tables){
 Database.tableToStore=function(table){
     var indexes=new Array();
     var key={autoIncrement : true};
-    for(var i in table.fields){
-        var field=table.fields[i];
+    for(var i in table.columns){
+        var column=table.columns[i];
         var unique=false;
-        if(field.key==="PK"){
+        if(column.key==="PK"){
             unique=true;
             if(table.mode==="unlock"){
-                key={keyPath:field.name,autoIncrement:true};
+                key={keyPath:column.name,autoIncrement:true};
             }else{
-                key={keyPath:field.name};
+                key={keyPath:column.name};
             }
         }
         var index={
-            name:field.name,
-            key:field.name,
+            name:column.name,
+            key:column.name,
             params:{unique: unique}
         };
         indexes.push(index);

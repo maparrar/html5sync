@@ -131,6 +131,9 @@ $_SESSION['html5sync_role']="role1";
                                     row[divInput.attr("id")]=divInput.val();
                                 });
                                 html5Sync.database.add(store,row,function(err,index){
+                                    
+                                    console.debug(html5Sync.database);
+                                    
                                     if(err){
                                         debug(err);
                                     }else{

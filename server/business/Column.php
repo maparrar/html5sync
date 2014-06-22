@@ -60,8 +60,8 @@ class Column extends Object{
     protected $order;
     /**
     * Constructor
-    * @param string $name Field Name
-    * @param string $type Field type     
+    * @param string $name Column Name
+    * @param string $type Column type     
     */
     function __construct($name="",$type=""){        
         $this->name=$name;
@@ -77,7 +77,7 @@ class Column extends Object{
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
     * Setter name
-    * @param string $value Field Name
+    * @param string $value Column Name
     * @return void
     */
     public function setName($value) {
@@ -85,7 +85,7 @@ class Column extends Object{
     }
     /**
     * Setter type
-    * @param string $value Field type
+    * @param string $value Column type
     * @return void
     */
     public function setType($value) {

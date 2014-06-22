@@ -156,7 +156,7 @@ return array(
      */
     "tables" => array(
         array(
-            "name" => "cultivo",
+            "name" => "agricultor",
             "mode" => "unlock",
             "roles"=> array(
                 "role1",

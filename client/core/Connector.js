@@ -106,8 +106,7 @@ var Connector = function(params,callback){
                         database: databaseName,
                         version: parseInt(data.version),                //Versión de la base de datos
                         stores:Database.tablesToStores(data.tables),
-                        debugLevel:debugLevel+1,
-                        storeTransactions:true
+                        debugLevel:debugLevel+1
                     };
                     var database=new Database(parameters,function(err){
                         if(err){

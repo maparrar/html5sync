@@ -181,6 +181,8 @@ var Html5Sync = function(params,callback){
                             if(err){
                                 if(callback)callback(err);
                             }else{
+                                //Se inicia el almacenamiento de transacciones luego de cargar la tabla del server
+                                self.database.storeTransactions=true;
                                 debug("All tables were successfuly loaded","good",1);
                                 debug("Database "+returnDBName()+" prepared","good");
                                 debug("");
