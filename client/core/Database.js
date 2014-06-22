@@ -706,9 +706,9 @@ Database.tableToStore=function(table){
     for(var i in table.columns){
         var column=table.columns[i];
         var unique=false;
-        if(column.key==="PK"){
+        if(column.pk==true){
             unique=true;
-            if(table.mode==="unlock"){
+            if(column.autoIncrement==true){
                 key={keyPath:column.name,autoIncrement:true};
             }else{
                 key={keyPath:column.name};
