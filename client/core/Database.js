@@ -67,6 +67,7 @@ var Database = function(params,callback){
     self.db;                //Base de datos indexedDB
     self.request;           //Objeto que contiene la conexión a la base de datos
     self.callback=callback; //Función que garantiza que en su contexto ya se ha cargado la base de datos
+    self.structTables=false;      //Almacena la estructura de las tablas de la base de datos de configuración
     
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
@@ -179,15 +180,15 @@ var Database = function(params,callback){
      * Borra los datos un almacén de objetos. ¡¡¡ Elimina todo el contenido !!! 
      * @param {string} name Nombre del almacén de objetos
      */
-    self.clearStore=function(table,callback){
-        var storeName=table.name;
+    self.clearStore=function(tableName,callback){
+        var storeName=tableName;
         debug("Deleting object store: "+storeName,"info",self.params.debugLevel);
         try{
             var tx = self.db.transaction([storeName],"readwrite");
             var store = tx.objectStore(storeName);
             tx.oncomplete=function(e){
                 debug("Object store deleted: "+storeName,"good",self.params.debugLevel+1);
-                if(callback)callback(false,table);
+                if(callback)callback(false,storeName);
             };
             tx.onerror=function(e){
                 if(callback)callback(e);
@@ -230,9 +231,17 @@ var Database = function(params,callback){
             //sino, se verifica que la PK no exista antes en la base de datos
             
             
-            
-            
-            
+            //Se verifica cada campo para establecer su tipo
+            for(var columnName in data[i]){
+                var struct=structColumn(storeName,columnName);
+                if(struct){
+                    if(struct.type==="int"){
+                        data[i][columnName]=parseInt(data[i][columnName]);
+                    }else if(struct.type==="double"){
+                        data[i][columnName]=parseFloat(data[i][columnName]);
+                    }
+                }
+            }
             var request = store.add(data[i]);
             if(self.params.debugCrud)debug("add()","info",self.params.debugLevel+3);
             request.onerror = function(e) {
@@ -251,9 +260,13 @@ var Database = function(params,callback){
                     if(callback)callback(false,indexes);
                 }
                 //Se agrega cada uno de los objetos agregados a la tabla de transacciones
+//                console.debug("1. ALMACENAR OBJETO");
                 if(self.params.storeTransactions){
+                    console.debug("2. Puedo transaccionar");
                     self.get(storeName,index,function(err,row){
+                        console.debug("3. Intento get el objeto almacenado");
                         if(!err){
+                            console.debug("4. Si no hay error, creo la transacción");
                             var transaction={
                                 table:storeName,
                                 key:index,
@@ -261,13 +274,14 @@ var Database = function(params,callback){
                                 transaction:"INSERT",
                                 row:row
                             };
-                            self.configurator.db.add("Transactions",transaction,function(err){
-                                if(err){
-                                    if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
-                                }else{
-                                    if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
-                                }
-                            });
+                            console.warn(transaction);
+//                            self.configurator.db.add("Transactions",transaction,function(err){
+//                                if(err){
+//                                    if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
+//                                }else{
+//                                    if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
+//                                }
+//                            });
                         }
                     });
                 }
@@ -493,11 +507,59 @@ var Database = function(params,callback){
             var row=rows[i];
             var register=new Object();
             for(var j in row){
-                register[columns[j].name]=row[j];
+                var struct=structColumn(table.name,columns[j].name);
+                if(struct){
+                    if(struct.type==="int"){
+                        register[columns[j].name]=parseInt(row[j]);
+                    }else if(struct.type==="double"){
+                        register[columns[j].name]=parseFloat(row[j]);
+                    }else{
+                        register[columns[j].name]=row[j];
+                    }
+                }else{
+                    register[columns[j].name]=row[j];
+                }
             }
             registers.push(register);
         }
         return registers;
+    };
+    /**
+     * Retorna la estructura de una tabla. Debe ejecutarse luego de cargar correctamente
+     * la base de datos
+     * @param {string} tableName Nombre de la tabla
+     * @return {object} Objeto con la estructura
+     */
+    function structTable(tableName){
+        var output=false;
+        for(var i in self.structTables){
+            if(self.structTables[i].name===tableName){
+                output=self.structTables[i];
+            }
+        }
+        return output;
+    };
+    /**
+     * Retorna los metadatos de una columna de una estructura de tabla. 
+     * Debe ejecutarse luego de cargar correctamente la base de datos.
+     * @param {string} tableName Nombre de la tabla
+     * @param {string} columnName Nombre de la columna de la tabla
+     * @return {object} Objeto con la estructura
+     */
+    function structColumn(tableName,columnName){
+        var output=false;
+        for(var i in self.structTables){
+            if(self.structTables[i].name===tableName){
+                var columns=self.structTables[i].columns;
+                for(var j in columns){
+                    if(columns[j].name===columnName){
+                        output=columns[j];
+                        break;
+                    }
+                }
+            }
+        }
+        return output;
     };
     /**
      * Procesa la lista de transacciones retornadas por la función sync.

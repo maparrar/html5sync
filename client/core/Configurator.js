@@ -49,9 +49,19 @@ var Configurator = function(params,callback){
                 indexes:[{name:"id",key:"id",params:{unique:true}}]
             },
             {
+                name:"Tables",
+                key:{keyPath:"name"},
+                indexes:[
+                    {name:"name",key:"name",params:{unique:true}},
+                    {name:"mode",key:"mode",params:{unique:false}},
+                    {name:"columns",key:"columns",params:{unique:false}}
+                ]
+            },
+            {
                 name:"Transactions",
                 key:{keyPath:"id",autoIncrement:true},
                 indexes:[
+                    {name:"id",key:"id",params:{unique:true}},
                     {name:"table",key:"table",params:{unique:false}},
                     {name:"key",key:"key",params:{unique:false}},
                     {name:"date",key:"date",params:{unique:false}},
@@ -179,6 +189,66 @@ var Configurator = function(params,callback){
                 debug("Load configuration failed","bad",debugLevel+1);
                 callback(new Error("Inaccessible configuration data from server or browser database"));
             };
+        });
+    };
+    /**
+     * Saves the tables' structures
+     * @param {object} tables List of Tables
+     * @param {function} callback Función para retornar los resultados
+     * @param {int} debugLevel Nivel inicial de debug para la función
+     */
+    self.saveTablesInConfiguration=function(tables,callback,debugLevel){
+        self.showLoading(true);
+        if(!debugLevel)debugLevel=0;
+        debug("Saving tables in local database...","info",debugLevel+0);
+        //Borra la estructura de las tablas anteriores de la base de datos de configuración
+        self.db.clearStore("Tables",function(err){
+            if(err){
+                debug("Clear Tables in configuration fails","bad",debugLevel+1);
+            }else{
+                debug("Store 'Tables' successful empty","good",debugLevel+1);
+                //Almacena la estructura de las tablas en la base de datos de configuración
+                var list=new Array();
+                for(var i in tables){
+                    var table={
+                        name:tables[i].name,
+                        mode:tables[i].mode,
+                        columns:tables[i].columns
+                    };
+                    list.push(table);
+                }
+                debug("Saving list of tables in local database...","info",debugLevel+2);
+                self.db.add("Tables",list,function(err){
+                    if(err){
+                        debug("Save Tables in configuration fails","bad",debugLevel+2);
+                        callback(err);
+                    }else{
+                        debug("Save Tables in configuration success","good",debugLevel+2);
+                        callback(false,list);
+                    }
+                });
+            }
+            self.showLoading(false);
+        });
+    };
+    /**
+     * Retorna la lista de estructuras de las tablas almacenadas en la base de datos de configuración
+     * @param {function} callback Función para retornar los resultados
+     * @param {int} debugLevel Nivel inicial de debug para la función
+     */
+    self.loadTablesFromConfiguration=function(callback,debugLevel){
+        self.showLoading(true);
+        if(!debugLevel)debugLevel=0;
+        debug("Trying load tables structure from local database...","info",debugLevel+0);
+        //Carga la lista de tablas de la base de datos de configuración
+        self.db.list("Tables",function(err,tables){
+            if(err){
+                debug("Load Tables from configuration fails","bad",debugLevel+1);
+                callback(err);
+            }else{
+                debug("Load Tables from configuration success","good",debugLevel+1);
+                callback(false,tables);
+            }
         });
     };
 };
