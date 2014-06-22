@@ -3,7 +3,7 @@
 * @package html5sync @subpackage core */
 include_once 'Connection.php';
 include_once 'Database.php';
-include_once 'Field.php';
+include_once 'Column.php';
 include_once 'Table.php';
 include_once 'DaoTable.php';
 include_once 'Transaction.php';
@@ -69,7 +69,7 @@ class BusinessDB{
     */
     public function getTables() {
         if(!$this->tables){
-            $this->loadTables();
+            $this->loadTables($this->parameter("database","name"));
         }
         return $this->tables;
     }
@@ -103,8 +103,9 @@ class BusinessDB{
     /**
      * Carga la lista de tablas (sin datos) para el usuario y configura el tipo 
      * de actualización definido.
+     * @param string $schema Nombre de la base de datos
      */
-    private function loadTables(){
+    private function loadTables($schema){
         unset($this->tables);
         $this->tables=array();
         $tablesData=$this->parameter("tables");
@@ -113,7 +114,7 @@ class BusinessDB{
         //Se lee cada tabla
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
-                $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
+                $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"]);
                 $table->setTotalOfRows($dao->countRows($table));
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);

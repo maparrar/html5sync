@@ -93,15 +93,15 @@ return array(
     
     
 //    "database" => array(
-//        "name" => "sakila",
+//        "name" => "mydb",
 //        "driver" => "mysql",
 //        "host" => "localhost",
-//        "login" => "html5sync",
-//        "password" => "H5FAHM98hBS8"
+//        "login" => "maparrar",
+//        "password" => "2gP5dS8tN9pD"
 //    ),
 //    "tables" => array(
 //        array(
-//            "name" => "actor",
+//            "name" => "User_Role",
 //            "mode" => "lock",
 //            "roles"=> array(
 //                "role1",
@@ -110,20 +110,6 @@ return array(
 //            "users"=> array(
 //                101,
 //                102
-//            )
-//        ),
-//        array(
-//            "name" => "city",
-//            "mode" => "unlock",
-//            "roles"=> array(
-//                "role1"
-//            )
-//        ),
-//        array(
-//            "name" => "film",
-//            "mode" => "unlock",
-//            "roles"=> array(
-//                "role1"
 //            )
 //        )
 //    )
@@ -170,7 +156,7 @@ return array(
      */
     "tables" => array(
         array(
-            "name" => "agricultor",
+            "name" => "cultivo",
             "mode" => "unlock",
             "roles"=> array(
                 "role1",
@@ -180,7 +166,8 @@ return array(
                 101,
                 102
             )
-        ),
+        )
+        ,
         array(
             "name" => "finca",
             "mode" => "unlock",
