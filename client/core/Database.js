@@ -260,7 +260,7 @@ var Database = function(params,callback){
                     if(callback)callback(false,indexes);
                 }
                 //Se agrega cada uno de los objetos agregados a la tabla de transacciones
-//                console.debug("1. ALMACENAR OBJETO");
+                console.debug("1. ALMACENAR OBJETO");
                 if(self.params.storeTransactions){
                     console.debug("2. Puedo transaccionar");
                     self.get(storeName,index,function(err,row){
@@ -275,13 +275,13 @@ var Database = function(params,callback){
                                 row:row
                             };
                             console.warn(transaction);
-//                            self.configurator.db.add("Transactions",transaction,function(err){
-//                                if(err){
-//                                    if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
-//                                }else{
-//                                    if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
-//                                }
-//                            });
+                            self.configurator.db.add("Transactions",transaction,function(err){
+                                if(err){
+                                    if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
+                                }else{
+                                    if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
+                                }
+                            });
                         }
                     });
                 }
@@ -476,6 +476,12 @@ var Database = function(params,callback){
     /**************************************************************************/
     /*************************** HTML5SYNC METHODS ****************************/
     /**************************************************************************/
+    /**
+     * Inicia el almacenamiento de las transacciones en la base de datos local html5sync
+     */
+    self.startStoreTransactions=function(){
+        self.params.storeTransactions=true;
+    };
     /**
      * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
      * los registros
