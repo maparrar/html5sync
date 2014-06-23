@@ -75,13 +75,13 @@ $_SESSION['html5sync_role']="role1";
                     
                     
                     //Pruebas de database
-                    html5Sync.database.get("agricultor","nombres","Pepito",function(err,data){
-                        if(err){
-                            console.debug(err);
-                        }else{
-                            console.debug(data);
-                        }
-                    });
+//                    html5Sync.configurator.db.get("Parameters",false,0,function(err,data){
+//                        if(err){
+//                            console.debug(err);
+//                        }else{
+//                            console.debug(data);
+//                        }
+//                    });
                     
                     
                 };
@@ -188,7 +188,7 @@ $_SESSION['html5sync_role']="role1";
                                         var divInput=$(this).find("input");
                                         row[divInput.attr("id")]=divInput.val();
                                     });
-                                    html5Sync.database.update(store,key,row,function(err,newRow){
+                                    html5Sync.database.update(store,false,key,row,function(err,newRow){
                                         if(err){
                                             debug(err);
                                         }else{

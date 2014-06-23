@@ -242,7 +242,7 @@ var Database = function(params,callback){
                     }
                 }
             }
-            var request = store.add(data[i]);
+            var request=store.add(data[i]);
             if(self.params.debugCrud)debug("add()","info",self.params.debugLevel+3);
             request.onerror = function(e) {
                 if(self.params.debugCrud)debug("add() - One object violates the unicity. Do not add more objects","bad",self.params.debugLevel+3);
@@ -288,46 +288,46 @@ var Database = function(params,callback){
      * @param {mixed} columnName Nombre de la columna por la que se busca, si es false, se busca por la PK de la tabla
      * @param {mixed} value Valor que se quiere buscar en la columna
      * @param {function} callback Función a la que se retornan los resultados
-     * @return {object[]} Retorna un array de objetos con los que coincidan con la búsqueda
+     * @return {object[]} Retorna un array de objetos con los que coincidan con la búsqueda. Si es solo uno, se retorna solo
      */
     self.get=function(storeName,columnName,value,callback){
         if(self.params.debugCrud)debug("get() - Transaction started","info",self.params.debugLevel+2);
         var output=new Array();
-            var tx = self.db.transaction([storeName]);
-            var store = tx.objectStore(storeName);
-            if(!columnName){
-                var request = store.get(value);
-                request.onerror = function(e) {
-                    if(callback)callback(e);
-                };
-                request.onsuccess = function() {
-                    var output=new Array();
-                    if(request.result!==undefined){
-                        output.push(request.result);
+        var tx = self.db.transaction([storeName]);
+        var store = tx.objectStore(storeName);
+        if(!columnName){
+            var request = store.get(value);
+            request.onerror = function(e) {
+                if(callback)callback(e);
+            };
+            request.onsuccess = function() {
+                var output=false;
+                if(request.result!==undefined){
+                    output=request.result;
+                }
+                if(callback)callback(false,output);
+            };
+        }else{
+            if(self.indexExist(storeName,columnName)){
+                var index = store.index(columnName);
+                var range = IDBKeyRange.only(value);
+                index.openCursor(range).onsuccess = function(e) {
+                    var cursor = e.target.result;
+                    if (cursor) {
+                        output.push(cursor.value);
+                        cursor.continue();
+                    }else{
+                        if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
+                        //Si es solo un objeto, lo retorna como elemento, no como matriz
+                        if(output.length===1)output=output[0];
+                        if(callback)callback(false,output);
                     }
-                    if(callback)callback(false,output);
                 };
             }else{
-                if(self.indexExist(storeName,columnName)){
-                    var index = store.index(columnName);
-                    var range = IDBKeyRange.only(value);
-                    index.openCursor(range).onsuccess = function(e) {
-                        var cursor = e.target.result;
-                        if (cursor) {
-                            output.push(cursor.value);
-                            cursor.continue();
-                        }else{
-                            if(self.params.debugCrud)debug("get() - Transaction ended","good",self.params.debugLevel+2);
-                            //Si es solo un objeto, lo retorna como elemento, no como matriz
-                            if(output.length===1)output=output[0];
-                            if(callback)callback(false,output);
-                        }
-                    };
-                }else{
-                    if(self.params.debugCrud)debug("get() - Column name "+columnName+" does not exist","bad",self.params.debugLevel+2);
-                    if(callback)callback(new Error("Column name '"+columnName+"' does not exist"));
-                }
+                if(self.params.debugCrud)debug("get() - Column name "+columnName+" does not exist","bad",self.params.debugLevel+2);
+                if(callback)callback(new Error("Column name '"+columnName+"' does not exist"));
             }
+        }
     };
     /**
      * Actualiza un objeto de la base de datos a partir del almacén y la clave.
@@ -341,95 +341,68 @@ var Database = function(params,callback){
      */
     self.update=function(storeName,columnName,value,object,callback){
         if(self.params.debugCrud)debug("upd() - Transaction started","info",self.params.debugLevel+2);
-        
-        
-        callback(false);
-        
+        //Se verifica cada campo para establecer su tipo con la estructura de las tablas
+        for(var i in object){
+            var struct=structColumn(storeName,i);
+            if(struct){
+                if(struct.type==="int"){
+                    object[i]=parseInt(object[i]);
+                }else if(struct.type==="double"){
+                    object[i]=parseFloat(object[i]);
+                }
+            }
+            
+        }
+        //Si no se pasa columnName se carga la PK si existe
+        var pk=false;
+        if(!columnName){
+            pk=getPkFromTable(storeName);
+            if(pk){
+               value=object[pk.name];
+            }
+        }
         //Se obtiene el anterior valor de la base de datos
-//        self.get(storeName,columnName,value,function(err,older){
-//            if(err){
-//                if(self.params.debugCrud)debug("upd() - Cannot get the previous value, inserting new object in DB","info",self.params.debugLevel+3);
-//                self.add(storeName,object,function(err){
-//                    if(callback)callback(err);
-//                });
-//            }else{
-//                var tx = self.db.transaction([storeName],"readwrite");
-//                var store = tx.objectStore(storeName);
-//                
-//                // Retorna la versión anterior del objeto y lo actualiza con el nuevo
-////                var older = request.result;
-//                var newer=$.extend(older,object);
-//                
-//                //Si no se para el nombre de la columna, se obtiene la PK de la lista de tablas
-////                if(!columnName){
-////                    var pk=getPkFromTable(storeName);
-//////                    if(pk){
-////                    columnName=getPkFromTable(storeName).name;
-////                }
-//                
-////                console.debug(">>>>>>>>>>>>>> UPDATE <<<<<<<<<<<<<");
-////                console.debug("store: "+storeName+" - column: "+columnName+" - value: "+value);
-////                console.debug("***********************************");
-////                console.debug(older);
-////                console.debug("-----------------------------------");
-////                console.debug(newer);
-////                console.debug("***********************************");
-//                var txIndex;
-//                var requestUpdate;
-//                if(columnName){
-//                    txIndex=tx.index(columnName);
-//                    requestUpdate = store.put(newer);
-//                }else{
-//                    requestUpdate = store.put(newer);
-//                }
-//                
-//                // Vuelve a insertar el objeto en la base de datos
-////                var requestUpdate = store.put(newer);
-//                requestUpdate.onerror = function(e) {
-//                    if(self.params.debugCrud)debug("upd() - Cannot update the object: "+columnName,"bad",self.params.debugLevel+2);
-//                    if(callback)callback(e.target.error);
-//                };
-//                requestUpdate.onsuccess = function(e) {
-//                    if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
-//                    if(callback)callback(false,newer);
-//                    //Agrega el objeto a la tabla de transacciones
-//                    if(self.params.storeTransactions){
-//                        self.get(storeName,key,function(err,row){
-//                            if(!err){
-//                                var transaction={
-//                                    table:storeName,
-//                                    key:key,
-//                                    date:now(),
-//                                    transaction:"UPDATE",
-//                                    row:row
-//                                };
-//                                self.configurator.db.add("Transactions",transaction,function(err){
-//                                    if(err){
-//                                        if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
-//                                    }else{
-//                                        if(self.params.debugCrud)debug("Add updated to transactions success","good",self.params.debugLevel+3);
-//                                    }
-//                                });
-//                            }
-//                        });
-//                    }
-//                };
-//            }
-//        });
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        self.get(storeName,columnName,value,function(err,older){
+            if(err||!older){
+                if(self.params.debugCrud)debug("upd() - Cannot get the previous value, inserting new object in DB","info",self.params.debugLevel+3);
+                self.add(storeName,object,function(err){
+                    if(callback)callback(err);
+                });
+            }else{
+                var tx = self.db.transaction([storeName],"readwrite");
+                var store = tx.objectStore(storeName);
+                var requestUpdate;
+                // Retorna la versión anterior del objeto y lo actualiza con el nuevo
+                var newer=$.extend(older,object);
+                requestUpdate = store.put(newer);
+                // Vuelve a insertar el objeto en la base de datos
+                requestUpdate.onerror = function(e) {
+                    if(self.params.debugCrud)debug("upd() - Cannot update the object: "+columnName,"bad",self.params.debugLevel+2);
+                    if(callback)callback(e.target.error);
+                };
+                requestUpdate.onsuccess = function(e) {
+                    if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
+                    if(callback)callback(false,newer);
+                    //Agrega el objeto a la tabla de transacciones
+                    if(self.params.storeTransactions){
+                        var transaction={
+                            table:storeName,
+                            key:value,
+                            date:now(),
+                            transaction:"UPDATE",
+                            row:newer
+                        };
+                        self.configurator.db.add("Transactions",transaction,function(err){
+                            if(err){
+                                if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
+                            }else{
+                                if(self.params.debugCrud)debug("Add updated to transactions success","good",self.params.debugLevel+3);
+                            }
+                        });
+                    }
+                };
+            }
+        });
     };
     /**
      * Elimina objetos de la base de datos a partir de su clave y el almacén
@@ -624,13 +597,15 @@ var Database = function(params,callback){
      */
     function structColumn(tableName,columnName){
         var output=false;
-        for(var i in self.structTables){
-            if(self.structTables[i].name===tableName){
-                var columns=self.structTables[i].columns;
-                for(var j in columns){
-                    if(columns[j].name===columnName){
-                        output=columns[j];
-                        break;
+        if(self.structTables){
+            for(var i in self.structTables){
+                if(self.structTables[i].name===tableName){
+                    var columns=self.structTables[i].columns;
+                    for(var j in columns){
+                        if(columns[j].name===columnName){
+                            output=columns[j];
+                            break;
+                        }
                     }
                 }
             }
