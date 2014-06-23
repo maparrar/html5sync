@@ -128,7 +128,7 @@ var Configurator = function(params,callback){
                 if(data.id===undefined||data.database===undefined||data.database.length===0){
                     returnErrors();
                 }else{
-                    self.db.update("Parameters",0,data,function(err){
+                    self.db.update("Parameters",false,0,data,function(err){
                         if(err){
                             returnErrors();
                         }else{
@@ -164,7 +164,7 @@ var Configurator = function(params,callback){
                     if(err){
                         returnErrors();
                     }else{
-                        configDatabase.get("Parameters",0,function(err,objects){
+                        configDatabase.get("Parameters",false,0,function(err,objects){
                             if(err||objects.length===0){
                                 returnErrors();
                             }else{
@@ -215,6 +215,19 @@ var Configurator = function(params,callback){
                         mode:tables[i].mode,
                         columns:tables[i].columns
                     };
+                    //Se ordenan los campos de la tabla por el óden la la DB del servidor
+                    table.columns.sort(function(a, b){
+                        return a.order-b.order;
+                    });
+                    //Se convierten los valores booleanos
+                    for(var j in table.columns){
+                        var column=table.columns[j];
+                        if(column.notNull==="1"){       column.notNull=true;        }else{   column.notNull=false;      }
+                        if(column.autoIncrement==="1"){ column.autoIncrement=true;  }else{   column.autoIncrement=false;}
+                        if(column.pk==="1"){            column.pk=true;             }else{   column.pk=false;           }
+                        if(column.fk==="1"){            column.fk=true;             }else{   column.fk=false;           }
+                        column.order=parseInt(column.order);
+                    }
                     list.push(table);
                 }
                 debug("Saving list of tables in local database...","info",debugLevel+2);

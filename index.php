@@ -69,6 +69,21 @@ $_SESSION['html5sync_role']="role1";
                     $("#storeSelect").change(function(){
                         showStore($(this).val());
                     });
+                    
+                    
+                    
+                    
+                    
+                    //Pruebas de database
+                    html5Sync.database.get("agricultor","nombres","Pepito",function(err,data){
+                        if(err){
+                            console.debug(err);
+                        }else{
+                            console.debug(data);
+                        }
+                    });
+                    
+                    
                 };
                 /**
                  * Function to execute each sync

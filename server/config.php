@@ -44,7 +44,7 @@ return array(
      */
     "main" => array(
         "updateMode"    => "transactionsTable",
-        "rowsPerPage"   => 500,
+        "rowsPerPage"   => 501,
         "browser"       => array(
             "syncTimer"    => 10000
         ),
