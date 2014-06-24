@@ -225,12 +225,6 @@ var Database = function(params,callback){
             indexes=new Array();
         }
         for (var i in data) {
-            
-            //Si es una tabla con autoincrement, se inserta aumentando la PK
-            
-            //sino, se verifica que la PK no exista antes en la base de datos
-            
-            
             //Se verifica cada campo para establecer su tipo
             for(var columnName in data[i]){
                 var struct=structColumn(storeName,columnName);
