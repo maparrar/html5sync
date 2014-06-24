@@ -173,6 +173,34 @@ class Table extends Object{
         }
         return $output;
     }
+    /**
+     * Verifica si una columna existe usando su nombre
+     * @param string $columnName Nombre de la columna que se quiere consultar
+     * @return bool True si existe, False en otro caso
+     */
+    public function existsColumn($columnName){
+        $output=false;
+        foreach ($this->columns as $column) {
+            if($column->getName()===$columnName){
+                $output=true;
+            }
+        }
+        return $output;
+    }
+    /**
+     * Retorna una columna usando su nombre
+     * @param string $columnName Nombre de la columna que se quiere consultar
+     * @return Column Objeto de tipo Column
+     */
+    public function getColumn($columnName){
+        $output=false;
+        foreach ($this->columns as $column) {
+            if($column->getName()===$columnName){
+                $output=$column;
+            }
+        }
+        return $output;
+    }
     /*
      * Retorna el número de filas que contiene $data
      * @return int Cantidad de filas en $data

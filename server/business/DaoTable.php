@@ -362,4 +362,51 @@ class DaoTable{
         }
         return $register;
     }
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>   TRANSACTIONS QUERIES   <<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
+    /**
+     * Recibe un objeto de tipo tabla y un array asociativo con los datos a almacenar
+     * @param Table $table Objeto de tipo tabla
+     * @param array $register Array asociativo saneado para almacenar
+     * @return bool False si no hay error, String con el error
+     */
+    public function addRegisterToDB($table,$register){
+        $error=false;
+        $columns="";
+        $values="";
+        foreach ($register as $column => $value) {
+            $tableColumn=$table->getColumn($column);
+            if($tableColumn){
+                $columns.=$column.',';
+                $values.=':'.$column.',';
+            }else{
+                $error="Wrong column specification";
+                break;
+            }
+        }
+        if(!$error){
+            //Remove the last comma
+            $columns=substr($columns,0,-1);
+            $values=substr($values,0,-1);
+
+            $sql='
+                INSERT INTO '.$table->getName().' 
+                    ('.$columns.')
+                VALUES 
+                    ('.$values.') 
+                ';
+            $handler=$this->db->connect("all");
+            $stmt = $handler->prepare($sql);
+            foreach ($register as $column => $value) {
+                $stmt->bindParam(':'.$column,$value);
+            }
+            if (!$stmt->execute()) {
+                $dberror=$stmt->errorInfo();
+                $error=$dberror[2];
+                error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
+            }
+        }
+        return $error;
+    }
 }
