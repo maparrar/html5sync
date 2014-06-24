@@ -27,6 +27,7 @@ var Configurator = function(params,callback){
     };
     self.params = $.extend(def, params);
     self.showLoading=self.params.showLoading;
+    self.connector=self.params.connector;
     /**
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
@@ -261,6 +262,50 @@ var Configurator = function(params,callback){
             }else{
                 debug("Load Tables from configuration success","good",debugLevel+1);
                 callback(false,tables);
+            }
+        });
+    };
+    
+    /**************************************************************************/
+    /****************************** TRANSACTIONS ******************************/
+    /**************************************************************************/
+    /**
+     * Recibe una transacción realizada en el navegador.
+     *  - Intenta enviarla por AJAX al servidor
+     *      - Si se retorna mensaje de éxito, no hace nada más
+     *      - Si el servidor no retorna éxito, almacena en BrowserDB
+     *          - espera a la siguiente sincronización para intentar de nuevo
+     * @param {object} transaction Transacción que se debe realizar
+     * @param {function} callback Función que se ejecuta cuando se termina el proceso
+     */
+    self.execTransaction=function(transaction,callback){
+        self.db.add("Transactions",transaction,function(err){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                
+                
+                
+                
+                
+                self.connector.storeTransactions(transaction,function(err,response){
+                    if(err){
+                        console.debug(err);
+                    }else{
+                        console.debug(response);
+                    }
+                });
+                
+                
+                
+                if(callback)callback(false);
+                
+                
+                
+//                if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
+//                if(parseInt(counter)===parseInt(data.length)){
+//                    if(callback)callback(false,indexes);
+//                }
             }
         });
     };

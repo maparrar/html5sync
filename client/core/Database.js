@@ -262,7 +262,7 @@ var Database = function(params,callback){
                         transaction:"INSERT",
                         row:row
                     };
-                    self.configurator.db.add("Transactions",transaction,function(err){
+                    self.configurator.execTransaction(transaction,function(err){
                         if(err){
                             if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
                         }else{
@@ -389,7 +389,7 @@ var Database = function(params,callback){
                             transaction:"UPDATE",
                             row:newer
                         };
-                        self.configurator.db.add("Transactions",transaction,function(err){
+                        self.configurator.execTransaction(transaction,function(err){
                             if(err){
                                 if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
                             }else{
@@ -444,7 +444,7 @@ var Database = function(params,callback){
                             transaction:"DELETE",
                             row:object
                         };
-                        self.configurator.db.add("Transactions",transaction,function(err){
+                        self.configurator.execTransaction(transaction,function(err){
                             if(err){
                                 if(self.params.debugCrud)debug("Add deleted to transactions failed","bad",self.params.debugLevel+3);
                             }else{

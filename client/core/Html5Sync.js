@@ -52,6 +52,7 @@ var Html5Sync = function(params,callback){
             showLoading:showLoading
         });
         self.configurator=new Configurator({
+            connector:self.connector,
             showLoading:showLoading
         });
         
