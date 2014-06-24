@@ -428,6 +428,27 @@ var Html5Sync = function(params,callback){
             string+=now.getMilliseconds();
             return string;
         };
+        window.removeTags=function(html){
+            var tagBody = '(?:[^"\'>]|"[^"]*"|\'[^\']*\')*';
+            var tagOrComment = new RegExp(
+                '<(?:'
+                // Comment body.
+                + '!--(?:(?:-*[^->])*--+|-?)'
+                // Special "raw text" elements whose content should be elided.
+                + '|script\\b' + tagBody + '>[\\s\\S]*?</script\\s*'
+                + '|style\\b' + tagBody + '>[\\s\\S]*?</style\\s*'
+                // Regular name
+                + '|/?[a-z]'
+                + tagBody
+                + ')>',
+            'gi');
+            var oldHtml;
+            do{
+                oldHtml = html;
+                html = html.replace(tagOrComment, '');
+            } while (html !== oldHtml);
+            return html.replace(/</g, '&lt;');
+        };   
         //Agrega el visor de la base de datos
         if(self.params.viewer){
             $("body").append('<div id="html5sync_viewer"></div>');

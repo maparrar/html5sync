@@ -214,6 +214,7 @@ var Database = function(params,callback){
         var store = tx.objectStore(storeName);
         var indexes=false;
         var counter=0;
+        var error=false;
         //Evento que se dispara cuando se finaliza la transacción con éxito
         tx.oncomplete = function(e) {
             if(self.params.debugCrud)debug("add() - Transaction ended","good",self.params.debugLevel+2);
@@ -227,57 +228,75 @@ var Database = function(params,callback){
         for (var i in data) {
             //Se verifica cada campo para establecer su tipo
             for(var columnName in data[i]){
+                //Se agrega el tipo de datos
                 var struct=structColumn(storeName,columnName);
                 if(struct){
                     if(struct.type==="int"){
                         data[i][columnName]=parseInt(data[i][columnName]);
                     }else if(struct.type==="double"){
                         data[i][columnName]=parseFloat(data[i][columnName]);
+                    }else{
+                        data[i][columnName]=removeTags(data[i][columnName]);
+                    }
+                    //Se verifica si son no nulos
+                    if(struct.notNull){
+                        if(struct.type==="varchar"&&data[i][columnName]===""){
+                            error=new Error("Column '"+columnName+"' cannot be empty");
+                            break;
+                        }else if(!data[i][columnName]){
+                            error=new Error("Column '"+columnName+"' must contain a number");
+                            break;
+                        }
                     }
                 }
             }
-            var request=store.add(data[i]);
-            if(self.params.debugCrud)debug("add()","info",self.params.debugLevel+3);
-            request.onerror = function(e) {
-                if(self.params.debugCrud)debug("add() - One object violates the unicity. Do not add more objects","bad",self.params.debugLevel+3);
-                if(callback)callback(e.target.error);
-            };
-            request.onsuccess=function(e){
-                counter++;
-                var index=e.target.result;
-                if(!indexes){
-                    indexes=index;
-                }else{
-                    indexes.push(index);
-                }
-                //Se agrega cada uno de los objetos agregados a la tabla de transacciones
-                if(self.params.storeTransactions){
-                    var pk=getPkFromTable(storeName);
-                    var row=data[i];
-                    row[pk.name]=index;
-                    var transaction={
-                        table:storeName,
-                        key:index,
-                        date:now(),
-                        transaction:"INSERT",
-                        row:row
-                    };
-                    self.configurator.execTransaction(transaction,function(err){
-                        if(err){
-                            if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
-                        }else{
-                            if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
-                            if(parseInt(counter)===parseInt(data.length)){
-                                if(callback)callback(false,indexes);
-                            }
-                        }
-                    });
-                }else{
-                    if(parseInt(counter)===parseInt(data.length)){
-                        if(callback)callback(false,indexes);
+            if(error){
+                if(self.params.debugCrud)debug("add() - "+error,"bad",self.params.debugLevel+3);
+                if(callback)callback(error);
+            }else{
+                var request=store.add(data[i]);
+                if(self.params.debugCrud)debug("add()","info",self.params.debugLevel+3);
+                request.onerror = function(e) {
+                    if(self.params.debugCrud)debug("add() - One object violates the unicity. Do not add more objects","bad",self.params.debugLevel+3);
+                    if(callback)callback(e.target.error);
+                };
+                request.onsuccess=function(e){
+                    counter++;
+                    var index=e.target.result;
+                    if(!indexes){
+                        indexes=index;
+                    }else{
+                        indexes.push(index);
                     }
-                }
-            };
+                    //Se agrega cada uno de los objetos agregados a la tabla de transacciones
+                    if(self.params.storeTransactions){
+                        var pk=getPkFromTable(storeName);
+                        var row=data[i];
+                        row[pk.name]=index;
+                        var transaction={
+                            table:storeName,
+                            key:index,
+                            date:now(),
+                            transaction:"INSERT",
+                            row:row
+                        };
+                        self.configurator.execTransaction(transaction,function(err){
+                            if(err){
+                                if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
+                            }else{
+                                if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
+                                if(parseInt(counter)===parseInt(data.length)){
+                                    if(callback)callback(false,indexes);
+                                }
+                            }
+                        });
+                    }else{
+                        if(parseInt(counter)===parseInt(data.length)){
+                            if(callback)callback(false,indexes);
+                        }
+                    }
+                };
+            }
         }
     };
     /**
