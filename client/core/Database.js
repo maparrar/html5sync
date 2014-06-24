@@ -250,9 +250,6 @@ var Database = function(params,callback){
                 }else{
                     indexes.push(index);
                 }
-                if(parseInt(counter)===parseInt(data.length)){
-                    if(callback)callback(false,indexes);
-                }
                 //Se agrega cada uno de los objetos agregados a la tabla de transacciones
                 if(self.params.storeTransactions){
                     var pk=getPkFromTable(storeName);
@@ -270,8 +267,15 @@ var Database = function(params,callback){
                             if(self.params.debugCrud)debug("Add inserted to transactions failed","bad",self.params.debugLevel+3);
                         }else{
                             if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
+                            if(parseInt(counter)===parseInt(data.length)){
+                                if(callback)callback(false,indexes);
+                            }
                         }
                     });
+                }else{
+                    if(parseInt(counter)===parseInt(data.length)){
+                        if(callback)callback(false,indexes);
+                    }
                 }
             };
         }
@@ -376,7 +380,6 @@ var Database = function(params,callback){
                 };
                 requestUpdate.onsuccess = function(e) {
                     if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
-                    if(callback)callback(false,newer);
                     //Agrega el objeto a la tabla de transacciones
                     if(self.params.storeTransactions){
                         var transaction={
@@ -391,8 +394,11 @@ var Database = function(params,callback){
                                 if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
                             }else{
                                 if(self.params.debugCrud)debug("Add updated to transactions success","good",self.params.debugLevel+3);
+                                if(callback)callback(false,newer);
                             }
                         });
+                    }else{
+                        if(callback)callback(false,newer);
                     }
                 };
             }
@@ -429,7 +435,6 @@ var Database = function(params,callback){
                 };
                 request.onsuccess = function(e) {
                     if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
-                    if(callback)callback(false);
                     //Agrega el objeto a la tabla de transacciones
                     if(self.params.storeTransactions){
                         var transaction={
@@ -444,8 +449,11 @@ var Database = function(params,callback){
                                 if(self.params.debugCrud)debug("Add deleted to transactions failed","bad",self.params.debugLevel+3);
                             }else{
                                 if(self.params.debugCrud)debug("Add deleted to transactions success","good",self.params.debugLevel+3);
+                                if(callback)callback(false);
                             }
                         });
+                    }else{
+                        if(callback)callback(false);
                     }
                 };
             }
@@ -530,6 +538,12 @@ var Database = function(params,callback){
      */
     self.startStoreTransactions=function(){
         self.params.storeTransactions=true;
+    };
+    /**
+     * Detiene el almacenamiento de las transacciones en la base de datos local html5sync
+     */
+    self.stopStoreTransactions=function(){
+        self.params.storeTransactions=false;
     };
     /**
      * Recibe una tabla formateada del servidor, la formatea para el navegador y agrega
@@ -649,12 +663,14 @@ var Database = function(params,callback){
         if(transactions.length>0){
             for(var i in transactions){
                 var transaction=transactions[i];
+                self.stopStoreTransactions();
                 switch (transaction.type) {
                     case "INSERT":
                         self.add(transaction.tableName,transaction.row,function(err){
                             if(err){
                                 if(callback)callback(err);
                             }
+                            self.startStoreTransactions();
                         });
                         break;
                     case "UPDATE":
@@ -662,6 +678,7 @@ var Database = function(params,callback){
                             if(err){
                                 if(callback)callback(err);
                             }
+                            self.startStoreTransactions();
                         });
                         break;
                     case "DELETE":
@@ -669,6 +686,7 @@ var Database = function(params,callback){
                             if(err){
                                 if(callback)callback(err);
                             }
+                            self.startStoreTransactions();
                         });
                         break;
                 };
