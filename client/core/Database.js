@@ -407,31 +407,43 @@ var Database = function(params,callback){
     /**
      * Elimina objetos de la base de datos a partir de su clave y el almacén
      * @param {string} storeName Nombre del almacén de datos
-     * @param {mixed} key 
+     * @param {mixed} value Valor de la clave principal con la que se eliminará el objeto
      * @param {function} callback Función a la que se retornan los resultados
      */
-    self.delete=function(storeName,key,callback){
+    self.delete=function(storeName,value,callback){
         if(self.params.debugCrud)debug("del() - Transaction started","info",self.params.debugLevel+2);
-        var tx = self.db.transaction([storeName],"readwrite");
-        var store = tx.objectStore(storeName);
-        var request = store.delete(key);
-        request.onerror = function(e){
-            if(self.params.debugCrud)debug("del() - Cannot delete the object: "+key,"bad",self.params.debugLevel+2);
-            if(callback)callback(e.target.error);
-        };
-        request.onsuccess = function(e) {
-            if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
-            if(callback)callback(false);
-            //Agrega el objeto a la tabla de transacciones
-            if(self.params.storeTransactions){
-                self.get(storeName,false,key,function(err,row){
-                    if(!err){
+        //Se convierte el valor al tipo de datos de la PK
+        var pk=getPkFromTable(storeName);
+        if(pk){
+            if(pk.type==="int"){
+                value=parseInt(value);
+            }else if(pk.type==="double"){
+                value=parseFloat(value);
+            }
+        }
+        self.get(storeName,false,value,function(err,object){
+            if(err){
+                if(self.params.debugCrud)debug("del() - Could not get the object to delete it","info",self.params.debugLevel+3);
+                if(callback)callback(err);
+            }else{
+                var tx = self.db.transaction([storeName],"readwrite");
+                var store = tx.objectStore(storeName);
+                var request = store.delete(value);
+                request.onerror = function(e){
+                    if(self.params.debugCrud)debug("del() - Cannot delete the object: "+value,"bad",self.params.debugLevel+2);
+                    if(callback)callback(e.target.error);
+                };
+                request.onsuccess = function(e) {
+                    if(self.params.debugCrud)debug("del() - Transaction ended","good",self.params.debugLevel+2);
+                    if(callback)callback(false);
+                    //Agrega el objeto a la tabla de transacciones
+                    if(self.params.storeTransactions){
                         var transaction={
                             table:storeName,
-                            key:key,
+                            key:value,
                             date:now(),
                             transaction:"DELETE",
-                            row:row
+                            row:object
                         };
                         self.configurator.db.add("Transactions",transaction,function(err){
                             if(err){
@@ -441,9 +453,9 @@ var Database = function(params,callback){
                             }
                         });
                     }
-                });
+                };
             }
-        };
+        });
     };
     /**
     * Retorna un conjunto de objetos de la base de datos
