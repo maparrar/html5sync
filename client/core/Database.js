@@ -658,7 +658,7 @@ var Database = function(params,callback){
                         });
                         break;
                     case "UPDATE":
-                        self.update(transaction.tableName,transaction.key,transaction.row,function(err){
+                        self.update(transaction.tableName,false,transaction.key,transaction.row,function(err){
                             if(err){
                                 if(callback)callback(err);
                             }

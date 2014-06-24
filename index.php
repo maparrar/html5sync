@@ -89,19 +89,7 @@ $_SESSION['html5sync_role']="role1";
                  * Function to execute each sync
                  */
                 function functionToExecEachSync(){
-                    var store=$.trim($("#store").val());
-                    var key=$.trim($("#key").val());
-                    if(store!==""&&key!==""){
-//                        html5Sync.database.get(store,key,function(err,objects){
-//                            if(!err&&objects.length>0){
-//                                for(var i in objects){
-//                                    $("#objects").text(objToString(objects[i]));
-//                                }
-//                            }else{
-//                                $("#objects").text("");
-//                            }
-//                        });
-                    }
+                    showStore($("#storeSelect").val());
                 };
                 
                 
