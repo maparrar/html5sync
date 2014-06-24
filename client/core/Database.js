@@ -357,6 +357,7 @@ var Database = function(params,callback){
      * @param {function} callback Función a la que se retornan los resultados
      */
     self.update=function(storeName,columnName,value,object,callback){
+        var error=false;
         if(self.params.debugCrud)debug("upd() - Transaction started","info",self.params.debugLevel+2);
         //Se verifica cada campo para establecer su tipo con la estructura de las tablas
         for(var i in object){
@@ -366,62 +367,79 @@ var Database = function(params,callback){
                     object[i]=parseInt(object[i]);
                 }else if(struct.type==="double"){
                     object[i]=parseFloat(object[i]);
+                }else{
+                    object[i]=removeTags(object[i]);
+                }
+                //Se verifica si son no nulos
+                if(struct.notNull){
+                    if(struct.type==="varchar"&&object[i]===""){
+                        error=new Error("Column '"+columnName+"' cannot be empty");
+                        break;
+                    }else if(!object[i]){
+                        error=new Error("Column '"+columnName+"' must contain a number");
+                        break;
+                    }
                 }
             }
             
         }
-        //Si no se pasa columnName se carga la PK si existe
-        var pk=false;
-        if(!columnName){
-            pk=getPkFromTable(storeName);
-            if(pk){
-               value=object[pk.name];
+        if(error){
+            if(self.params.debugCrud)debug("upd() - "+error,"bad",self.params.debugLevel+3);
+            if(callback)callback(error);
+        }else{
+            //Si no se pasa columnName se carga la PK si existe
+            var pk=false;
+            if(!columnName){
+                pk=getPkFromTable(storeName);
+                if(pk){
+                   value=object[pk.name];
+                }
             }
+            //Se obtiene el anterior valor de la base de datos
+            self.get(storeName,columnName,value,function(err,older){
+                if(err||!older){
+                    if(self.params.debugCrud)debug("upd() - Cannot get the previous value, inserting new object in DB","info",self.params.debugLevel+3);
+                    self.add(storeName,object,function(err){
+                        if(callback)callback(err);
+                    });
+                }else{
+                    var tx = self.db.transaction([storeName],"readwrite");
+                    var store = tx.objectStore(storeName);
+                    var requestUpdate;
+                    // Retorna la versión anterior del objeto y lo actualiza con el nuevo
+                    var newer=$.extend(older,object);
+                    requestUpdate = store.put(newer);
+                    // Vuelve a insertar el objeto en la base de datos
+                    requestUpdate.onerror = function(e) {
+                        if(self.params.debugCrud)debug("upd() - Cannot update the object: "+columnName,"bad",self.params.debugLevel+2);
+                        if(callback)callback(e.target.error);
+                    };
+                    requestUpdate.onsuccess = function(e) {
+                        if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
+                        //Agrega el objeto a la tabla de transacciones
+                        if(self.params.storeTransactions){
+                            var transaction={
+                                table:storeName,
+                                key:value,
+                                date:now(),
+                                transaction:"UPDATE",
+                                row:newer
+                            };
+                            self.configurator.execTransaction(transaction,function(err){
+                                if(err){
+                                    if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
+                                }else{
+                                    if(self.params.debugCrud)debug("Add updated to transactions success","good",self.params.debugLevel+3);
+                                    if(callback)callback(false,newer);
+                                }
+                            });
+                        }else{
+                            if(callback)callback(false,newer);
+                        }
+                    };
+                }
+            });
         }
-        //Se obtiene el anterior valor de la base de datos
-        self.get(storeName,columnName,value,function(err,older){
-            if(err||!older){
-                if(self.params.debugCrud)debug("upd() - Cannot get the previous value, inserting new object in DB","info",self.params.debugLevel+3);
-                self.add(storeName,object,function(err){
-                    if(callback)callback(err);
-                });
-            }else{
-                var tx = self.db.transaction([storeName],"readwrite");
-                var store = tx.objectStore(storeName);
-                var requestUpdate;
-                // Retorna la versión anterior del objeto y lo actualiza con el nuevo
-                var newer=$.extend(older,object);
-                requestUpdate = store.put(newer);
-                // Vuelve a insertar el objeto en la base de datos
-                requestUpdate.onerror = function(e) {
-                    if(self.params.debugCrud)debug("upd() - Cannot update the object: "+columnName,"bad",self.params.debugLevel+2);
-                    if(callback)callback(e.target.error);
-                };
-                requestUpdate.onsuccess = function(e) {
-                    if(self.params.debugCrud)debug("upd() - Transaction ended","good",self.params.debugLevel+2);
-                    //Agrega el objeto a la tabla de transacciones
-                    if(self.params.storeTransactions){
-                        var transaction={
-                            table:storeName,
-                            key:value,
-                            date:now(),
-                            transaction:"UPDATE",
-                            row:newer
-                        };
-                        self.configurator.execTransaction(transaction,function(err){
-                            if(err){
-                                if(self.params.debugCrud)debug("Add updated to transactions failed","bad",self.params.debugLevel+3);
-                            }else{
-                                if(self.params.debugCrud)debug("Add updated to transactions success","good",self.params.debugLevel+3);
-                                if(callback)callback(false,newer);
-                            }
-                        });
-                    }else{
-                        if(callback)callback(false,newer);
-                    }
-                };
-            }
-        });
     };
     /**
      * Elimina objetos de la base de datos a partir de su clave y el almacén
