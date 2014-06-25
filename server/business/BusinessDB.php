@@ -299,7 +299,7 @@ class BusinessDB{
                         $error="Column ".$column->getName()." must contain a number";
                     }
                 }
-            }else if($operation==="UPDATE"){
+            }else if($operation==="UPDATE"||$operation==="DELETE"){
                 //Si es update, agrega los autoincrement, pueden ser las PK
                 $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
             }
@@ -311,7 +311,7 @@ class BusinessDB{
             }elseif($operation==="UPDATE"){
                 $error=$dao->updateRegister($table,$register);
             }elseif($operation==="DELETE"){
-                
+                $error=$dao->deleteRegister($table,$register);
             }
         }
         return $error;

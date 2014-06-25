@@ -389,12 +389,7 @@ class DaoTable{
             //Remove the last comma
             $columns=substr($columns,0,-1);
             $values=substr($values,0,-1);
-            $sql='
-                INSERT INTO '.$table->getName().' 
-                    ('.$columns.')
-                VALUES 
-                    ('.$values.') 
-                ';
+            $sql='INSERT INTO '.$table->getName().' ('.$columns.') VALUES ('.$values.')';
             $handler=$this->db->connect("all");
             $stmt = $handler->prepare($sql);
             foreach ($register as $column => &$value) {
@@ -449,6 +444,65 @@ class DaoTable{
                 error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
             }
         }
+        return $error;
+    }
+    /**
+     * Recibe un objeto de tipo tabla y un array asociativo con los datos del registro a eliminar
+     * @param Table $table Objeto de tipo tabla
+     * @param array $register Array asociativo saneado para eliminar, debe tener un valor existente de PK
+     * @return bool False si no hay error, String con el error
+     */
+    public function deleteRegister($table,$register){
+        $error=false;
+        $columns="";
+        $pkColumn=false;
+        $pkValue=false;
+        
+        
+        $pk=$table->getPk();
+        $sql='DELETE FROM '.$table->getName().' WHERE '.$pk->getName().'=:'.$pk->getName().' ';
+        $handler=$this->db->connect("all");
+        $stmt = $handler->prepare($sql);
+        $stmt->bindParam(':'.$pk->getName(),$register[$pk->getName()]);
+        if (!$stmt->execute()) {
+            $dberror=$stmt->errorInfo();
+            $error=$dberror[2];
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
+        }
+        
+        
+        
+        
+//        foreach ($register as $column => $value) {
+//            $tableColumn=$table->getColumn($column);
+//            if($tableColumn){
+//                if($tableColumn->isPK()){
+//                    $pkColumn=$column;
+//                    $pkValue=$value;
+//                }else{
+//                    $columns.=$column.'=:'.$column.',';
+//                }
+//            }else{
+//                $error="Wrong column specification";
+//                break;
+//            }
+//        }
+//        if(!$error){
+//            //Remove the last comma
+//            $columns=substr($columns,0,-1);
+//            $sql='UPDATE '.$table->getName().' SET '.$columns.' WHERE '.$pkColumn.'=:'.$pkColumn.' ';
+//            $handler=$this->db->connect("all");
+//            $stmt = $handler->prepare($sql);
+//            foreach ($register as $column => &$value) {
+//                $stmt->bindParam(':'.$column,$value);
+//            }
+//            $stmt->bindParam(':'.$pkColumn,$pkValue);
+//            if (!$stmt->execute()) {
+//                $dberror=$stmt->errorInfo();
+//                $error=$dberror[2];
+//                error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
+//            }
+//        }
         return $error;
     }
 }
