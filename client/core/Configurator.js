@@ -287,10 +287,9 @@ var Configurator = function(params,callback){
                 transaction.id=index;
                 self.connector.storeTransactions(transaction,function(err,response){
                     if(err){
-                        debug("Store transactions fail","bad",debugLevel);
-                        if(callback)callback(err);
+                        debug("Could not save transactions in server","bad",debugLevel);
+                        if(callback)callback(false);
                     }else{
-                        debug("Transactions saved in server","good",debugLevel);
                         var transactions=response;
                         for(var i in transactions){
                             var tx=transactions[i];
@@ -301,6 +300,7 @@ var Configurator = function(params,callback){
                             }
                             var id=parseInt(tx.id);
                             if(tx.success){
+                                debug("Transactions saved in server","good",debugLevel);
                                 self.db.delete("Transactions",id,function(err){
                                     if(err){
                                         if(callback)callback(err);
@@ -309,7 +309,8 @@ var Configurator = function(params,callback){
                                     }
                                 });
                             }else{
-                                if(callback)callback(new Error("Could not execute transaction: "+id));
+                                debug("Transactions saved in browser","info",debugLevel);
+                                if(callback)callback(false);
                             }
                         }
                     }

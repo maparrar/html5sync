@@ -39,6 +39,10 @@ if($user->getId()<=0){
             $operation=filter_var($transaction["transaction"],FILTER_SANITIZE_STRING);
             //Si no hay error, se almacena en la BusinessDB
             $txError=$businessDB->processRegister($table,$row,$operation);
+            
+            
+            $txError=true;
+            
             if(!$txError){
                 //Si todo sale bien, actualiza la fecha de actualización para evitar que se vuelva a cargar
                 $stateDB->setTableLastUpdate($table);
