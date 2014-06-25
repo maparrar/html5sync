@@ -298,8 +298,12 @@ var Html5Sync = function(params,callback){
                         if(callback)callback(err);
                     }else{
                         setState(true);
-                        self.database.processTransactions(transactions);
-                        if(self.params.syncCallback)self.params.syncCallback();
+                        //Cuanda haya conexión, debe verificar las transacciones pendientes en el navegador y enviarlas antes
+                        self.configurator.execPendingTransactions(function(){
+                            self.database.processTransactions(transactions,function(){
+                                if(self.params.syncCallback)self.params.syncCallback();
+                            });
+                        });
                     }
                 });
             }catch(e){

@@ -318,4 +318,51 @@ var Configurator = function(params,callback){
             }
         });
     };
+    /**
+     * Revisa la tabla de transacciones pendientes y las envía al servidor
+     * @param {function} callback Función que se ejecuta cuando se termina el proceso
+     */
+    self.execPendingTransactions=function(callback){
+        var debugLevel=1;
+        self.db.list("Transactions",function(err,transactions){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(transactions.length>0){
+                    self.connector.storeTransactions(transactions,function(err,response){
+                        if(err){
+                            debug("Could not save transactions in server","bad",debugLevel);
+                            if(callback)callback(false);
+                        }else{
+                            var transactions=response;
+                            for(var i in transactions){
+                                var tx=transactions[i];
+                                if(tx.success==="true"){
+                                    tx.success=true;
+                                }else{
+                                    tx.success=false;
+                                }
+                                var id=parseInt(tx.id);
+                                if(tx.success){
+                                    debug("Transaction "+id+" saved in server","good",debugLevel);
+                                    self.db.delete("Transactions",id,function(err){
+                                        if(err){
+                                            if(callback)callback(err);
+                                        }else{
+                                            if(callback)callback(false);
+                                        }
+                                    });
+                                }else{
+                                    debug("Transactions "+id+" saved in browser, pending for server...","info",debugLevel);
+                                    if(callback)callback(false);
+                                }
+                            }
+                        }
+                    });
+                }else{
+                    if(callback)callback(false);
+                }
+            }
+        });
+    };
 };
