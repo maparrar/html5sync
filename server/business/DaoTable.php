@@ -275,7 +275,7 @@ class DaoTable{
                         "INSERT INTO html5sync  ".
                                 "(html5sync_table,html5sync_key,html5sync_date,html5sync_transaction)  ".
                         "VALUES ".
-                                "(TG_TABLE_NAME,id,current_timestamp(0),TG_OP);  ".
+                                "(TG_TABLE_NAME,id,current_timestamp,TG_OP);  ".
                 "IF TG_OP = 'DELETE' THEN ".
                     "RETURN OLD;  ".
                 "ELSE ".
@@ -327,7 +327,7 @@ class DaoTable{
             ON temp.html5sync_table = tempGroup.html5sync_table 
             AND temp.html5sync_date = tempGroup.MaxDateTime ORDER BY temp.html5sync_date;"
         );
-        $date=$lastUpdate->format('Y-m-d H:i:s');
+        $date=$lastUpdate->format('Y-m-d H:i:s.u');
         $stmt->bindParam(':lastUpdate',$date);
         if ($stmt->execute()) {
             while ($row = $stmt->fetch()){
@@ -457,8 +457,6 @@ class DaoTable{
         $columns="";
         $pkColumn=false;
         $pkValue=false;
-        
-        
         $pk=$table->getPk();
         $sql='DELETE FROM '.$table->getName().' WHERE '.$pk->getName().'=:'.$pk->getName().' ';
         $handler=$this->db->connect("all");
@@ -469,40 +467,6 @@ class DaoTable{
             $error=$dberror[2];
             error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
         }
-        
-        
-        
-        
-//        foreach ($register as $column => $value) {
-//            $tableColumn=$table->getColumn($column);
-//            if($tableColumn){
-//                if($tableColumn->isPK()){
-//                    $pkColumn=$column;
-//                    $pkValue=$value;
-//                }else{
-//                    $columns.=$column.'=:'.$column.',';
-//                }
-//            }else{
-//                $error="Wrong column specification";
-//                break;
-//            }
-//        }
-//        if(!$error){
-//            //Remove the last comma
-//            $columns=substr($columns,0,-1);
-//            $sql='UPDATE '.$table->getName().' SET '.$columns.' WHERE '.$pkColumn.'=:'.$pkColumn.' ';
-//            $handler=$this->db->connect("all");
-//            $stmt = $handler->prepare($sql);
-//            foreach ($register as $column => &$value) {
-//                $stmt->bindParam(':'.$column,$value);
-//            }
-//            $stmt->bindParam(':'.$pkColumn,$pkValue);
-//            if (!$stmt->execute()) {
-//                $dberror=$stmt->errorInfo();
-//                $error=$dberror[2];
-//                error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
-//            }
-//        }
         return $error;
     }
 }
