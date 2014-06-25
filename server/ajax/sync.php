@@ -25,7 +25,6 @@ $tables=$businessDB->getTables();
 //Retorna una lista de operaciones realizadas en la base de datos
 $lastUpdate=$stateDB->getUserLastUpdate();
 $transactions=$businessDB->getLastTransactions($lastUpdate);
-
 $transactionsJSON='[';
 foreach ($transactions as $transaction) {
     $register="";
@@ -50,9 +49,11 @@ if(count($transactions)>0){
 }
 $transactionsJSON.=']';
 
-//Actualiza la última fecha para el usuario
+//Actualiza la última fecha para el usuario y las tablas
 $stateDB->setUserLastUpdate();
-
+foreach ($tables as $table) {
+    $stateDB->setTableLastUpdate($table);
+}
 //Se retorna la respuesta en JSON
 $json='{"transactions":'.$transactionsJSON.'}';
 //Si se encuentran errores, se retornan al cliente
