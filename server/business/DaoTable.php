@@ -397,7 +397,7 @@ class DaoTable{
                 ';
             $handler=$this->db->connect("all");
             $stmt = $handler->prepare($sql);
-            foreach ($register as $column => $value) {
+            foreach ($register as $column => &$value) {
                 $stmt->bindParam(':'.$column,$value);
             }
             if (!$stmt->execute()) {
@@ -417,7 +417,6 @@ class DaoTable{
     public function updateRegister($table,$register){
         $error=false;
         $columns="";
-        $values="";
         $pkColumn=false;
         $pkValue=false;
         foreach ($register as $column => $value) {
@@ -428,7 +427,6 @@ class DaoTable{
                     $pkValue=$value;
                 }else{
                     $columns.=$column.'=:'.$column.',';
-                    $values.=':'.$column.',';
                 }
             }else{
                 $error="Wrong column specification";
@@ -438,27 +436,18 @@ class DaoTable{
         if(!$error){
             //Remove the last comma
             $columns=substr($columns,0,-1);
-            $values=substr($values,0,-1);
-            $sql='
-                UPDATE '.$table->getName().' 
-                SET 
-                    '.$columns.'
-                WHERE 
-                    '.$pkColumn.'=:'.$pkColumn.'
-                ';
-            
-            print_r($sql);
-            
-//            $handler=$this->db->connect("all");
-//            $stmt = $handler->prepare($sql);
-//            foreach ($register as $column => $value) {
-//                $stmt->bindParam(':'.$column,$value);
-//            }
-//            if (!$stmt->execute()) {
-//                $dberror=$stmt->errorInfo();
-//                $error=$dberror[2];
-//                error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
-//            }
+            $sql='UPDATE '.$table->getName().' SET '.$columns.' WHERE '.$pkColumn.'=:'.$pkColumn.' ';
+            $handler=$this->db->connect("all");
+            $stmt = $handler->prepare($sql);
+            foreach ($register as $column => &$value) {
+                $stmt->bindParam(':'.$column,$value);
+            }
+            $stmt->bindParam(':'.$pkColumn,$pkValue);
+            if (!$stmt->execute()) {
+                $dberror=$stmt->errorInfo();
+                $error=$dberror[2];
+                error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
+            }
         }
         return $error;
     }
