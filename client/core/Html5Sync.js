@@ -34,7 +34,7 @@ var Html5Sync = function(params,callback){
     var def = {
         debugging:false,
         debugLevel:0,       //Nivel de mensajes de debug que se muestran. 0 para mostrar todos
-        stateTimer: 10000,
+        stateTimer: 100000,
         showState:false,
         syncCallback:false, //Callback que se ejecuta cada que se ejecuta connector.sync()
         viewer:false

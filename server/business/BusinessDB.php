@@ -270,12 +270,13 @@ class BusinessDB{
     //>>>>>>>>>>>>>>>>>>>>>   TRANSACTIONS METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<
     //**************************************************************************
     /**
-     * Almacena un nuevo registro en la tabla especificada
+     * Almacena, actualiza o borra un nuevo registro en la tabla especificada
      * @param Table $table Objeto de tipo Table donde se almacenará el registro
      * @param array $row Matriz asociativa con los valores a sanear
+     * @param string $operation Operación a ejecutar: INSERT, UPDATE, DELETE
      * @return bool False si no hay error, String con el error si existe
      */
-    public function addRegister($table,$row){
+    public function processRegister($table,$row,$operation){
         $dao=new DaoTable($this->db);
         $error=false;
         //Verifica todas las columnas del registro contra las de la tabla
@@ -298,11 +299,20 @@ class BusinessDB{
                         $error="Column ".$column->getName()." must contain a number";
                     }
                 }
+            }else if($operation==="UPDATE"){
+                //Si es update, agrega los autoincrement, pueden ser las PK
+                $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
             }
         }
         //Pasa la Tabla con el registro a almacenar a DaoTable
         if(!$error){
-            $dao->addRegisterToDB($table,$register);
+            if($operation==="INSERT"){
+                $error=$dao->addRegister($table,$register);
+            }elseif($operation==="UPDATE"){
+                $error=$dao->updateRegister($table,$register);
+            }elseif($operation==="DELETE"){
+                
+            }
         }
         return $error;
     }

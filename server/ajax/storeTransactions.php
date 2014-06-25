@@ -37,14 +37,11 @@ if($user->getId()<=0){
             $table=$businessDB->getTableData($tableName);
             $row=$transaction["row"];
             $operation=filter_var($transaction["transaction"],FILTER_SANITIZE_STRING);
-            if($operation==="INSERT"){
-                $txError=$businessDB->addRegister($table,$row);
-            }elseif($operation==="UPDATE"){
-                
-            }elseif($operation==="DELETE"){
-                
-            }
             //Si no hay error, se almacena en la BusinessDB
+            $txError=$businessDB->processRegister($table,$row,$operation);
+            
+            print_r("ERROR: ".$txError);
+            
             if(!$txError){
                 //Si todo sale bien, actualiza la fecha de actualización para evitar que se vuelva a cargar
                 $stateDB->setTableLastUpdate($table);

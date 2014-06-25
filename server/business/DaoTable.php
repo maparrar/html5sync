@@ -371,7 +371,7 @@ class DaoTable{
      * @param array $register Array asociativo saneado para almacenar
      * @return bool False si no hay error, String con el error
      */
-    public function addRegisterToDB($table,$register){
+    public function addRegister($table,$register){
         $error=false;
         $columns="";
         $values="";
@@ -389,7 +389,6 @@ class DaoTable{
             //Remove the last comma
             $columns=substr($columns,0,-1);
             $values=substr($values,0,-1);
-
             $sql='
                 INSERT INTO '.$table->getName().' 
                     ('.$columns.')
@@ -406,6 +405,60 @@ class DaoTable{
                 $error=$dberror[2];
                 error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
             }
+        }
+        return $error;
+    }
+    /**
+     * Recibe un objeto de tipo tabla y un array asociativo con los datos a actualizar
+     * @param Table $table Objeto de tipo tabla
+     * @param array $register Array asociativo saneado para actualizar, debe tener un valor existente de PK
+     * @return bool False si no hay error, String con el error
+     */
+    public function updateRegister($table,$register){
+        $error=false;
+        $columns="";
+        $values="";
+        $pkColumn=false;
+        $pkValue=false;
+        foreach ($register as $column => $value) {
+            $tableColumn=$table->getColumn($column);
+            if($tableColumn){
+                if($tableColumn->isPK()){
+                    $pkColumn=$column;
+                    $pkValue=$value;
+                }else{
+                    $columns.=$column.'=:'.$column.',';
+                    $values.=':'.$column.',';
+                }
+            }else{
+                $error="Wrong column specification";
+                break;
+            }
+        }
+        if(!$error){
+            //Remove the last comma
+            $columns=substr($columns,0,-1);
+            $values=substr($values,0,-1);
+            $sql='
+                UPDATE '.$table->getName().' 
+                SET 
+                    '.$columns.'
+                WHERE 
+                    '.$pkColumn.'=:'.$pkColumn.'
+                ';
+            
+            print_r($sql);
+            
+//            $handler=$this->db->connect("all");
+//            $stmt = $handler->prepare($sql);
+//            foreach ($register as $column => $value) {
+//                $stmt->bindParam(':'.$column,$value);
+//            }
+//            if (!$stmt->execute()) {
+//                $dberror=$stmt->errorInfo();
+//                $error=$dberror[2];
+//                error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error);
+//            }
         }
         return $error;
     }

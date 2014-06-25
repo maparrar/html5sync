@@ -169,6 +169,7 @@ class Table extends Object{
         foreach ($this->columns as $column) {
             if($column->isPK()){
                 $output=$column;
+                break;
             }
         }
         return $output;
