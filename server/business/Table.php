@@ -26,9 +26,9 @@ class Table extends Object{
     /** 
      * Array con los nombres de las columnas 
      * 
-     * @var Field[]
+     * @var Column[]
      */
-    protected $fields;
+    protected $columns;
     /** 
      * Array con los datos de la tabla 
      * 
@@ -55,13 +55,13 @@ class Table extends Object{
     * Constructor
     * @param string $name Nombre de la tabla        
     * @param string $mode Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete)        
-    * @param array $fields Array con los nombres de las columnas        
+    * @param Column[] $columns Array con los objetos columnas        
     * @param array $data Array con los datos de la tabla
     */
-    function __construct($name="",$mode="",$fields=array(),$data=array()){ 
+    function __construct($name="",$mode="",$columns=array(),$data=array()){ 
         $this->name=$name;
         $this->mode=$mode;
-        $this->fields=$fields;
+        $this->columns=$columns;
         $this->data=$data;
         $this->numberOfRows=0;
         $this->initialRow=0;
@@ -84,12 +84,12 @@ class Table extends Object{
         $this->mode=$value;
     }
     /**
-    * Setter fields
-    * @param Field[] $value Field objects of the table
+    * Setter Columns
+    * @param Column[] $value Column objects of the table
     * @return void
     */
-    public function setFields($value) {
-        $this->fields=$value;
+    public function setColumns($value) {
+        $this->columns=$value;
     }
     /**
     * Setter data
@@ -132,11 +132,11 @@ class Table extends Object{
         return $this->mode;
     }
     /**
-    * Getter: fields
-    * @return Field[]
+    * Getter: columns
+    * @return Column[]
     */
-    public function getFields() {
-        return $this->fields;
+    public function getColumns() {
+        return $this->columns;
     }
     /**
     * Getter: data
@@ -162,13 +162,42 @@ class Table extends Object{
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
     * Return the table PK
-    * @return Field
+    * @return Column
     */
     public function getPk() {
         $output=false;
-        foreach ($this->fields as $field) {
-            if($field->getKey()==="PK"){
-                $output=$field;
+        foreach ($this->columns as $column) {
+            if($column->isPK()){
+                $output=$column;
+                break;
+            }
+        }
+        return $output;
+    }
+    /**
+     * Verifica si una columna existe usando su nombre
+     * @param string $columnName Nombre de la columna que se quiere consultar
+     * @return bool True si existe, False en otro caso
+     */
+    public function existsColumn($columnName){
+        $output=false;
+        foreach ($this->columns as $column) {
+            if($column->getName()===$columnName){
+                $output=true;
+            }
+        }
+        return $output;
+    }
+    /**
+     * Retorna una columna usando su nombre
+     * @param string $columnName Nombre de la columna que se quiere consultar
+     * @return Column Objeto de tipo Column
+     */
+    public function getColumn($columnName){
+        $output=false;
+        foreach ($this->columns as $column) {
+            if($column->getName()===$columnName){
+                $output=$column;
             }
         }
         return $output;

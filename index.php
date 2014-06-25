@@ -34,7 +34,7 @@ $_SESSION['html5sync_role']="role1";
                     if(err){
                         console.debug(err);
                     }else{
-                        debug("----------- HTML5SYNC - NO ERRORS -----------","good");
+                        debug("html5sync, without errors","good");
                         functionToExecuteWhenDatabaseLoaded();
                     }
                 });
@@ -69,24 +69,27 @@ $_SESSION['html5sync_role']="role1";
                     $("#storeSelect").change(function(){
                         showStore($(this).val());
                     });
+                    
+                    
+                    
+                    
+                    
+                    //Pruebas de database
+//                    html5Sync.configurator.db.get("Parameters",false,0,function(err,data){
+//                        if(err){
+//                            console.debug(err);
+//                        }else{
+//                            console.debug(data);
+//                        }
+//                    });
+                    
+                    
                 };
                 /**
                  * Function to execute each sync
                  */
                 function functionToExecEachSync(){
-                    var store=$.trim($("#store").val());
-                    var key=$.trim($("#key").val());
-                    if(store!==""&&key!==""){
-//                        html5Sync.database.get(store,key,function(err,objects){
-//                            if(!err&&objects.length>0){
-//                                for(var i in objects){
-//                                    $("#objects").text(objToString(objects[i]));
-//                                }
-//                            }else{
-//                                $("#objects").text("");
-//                            }
-//                        });
-                    }
+                    showStore($("#storeSelect").val());
                 };
                 
                 
@@ -104,24 +107,91 @@ $_SESSION['html5sync_role']="role1";
                     html5Sync.database.list(storeName,function(err,list){
                         if(!err){
                             showObjects(list);
-                            //Asigna los eventos para las filas
-                            $(".html5sync_edit_row").click(function(){
-                                var key=$(this).parent().parent().find(".html5sync_pk").text();
-                                console.debug(key);
+                            //Asigna los eventos y crea el formulario para agregar objetos
+                            var titles=table.find("#html5sync_store_titles");
+                            var html5sync_new=$("#html5sync_new");
+                            html5sync_new.attr("data-store",$("#storeSelect").val());
+                            var html="<h3>New object</h3>";
+                            titles.find(".html5sync_title").each(function(){
+                                var divField=$(this);
+                                if(divField.hasClass("html5sync_pk")){
+                                    html5sync_new.attr("data-pk",divField.attr("data-field"));
+                                }else{
+                                    html+='<div class="html5sync_field">';
+                                    html+='<label for="'+divField.attr("data-field")+'">'+divField.attr("data-field")+'</label><br/>';
+                                    html+='<input type="text" id="'+divField.attr("data-field")+'" value="" />';
+                                    html+='</div>';
+                                }
                             });
-                            $(".html5sync_delete_row").click(function(){
-                                var row=$(this).parent().parent();
-                                var key=row.find(".html5sync_pk").text();
-                                html5Sync.database.delete(storeName,key,function(err){
+                            html+='<button id="html5sync_add">Add</button>';
+                            html5sync_new.empty().append(html);
+                            //Si se hace click en el botón de insertar
+                            $("#html5sync_add").click(function(){
+                                var store=html5sync_new.attr("data-store");
+                                var row={};
+                                html5sync_new.find(".html5sync_field").each(function(){
+                                    var divInput=$(this).find("input");
+                                    row[divInput.attr("id")]=divInput.val();
+                                });
+                                html5Sync.database.add(store,row,function(err,index){
                                     if(err){
                                         debug(err);
                                     }else{
-                                        debug("Row "+key+" was deleted from "+storeName);
-                                        row.remove();
+                                        debug("Row "+index+" was insert on "+storeName);
+                                        showStore(storeName);
                                     }
                                 });
                             });
+                            
+                            
+                            //Asigna los eventos para las filas
                             $(".html5sync_edit_row").click(function(){
+                                var row=$(this).parent().parent();
+                                var html5sync_edit=$("#html5sync_edit");
+                                html5sync_edit.attr("data-store",$("#storeSelect").val());
+                                var html="<h3>Update object</h3>";
+                                row.find("td").each(function(){
+                                    var divField=$(this);
+                                    if(divField.attr("data-field")!==undefined){
+                                        html+='<div class="html5sync_field">';
+                                        html+='<label for="'+divField.attr("data-field")+'">'+divField.attr("data-field")+'</label><br/>';
+                                        if(divField.hasClass("html5sync_pk")){
+                                            html+='<input type="text" id="'+divField.attr("data-field")+'" value="'+divField.text()+'" disabled/>';
+                                            html5sync_edit.attr("data-pk",divField.attr("data-field"));
+                                            html5sync_edit.attr("data-key",divField.text());
+                                        }else{
+                                            html+='<input type="text" id="'+divField.attr("data-field")+'" value="'+divField.text()+'" />';
+                                        }
+                                        html+='</div>';
+                                    }
+                                });
+                                html+='<button id="html5sync_update">Update</button>';
+                                html5sync_edit.empty().append(html);
+                                //Si se hace cliek en el botón de actualizar
+                                $("#html5sync_update").click(function(){
+                                    var store=html5sync_edit.attr("data-store");
+                                    var key=html5sync_edit.attr("data-key");
+                                    var row={};
+                                    html5sync_edit.find(".html5sync_field").each(function(){
+                                        var divInput=$(this).find("input");
+                                        row[divInput.attr("id")]=divInput.val();
+                                    });
+                                    html5Sync.database.update(store,false,key,row,function(err,newRow){
+                                        if(err){
+                                            debug(err);
+                                        }else{
+                                            debug("Row "+key+" was updated in "+storeName);
+                                            showStore(storeName);
+                                            html5sync_edit.empty();
+                                        }
+                                    });
+                                });
+                            });
+                            
+                            
+                            
+                            
+                            $(".html5sync_delete_row").click(function(){
                                 var row=$(this).parent().parent();
                                 var key=row.find(".html5sync_pk").text();
                                 html5Sync.database.delete(storeName,key,function(err){
@@ -167,9 +237,9 @@ $_SESSION['html5sync_role']="role1";
                         stringRow+='<td><div class="html5sync_edit_row">edit</div><div class="html5sync_delete_row">delete</div></td>';
                         titles.each(function(){
                             if($(this).hasClass("html5sync_pk")){
-                                stringRow+='<td class="html5sync_pk">'+row[$(this).attr("data-field")]+'</td>';
+                                stringRow+='<td data-field="'+$(this).attr("data-field")+'" class="html5sync_pk">'+row[$(this).attr("data-field")]+'</td>';
                             }else{
-                                stringRow+='<td>'+row[$(this).attr("data-field")]+'</td>';
+                                stringRow+='<td data-field="'+$(this).attr("data-field")+'">'+row[$(this).attr("data-field")]+'</td>';
                             }
                         });
                         stringRow+='</td>';
@@ -182,17 +252,14 @@ $_SESSION['html5sync_role']="role1";
     <body>
         <input type="button" id="reloadData" value="Recargar datos"/>
         <div id="example">
-            <div id="html5sync_edit">
-                <input id="store" type="text" placeholder="store name"/>
-                <input id="key" type="text" placeholder="key"/>
-                <input id="search" type="button" value="search"><br>
-            </div>
             <div id="html5sync_store">
                 <div id="html5sync_caption">Select a store: <select id="storeSelect"></select></div>
                 <div id="html5sync_content">
                     <table id="html5sync_table"></table>
                 </div>
             </div>
+            <div id="html5sync_new"></div>
+            <div id="html5sync_edit"></div>
         </div>
     </body>
 </html>

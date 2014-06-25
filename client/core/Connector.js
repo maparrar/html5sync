@@ -92,23 +92,21 @@ var Connector = function(params,callback){
         if(!self.isBusy("reloadDatabase")){
             self.setToBusy("reloadDatabase");
             debug("Reloading database from server...","info",debugLevel);
-            debug("THIS MAY TAKE A WHILE","wait",debugLevel);
+            debug("This may take a while","wait",debugLevel);
             $.ajax({
                 url: self.params.ajaxFolder+"reloadDatabase.php",
                 type: "POST"
             }).done(function(response) {
                 var data=JSON.parse(response);
                 if(data.error){
-                    debug("SERVER: "+data.error,"bad",debugLevel+1);
-                    if(callback)callback(new Error("SERVER: "+data.error));
+                    if(callback)callback(new Error(data.error));
                 }else{
                     //Configura los parámetros para crear la base de datos
                     var parameters={
                         database: databaseName,
                         version: parseInt(data.version),                //Versión de la base de datos
                         stores:Database.tablesToStores(data.tables),
-                        debugLevel:debugLevel+1,
-                        storeTransactions:true
+                        debugLevel:debugLevel+1
                     };
                     var database=new Database(parameters,function(err){
                         if(err){
@@ -213,7 +211,56 @@ var Connector = function(params,callback){
             });
         }
     };
-    
+    /**************************************************************************/
+    /************************** TRANSACTIONS METHODS **************************/
+    /**************************************************************************/
+    /**
+     * Envía una lista de transacciones al servidor e intenta almacenarlas en la
+     * base de datos. Retorna true para cada transacción almacenada, false para
+     * cada transacción no almacenada:
+     *  - Si envía:
+     *      {id:1,...}
+     *      {id:2,...}
+     *      {id:3,...}
+     *      ...
+     *  - Retorna:
+     *      {id:1,status:true}
+     *      {id:2,status:false} //Esta transacción no se pudo realizar
+     *      {id:3,status:true}
+     *      ...
+     * @param {object[]} transactions Transacción o lista de transacciones a almacenar
+     * @param {function} callback Función a la que se retornan los resultados
+     */
+    self.storeTransactions=function(transactions,callback,debugLevel){
+        if(!debugLevel)debugLevel=0;
+        debug("Send transactions","info",1);
+        //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
+        if(Object.prototype.toString.call(transactions)!=="[object Array]"){
+            transactions=new Array(transactions);
+        }
+        $.ajax({
+            url: self.params.ajaxFolder+"storeTransactions.php",
+            data:{
+                transactions:transactions
+            },
+            type: "POST"
+        }).done(function(response) {
+            var data=false;
+            try{
+                data=JSON.parse(response);
+                if(data.error){
+                    debug("SERVER: "+data.error,"bad",debugLevel+1);
+                    if(callback)callback(new Error("SERVER: "+data.error));
+                }else{
+                    if(callback)callback(false,data.transactions);
+                }
+            }catch(e){
+                if(callback)callback(new Error("Transactions: Error parsing server data"));
+            }
+        }).fail(function(){
+            if(callback)callback(new Error("Could not store transactions in server"));
+        });
+    };
     /**************************************************************************/
     /***************************** STATUS METHODS *****************************/
     /**************************************************************************/

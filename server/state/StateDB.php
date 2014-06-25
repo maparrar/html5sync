@@ -190,7 +190,10 @@ class StateDB{
      */
     public function setUserLastUpdate(){
         $stmt = $this->handler->prepare("UPDATE `User` SET `lastUpdate`=:lastUpdate");
-        $date=date('Y-m-d H:i:s');
+        $t = microtime(true);
+        $micro = sprintf("%06d",($t - floor($t)) * 1000000);
+        $d = new DateTime( date('Y-m-d H:i:s.'.$micro,$t) );
+        $date=$d->format("Y-m-d H:i:s.u");
         $stmt->bindParam(':lastUpdate',$date);
         if(!$stmt->execute()){
             $error=$stmt->errorInfo();

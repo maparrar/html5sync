@@ -21,27 +21,29 @@ if($user->getId()<=0){
     $businessDB=new BusinessDB($user,$config);
     //Crea el objeto para manejo de la base de datos estática y crea el usuario si no existe
     $stateDB=new StateDB($user);
-    
-    //Renueva la lista de tablas en la base de datos estática StateDB
-    $tables=$businessDB->getTables();
-    
-    //Prepara la base de datos BussinessDB: crea las tablas y los triggers
-    $businessDB->prepareDatabase();
-    
-    if(count($tables)<=0){
-        $error="The user has no tables to synchronize";
+    //Verifica si hay conexión con la base de datos
+    if($businessDB->testConnection()){
+        //Renueva la lista de tablas en la base de datos estática StateDB
+        $tables=$businessDB->getTables();
+        //Prepara la base de datos BussinessDB: crea las tablas y los triggers
+        $businessDB->prepareDatabase();
+        if(count($tables)<=0){
+            $error="The user has no tables to synchronize";
+        }else{
+            $stateDB->deleteTables();
+            $stateDB->insertTables($tables);
+
+            //Obtiene la nueva versión a aplicar a la base de datos
+            $version=$stateDB->increaseVersion($user);
+
+            //Retorna la lista de tablas en 
+            $jsonTables=$businessDB->getTablesInJson();
+
+            //Construye y retorna la respuesta en JSON
+            $json='{"version":'.$version.',"tables":'.$jsonTables.'}';
+        }
     }else{
-        $stateDB->deleteTables();
-        $stateDB->insertTables($tables);
-
-        //Obtiene la nueva versión a aplicar a la base de datos
-        $version=$stateDB->increaseVersion($user);
-
-        //Retorna la lista de tablas en 
-        $jsonTables=$businessDB->getTablesInJson();
-
-        //Construye y retorna la respuesta en JSON
-        $json='{"version":'.$version.',"tables":'.$jsonTables.'}';
+        $error="Unable to connect to database, check the access data.";
     }
 }
 //Si se encuentran errores, se retornan al cliente

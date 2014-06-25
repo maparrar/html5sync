@@ -44,7 +44,7 @@ return array(
      */
     "main" => array(
         "updateMode"    => "transactionsTable",
-        "rowsPerPage"   => 500,
+        "rowsPerPage"   => 501,
         "browser"       => array(
             "syncTimer"    => 10000
         ),
@@ -93,15 +93,15 @@ return array(
     
     
 //    "database" => array(
-//        "name" => "sakila",
+//        "name" => "mydb",
 //        "driver" => "mysql",
 //        "host" => "localhost",
-//        "login" => "html5sync",
-//        "password" => "H5FAHM98hBS8"
+//        "login" => "maparrar",
+//        "password" => "2gP5dS8tN9pD"
 //    ),
 //    "tables" => array(
 //        array(
-//            "name" => "actor",
+//            "name" => "User_Role",
 //            "mode" => "lock",
 //            "roles"=> array(
 //                "role1",
@@ -110,20 +110,6 @@ return array(
 //            "users"=> array(
 //                101,
 //                102
-//            )
-//        ),
-//        array(
-//            "name" => "city",
-//            "mode" => "unlock",
-//            "roles"=> array(
-//                "role1"
-//            )
-//        ),
-//        array(
-//            "name" => "film",
-//            "mode" => "unlock",
-//            "roles"=> array(
-//                "role1"
 //            )
 //        )
 //    )
@@ -154,18 +140,24 @@ return array(
 
     
     
-    
     "database" => array(
-        "name" => "pagila",
+        "name" => "agroplan",
         "driver" => "pgsql",
         "host" => "localhost",
-        "login" => "html5sync",
-        "password" => "H5FAHM98hBS8"
+        "login" => "databaseuser",
+        "password" => "2oQ1XFa6bCCJUWm3zhO7"
     ),
+    /**
+     * Lista de tablas que se sincronizarán. Para cada tabla se permiten los siguientes
+     * atributos:
+     *  - name (string): Nombre de la tabla en la base de datos
+     *  - mode (string): Puede ser "lock" o "unlock".
+     *      - lock: La tabla se bloquea mientras el usuario la 
+     */
     "tables" => array(
         array(
-            "name" => "actor",
-            "mode" => "lock",
+            "name" => "agricultor",
+            "mode" => "unlock",
             "roles"=> array(
                 "role1",
                 "role2"
@@ -174,16 +166,17 @@ return array(
                 101,
                 102
             )
-        ),
+        )
+        ,
         array(
-            "name" => "city",
+            "name" => "finca",
             "mode" => "unlock",
             "roles"=> array(
                 "role1"
             )
         ),
         array(
-            "name" => "film",
+            "name" => "lote",
             "mode" => "unlock",
             "roles"=> array(
                 "role1"

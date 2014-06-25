@@ -156,7 +156,6 @@ class Database{
             );
         } catch (PDOException $e) {
             error_log("Error!: " . $e->getMessage());
-            die();
         }
         return $handler;
     }

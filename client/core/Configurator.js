@@ -27,6 +27,7 @@ var Configurator = function(params,callback){
     };
     self.params = $.extend(def, params);
     self.showLoading=self.params.showLoading;
+    self.connector=self.params.connector;
     /**
      * Método privado que se ejecuta automáticamente. Hace las veces de constructor
      */
@@ -49,9 +50,19 @@ var Configurator = function(params,callback){
                 indexes:[{name:"id",key:"id",params:{unique:true}}]
             },
             {
+                name:"Tables",
+                key:{keyPath:"name"},
+                indexes:[
+                    {name:"name",key:"name",params:{unique:true}},
+                    {name:"mode",key:"mode",params:{unique:false}},
+                    {name:"columns",key:"columns",params:{unique:false}}
+                ]
+            },
+            {
                 name:"Transactions",
                 key:{keyPath:"id",autoIncrement:true},
                 indexes:[
+                    {name:"id",key:"id",params:{unique:true}},
                     {name:"table",key:"table",params:{unique:false}},
                     {name:"key",key:"key",params:{unique:false}},
                     {name:"date",key:"date",params:{unique:false}},
@@ -118,7 +129,7 @@ var Configurator = function(params,callback){
                 if(data.id===undefined||data.database===undefined||data.database.length===0){
                     returnErrors();
                 }else{
-                    self.db.update("Parameters",0,data,function(err){
+                    self.db.update("Parameters",false,0,data,function(err){
                         if(err){
                             returnErrors();
                         }else{
@@ -154,7 +165,7 @@ var Configurator = function(params,callback){
                     if(err){
                         returnErrors();
                     }else{
-                        configDatabase.get("Parameters",0,function(err,objects){
+                        configDatabase.get("Parameters",false,0,function(err,objects){
                             if(err||objects.length===0){
                                 returnErrors();
                             }else{
@@ -179,6 +190,179 @@ var Configurator = function(params,callback){
                 debug("Load configuration failed","bad",debugLevel+1);
                 callback(new Error("Inaccessible configuration data from server or browser database"));
             };
+        });
+    };
+    /**
+     * Saves the tables' structures
+     * @param {object} tables List of Tables
+     * @param {function} callback Función para retornar los resultados
+     * @param {int} debugLevel Nivel inicial de debug para la función
+     */
+    self.saveTablesInConfiguration=function(tables,callback,debugLevel){
+        self.showLoading(true);
+        if(!debugLevel)debugLevel=0;
+        debug("Saving tables in local database...","info",debugLevel+0);
+        //Borra la estructura de las tablas anteriores de la base de datos de configuración
+        self.db.clearStore("Tables",function(err){
+            if(err){
+                debug("Clear Tables in configuration fails","bad",debugLevel+1);
+            }else{
+                debug("Store 'Tables' successful empty","good",debugLevel+1);
+                //Almacena la estructura de las tablas en la base de datos de configuración
+                var list=new Array();
+                for(var i in tables){
+                    var table={
+                        name:tables[i].name,
+                        mode:tables[i].mode,
+                        columns:tables[i].columns
+                    };
+                    //Se ordenan los campos de la tabla por el óden la la DB del servidor
+                    table.columns.sort(function(a, b){
+                        return a.order-b.order;
+                    });
+                    //Se convierten los valores booleanos
+                    for(var j in table.columns){
+                        var column=table.columns[j];
+                        if(column.notNull==="1"){       column.notNull=true;        }else{   column.notNull=false;      }
+                        if(column.autoIncrement==="1"){ column.autoIncrement=true;  }else{   column.autoIncrement=false;}
+                        if(column.pk==="1"){            column.pk=true;             }else{   column.pk=false;           }
+                        if(column.fk==="1"){            column.fk=true;             }else{   column.fk=false;           }
+                        column.order=parseInt(column.order);
+                    }
+                    list.push(table);
+                }
+                debug("Saving list of tables in local database...","info",debugLevel+2);
+                self.db.add("Tables",list,function(err){
+                    if(err){
+                        debug("Save Tables in configuration fails","bad",debugLevel+2);
+                        callback(err);
+                    }else{
+                        debug("Save Tables in configuration success","good",debugLevel+2);
+                        callback(false,list);
+                    }
+                });
+            }
+            self.showLoading(false);
+        });
+    };
+    /**
+     * Retorna la lista de estructuras de las tablas almacenadas en la base de datos de configuración
+     * @param {function} callback Función para retornar los resultados
+     * @param {int} debugLevel Nivel inicial de debug para la función
+     */
+    self.loadTablesFromConfiguration=function(callback,debugLevel){
+        self.showLoading(true);
+        if(!debugLevel)debugLevel=0;
+        debug("Trying load tables structure from local database...","info",debugLevel+0);
+        //Carga la lista de tablas de la base de datos de configuración
+        self.db.list("Tables",function(err,tables){
+            if(err){
+                debug("Load Tables from configuration fails","bad",debugLevel+1);
+                callback(err);
+            }else{
+                debug("Load Tables from configuration success","good",debugLevel+1);
+                callback(false,tables);
+            }
+        });
+    };
+    
+    /**************************************************************************/
+    /****************************** TRANSACTIONS ******************************/
+    /**************************************************************************/
+    /**
+     * Recibe una transacción realizada en el navegador.
+     *  - Intenta enviarla por AJAX al servidor
+     *      - Si se retorna mensaje de éxito, no hace nada más
+     *      - Si el servidor no retorna éxito, almacena en BrowserDB
+     *          - espera a la siguiente sincronización para intentar de nuevo
+     * @param {object} transaction Transacción que se debe realizar
+     * @param {function} callback Función que se ejecuta cuando se termina el proceso
+     */
+    self.execTransaction=function(transaction,callback){
+        var debugLevel=1;
+        self.db.add("Transactions",transaction,function(err,index){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                transaction.id=index;
+                self.connector.storeTransactions(transaction,function(err,response){
+                    if(err){
+                        debug("Could not save transactions in server","bad",debugLevel);
+                        if(callback)callback(false);
+                    }else{
+                        var transactions=response;
+                        for(var i in transactions){
+                            var tx=transactions[i];
+                            if(tx.success==="true"){
+                                tx.success=true;
+                            }else{
+                                tx.success=false;
+                            }
+                            var id=parseInt(tx.id);
+                            if(tx.success){
+                                debug("Transactions saved in server","good",debugLevel);
+                                self.db.delete("Transactions",id,function(err){
+                                    if(err){
+                                        if(callback)callback(err);
+                                    }else{
+                                        if(callback)callback(false);
+                                    }
+                                });
+                            }else{
+                                debug("Transactions saved in browser","info",debugLevel);
+                                if(callback)callback(false);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    };
+    /**
+     * Revisa la tabla de transacciones pendientes y las envía al servidor
+     * @param {function} callback Función que se ejecuta cuando se termina el proceso
+     */
+    self.execPendingTransactions=function(callback){
+        var debugLevel=1;
+        self.db.list("Transactions",function(err,transactions){
+            if(err){
+                if(callback)callback(err);
+            }else{
+                if(transactions.length>0){
+                    self.connector.storeTransactions(transactions,function(err,response){
+                        if(err){
+                            debug("Could not save transactions in server","bad",debugLevel);
+                            if(callback)callback(false);
+                        }else{
+                            var transactions=response;
+                            for(var i in transactions){
+                                var tx=transactions[i];
+                                if(tx.success==="true"){
+                                    tx.success=true;
+                                }else{
+                                    tx.success=false;
+                                }
+                                var id=parseInt(tx.id);
+                                if(tx.success){
+                                    debug("Transaction "+id+" saved in server","good",debugLevel);
+                                    self.db.delete("Transactions",id,function(err){
+                                        if(err){
+                                            if(callback)callback(err);
+                                        }else{
+                                            if(callback)callback(false);
+                                        }
+                                    });
+                                }else{
+                                    debug("Transactions "+id+" saved in browser, pending for server...","info",debugLevel);
+                                    if(callback)callback(false);
+                                }
+                            }
+                        }
+                    });
+                }else{
+                    if(callback)callback(false);
+                }
+            }
         });
     };
 };

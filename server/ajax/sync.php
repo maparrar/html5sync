@@ -30,10 +30,12 @@ $transactionsJSON='[';
 foreach ($transactions as $transaction) {
     $register="";
     $row=$transaction->getRow();
-    foreach ($row as $name => $value) {
-        $register.='"'.$name.'":"'.$value.'",';
+    if($row){
+        foreach ($row as $name => $value) {
+            $register.='"'.$name.'":"'.$value.'",';
+        }
+        $register=substr($register,0,-1);
     }
-    $register=substr($register,0,-1);
     $transactionsJSON.='{'
         .'"id":"'.$transaction->getId().'",'
         .'"type":"'.$transaction->getType().'",'

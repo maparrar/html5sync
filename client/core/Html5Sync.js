@@ -18,13 +18,14 @@ var Html5Sync = function(params,callback){
     self.config=false;          
     self.connector=false;       //Objeto de connexión con el servidor
     
-    self.callback=callback; //Function to return responses
+    self.callback=callback;     //Function to return responses
     
-    self.state;         //{bool} Estado de la conexión con el servidor.
-    self.showLoadingCounter=0; //{int} Alamacena la cantidad de llamados a showLoading
-    self.userId=false;  //Identificador del usuario
-    self.databaseName=false;//Nombre de la base de datos
-    self.database=false;//Base de datos del navegador
+    self.state;                 //{bool} Estado de la conexión con el servidor.
+    self.showLoadingCounter=0;  //{int} Alamacena la cantidad de llamados a showLoading
+    self.userId=false;          //Identificador del usuario
+    self.databaseName=false;    //Nombre de la base de datos
+    self.database=false;        //Base de datos del navegador
+    self.structTables=false;    //Contiene la lista de tablas con las columnas y atributos (cuando ha sido preparada la DB)
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
     /**************************************************************************/
@@ -51,6 +52,7 @@ var Html5Sync = function(params,callback){
             showLoading:showLoading
         });
         self.configurator=new Configurator({
+            connector:self.connector,
             showLoading:showLoading
         });
         
@@ -81,14 +83,23 @@ var Html5Sync = function(params,callback){
                     }else{
                         //Cuando la base de datos está preparada, se agrega el acceso a la base de datos de configuración
                         self.database.configurator=self.configurator;
-                        //Cuando se cargue, inicia la sincronización
-                        startSync(function(err){
+                        //Carga la estructura de las tablas en la variable del sistema
+                        self.configurator.loadTablesFromConfiguration(function(err,structTables){
                             if(err){
                                 if(callback)callback(err);
                             }else{
-                                if(callback)callback(false);
+                                self.structTables=structTables;
+                                self.database.structTables=self.structTables;
+                                //Cuando se cargue, inicia la sincronización
+                                startSync(function(err){
+                                    if(err){
+                                        if(callback)callback(err);
+                                    }else{
+                                        if(callback)callback(false);
+                                    }
+                                });
                             }
-                        });
+                        },1);
                     }
                 });
             }
@@ -171,22 +182,35 @@ var Html5Sync = function(params,callback){
                     if(err){
                         debug("Clear the browser history and reload","bad",1);
                         debug("Check the Internet connection to reload the database","bad");
+                        debug(err,"bad");
                         if(callback)callback(err);
                     }else{
                         debug("Database loaded from server","good",1);
                         self.database=browserDatabase;
-                        //Recarga todas las tablas antes de seguir
-                        reloadTables(tables,function(err){
+                        //Almacena la estructura de las tablas en la base de datos de configuración
+                        self.configurator.saveTablesInConfiguration(tables,function(err,structTables){
                             if(err){
+                                debug("Cannot save the tables' structure","bad",1);
                                 if(callback)callback(err);
                             }else{
-                                debug("All tables were successfuly loaded","good",1);
-                                debug("Database "+returnDBName()+" prepared","good");
-                                debug("");
-                                if(callback)callback(false);
+                                self.structTables=structTables;
+                                self.database.structTables=self.structTables;
+                                //Recarga todas las tablas antes de seguir
+                                reloadTables(tables,function(err){
+                                    if(err){
+                                        if(callback)callback(err);
+                                    }else{
+                                        //Se inicia el almacenamiento de transacciones luego de cargar la tabla del server
+                                        self.database.startStoreTransactions();
+                                        debug("All tables were successfuly loaded","good",1);
+                                        debug("Database "+returnDBName()+" prepared","good");
+                                        debug("");
+                                        if(callback)callback(false);
+                                    }
+                                    self.connector.setToIdle("sync");
+                                });
                             }
-                            self.connector.setToIdle("sync");
-                        });
+                        },2);
                     }
                     showLoading(false);
                 },2);
@@ -274,8 +298,12 @@ var Html5Sync = function(params,callback){
                         if(callback)callback(err);
                     }else{
                         setState(true);
-                        self.database.processTransactions(transactions);
-                        if(self.params.syncCallback)self.params.syncCallback();
+                        //Cuanda haya conexión, debe verificar las transacciones pendientes en el navegador y enviarlas antes
+                        self.configurator.execPendingTransactions(function(){
+                            self.database.processTransactions(transactions,function(){
+                                if(self.params.syncCallback)self.params.syncCallback();
+                            });
+                        });
                     }
                 });
             }catch(e){
@@ -295,10 +323,12 @@ var Html5Sync = function(params,callback){
         self.state=true;
         if(self.params.showState){
             if(state){
-                self.stateLabel.removeClass("offline").addClass("online");
+                self.stateLabel.removeClass().addClass("online");
+                self.stateLabel.children().removeClass();
                 self.stateLabel.find("#state").text("on line");
             }else{
-                self.stateLabel.removeClass("online").addClass("offline");
+                self.stateLabel.removeClass().addClass("offline");
+                self.stateLabel.children().removeClass();
                 self.stateLabel.find("#state").text("off line");
             }
         }
@@ -360,6 +390,7 @@ var Html5Sync = function(params,callback){
                     }else{
                         typeText="html5sync_message_info";
                     }
+                    self.stateLabel.find("#state").removeClass().addClass(typeText);
                     if(!$("#html5sync_debug").exist()){
                         $("body").prepend('<div id="html5sync_debug"></div>');
                     }
@@ -401,10 +432,35 @@ var Html5Sync = function(params,callback){
             string+=now.getMilliseconds();
             return string;
         };
+        window.removeTags=function(html){
+            var tagBody = '(?:[^"\'>]|"[^"]*"|\'[^\']*\')*';
+            var tagOrComment = new RegExp(
+                '<(?:'
+                // Comment body.
+                + '!--(?:(?:-*[^->])*--+|-?)'
+                // Special "raw text" elements whose content should be elided.
+                + '|script\\b' + tagBody + '>[\\s\\S]*?</script\\s*'
+                + '|style\\b' + tagBody + '>[\\s\\S]*?</style\\s*'
+                // Regular name
+                + '|/?[a-z]'
+                + tagBody
+                + ')>',
+            'gi');
+            var oldHtml;
+            do{
+                oldHtml = html;
+                html = html.replace(tagOrComment, '');
+            } while (html !== oldHtml);
+            return html.replace(/</g, '&lt;');
+        };   
         //Agrega el visor de la base de datos
         if(self.params.viewer){
             $("body").append('<div id="html5sync_viewer"></div>');
         }
+        //Agrega los eventos del visor de estado
+        self.stateLabel.click(function(){
+            $("#html5sync_debug").toggle();
+        });
         showLoading(false);
     };
     /**

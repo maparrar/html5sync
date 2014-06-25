@@ -3,7 +3,7 @@
 * @package html5sync @subpackage core */
 include_once 'Connection.php';
 include_once 'Database.php';
-include_once 'Field.php';
+include_once 'Column.php';
 include_once 'Table.php';
 include_once 'DaoTable.php';
 include_once 'Transaction.php';
@@ -69,7 +69,7 @@ class BusinessDB{
     */
     public function getTables() {
         if(!$this->tables){
-            $this->loadTables();
+            $this->loadTables($this->parameter("database","name"));
         }
         return $this->tables;
     }
@@ -103,8 +103,9 @@ class BusinessDB{
     /**
      * Carga la lista de tablas (sin datos) para el usuario y configura el tipo 
      * de actualización definido.
+     * @param string $schema Nombre de la base de datos
      */
-    private function loadTables(){
+    private function loadTables($schema){
         unset($this->tables);
         $this->tables=array();
         $tablesData=$this->parameter("tables");
@@ -113,7 +114,7 @@ class BusinessDB{
         //Se lee cada tabla
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
-                $table=$dao->loadTable($tableData["name"],$tableData["mode"]);
+                $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"]);
                 $table->setTotalOfRows($dao->countRows($table));
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);
@@ -257,185 +258,62 @@ class BusinessDB{
         }
         return $transactions;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /**
-     * Verifica si la estructura de las tablas cambió.
-     * @return boolean True si la estructura de las tablas cambió, False en otro caso
+     * Prueba la conexión con la base de datos
+     * @return bool Retorna true si la conexión fue exitosa, false en otro caso
      */
-//    public function checkIfStructureChanged(){
-//        $this->loadTables();
-//        $jsonTables=$this->getTablesInJson();
-//        return $this->stateDB->checkIfStructureChanged($jsonTables,$this->user);
-//    }
+    public function testConnection(){
+        $connection=$this->db->connect();
+        return $connection;
+    }
+    //**************************************************************************
+    //>>>>>>>>>>>>>>>>>>>>>   TRANSACTIONS METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<
+    //**************************************************************************
     /**
-     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaron
-     * registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
+     * Almacena, actualiza o borra un nuevo registro en la tabla especificada
+     * @param Table $table Objeto de tipo Table donde se almacenará el registro
+     * @param array $row Matriz asociativa con los valores a sanear
+     * @param string $operation Operación a ejecutar: INSERT, UPDATE, DELETE
+     * @return bool False si no hay error, String con el error si existe
      */
-//    public function getTablesWithChanges(){
-//        $tables=array();
-//        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-//        //Se crea el objeto para manejar tablas con PDO
-//        $dao=new DaoTable($this->db);
-//        foreach ($this->tables as $table) {
-//            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
-//            if($dao->checkIfRowsChanged($table,$lastUpdate)){
-//                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-//                $table->setInitialRow(0);
-//                array_push($tables, $table);
-//            }
-//        }
-//        if(count($tables)==0){
-//            $tables=false;
-//        }
-//        return $tables;
-//    }
-    /**
-     * Verifica si los datos de las tablas de usuario cambiaron o se eliminaros
-     * registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
-     */
-//    public function getTablesWithDeletions(){
-//        $tables=array();
-//        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-//        //Se crea el objeto para manejar tablas con PDO
-//        $dao=new DaoTable($this->db);
-//        foreach ($this->tables as $table) {
-//            //Verifica si hubo actualización o inserción en la tabla y la agrega a la lista
-//            if($dao->checkIfRowsChanged($table,$lastUpdate)){
-//                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-//                $table->setInitialRow(0);
-//                array_push($tables, $table);
-//            }
-//            //Verifica si hubo deleciones, sino está en la lista, la agrega
-//            if($dao->checkIfRowsDeleted($table,$lastUpdate)){
-//                
-//                
-//                $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-//                $table->setInitialRow(0);
-//                array_push($tables, $table);
-//            }
-//        }
-//        if(count($tables)==0){
-//            $tables=false;
-//        }
-//        return $tables;
-//    }
-    /**
-     * Retorna todos los datos de las tablas
-     * @return mixed Array con las tablas para el usuario
-     */
-//    public function getAllTables(){
-//        $changed=array();
-//        //Se crea el objeto para manejar tablas con PDO
-//        $dao=new DaoTable($this->db);
-//        foreach ($this->tables as $table){
-////            $data=$dao->getAllRows($table,0,$this->parameters["rowsPerPage"]);
-////            if($data){
-////                $table->setData($data);
-//                array_push($changed, $table);
-//                $table->setTotalOfRows($dao->getTotalOfRows($table));
-////            }
-//        }
-//        //Actualiza la fecha de última actualización para no recargár más los datos cargados
-//        $this->stateDB->updateLastUpdate($this->user);
-//        return $changed;
-//    }
-    
-    /**
-     * Retorna los datos que han cambiado de la tabla 
-     * @param string $tableName Nombre de la tabla
-     * @param int $initialRow [optional] Indica la fila desde la que debe cargar los registros
-     * @return mixed False si los datos no cambiaron. Array con las tablas que tuvieron cambios
-     */
-//    public function getUpdatedTable($tableName,$initialRow=0){
-//        //Se crea el objeto para manejar tablas con PDO
-//        $dao=new DaoTable($this->db);
-//        $table=$this->getTableByName($tableName);
-//        $lastUpdate=$this->stateDB->getLastUpdate($this->user);
-//        $data=$dao->getUpdatedRows($table,$lastUpdate,$initialRow,$this->parameters["rowsPerPage"]);
-//        if($data){
-//            $table->setData($data);
-//            $table->setTotalOfRows($dao->getTotalOfRows($table,$lastUpdate));
-//            $table->setInitialRow($initialRow);
-//        }
-//        return $table;
-//    }
-    /**
-     * Actualiza la última fecha de acceso a los datos en la base de datos de estado SQLite
-     */
-//    public function updateLastUpdate(){
-//        //Actualiza la fecha de última actualización para no recargár más los datos cargados
-//        $this->stateDB->updateLastUpdate($this->user);
-//    }
-    
-    
-    
-    
-    
-    /**
-     * Retorna la versión de la base de datos almacenada para el usuario
-     * @return int Número de versión
-     */
-//    public function getVersion(){
-//        $state=$this->getTablesInJson();
-//        return $this->stateDB->version($state,$this->user);
-//    }
+    public function processRegister($table,$row,$operation){
+        $dao=new DaoTable($this->db);
+        $error=false;
+        //Verifica todas las columnas del registro contra las de la tabla
+        $register=false;
+        foreach ($table->getColumns() as $column){
+            //Si el id es autoincrement, lo elimina para que se genere automáticamente en la BusinessDB
+            if(!$column->isAI()){
+                if($column->getType()==="int"){
+                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
+                }elseif($column->getType()==="double"){
+                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_FLOAT);
+                }else{
+                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_STRING);
+                }
+                //Se verifica que los que no deben ser nulos, no sean nulos, sino, retorna error
+                if($column->isNN()){
+                    if($column->getType()==="varchar"&&trim($register[$column->getName()])===""){
+                        $error="Column ".$column->getName()." cannot be empty";
+                    }elseif(!$register[$column->getName()]){
+                        $error="Column ".$column->getName()." must contain a number";
+                    }
+                }
+            }else if($operation==="UPDATE"||$operation==="DELETE"){
+                //Si es update, agrega los autoincrement, pueden ser las PK
+                $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
+            }
+        }
+        //Pasa la Tabla con el registro a almacenar a DaoTable
+        if(!$error){
+            if($operation==="INSERT"){
+                $error=$dao->addRegister($table,$register);
+            }elseif($operation==="UPDATE"){
+                $error=$dao->updateRegister($table,$register);
+            }elseif($operation==="DELETE"){
+                $error=$dao->deleteRegister($table,$register);
+            }
+        }
+        return $error;
+    }
 }
