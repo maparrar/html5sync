@@ -43,7 +43,7 @@ if($user->getId()<=0){
                 //Si todo sale bien, actualiza la fecha de actualización para evitar que se vuelva a cargar
                 $stateDB->setTableLastUpdate($table);
                 $txResponse=array(
-                    "id"=>$transaction["key"],
+                    "id"=>$transaction["id"],
                     "success"=>"true",
                     "error"=>""
                 );

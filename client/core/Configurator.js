@@ -279,33 +279,41 @@ var Configurator = function(params,callback){
      * @param {function} callback Función que se ejecuta cuando se termina el proceso
      */
     self.execTransaction=function(transaction,callback){
-        self.db.add("Transactions",transaction,function(err){
+        var debugLevel=1;
+        self.db.add("Transactions",transaction,function(err,index){
             if(err){
                 if(callback)callback(err);
             }else{
-                
-                
-                
-                
-                
+                transaction.id=index;
                 self.connector.storeTransactions(transaction,function(err,response){
                     if(err){
-                        console.debug(err);
+                        debug("Store transactions fail","bad",debugLevel);
+                        if(callback)callback(err);
                     }else{
-                        console.debug(response);
+                        debug("Transactions saved in server","good",debugLevel);
+                        var transactions=response;
+                        for(var i in transactions){
+                            var tx=transactions[i];
+                            if(tx.success==="true"){
+                                tx.success=true;
+                            }else{
+                                tx.success=false;
+                            }
+                            var id=parseInt(tx.id);
+                            if(tx.success){
+                                self.db.delete("Transactions",id,function(err){
+                                    if(err){
+                                        if(callback)callback(err);
+                                    }else{
+                                        if(callback)callback(false);
+                                    }
+                                });
+                            }else{
+                                if(callback)callback(new Error("Could not execute transaction: "+id));
+                            }
+                        }
                     }
                 });
-                
-                
-                
-                if(callback)callback(false);
-                
-                
-                
-//                if(self.params.debugCrud)debug("Add inserted to transactions success","good",self.params.debugLevel+3);
-//                if(parseInt(counter)===parseInt(data.length)){
-//                    if(callback)callback(false,indexes);
-//                }
             }
         });
     };

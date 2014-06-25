@@ -231,7 +231,8 @@ var Connector = function(params,callback){
      * @param {object[]} transactions Transacción o lista de transacciones a almacenar
      * @param {function} callback Función a la que se retornan los resultados
      */
-    self.storeTransactions=function(transactions,callback){
+    self.storeTransactions=function(transactions,callback,debugLevel){
+        if(!debugLevel)debugLevel=0;
         debug("Send transactions","info",1);
         //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
         if(Object.prototype.toString.call(transactions)!=="[object Array]"){
@@ -247,18 +248,12 @@ var Connector = function(params,callback){
             var data=false;
             try{
                 data=JSON.parse(response);
-                
-                console.debug(">>>>> Transactions response <<<<<");
-                console.debug(data);
-                console.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-                
-//                if(data.error){
-//                    debug("SERVER: "+data.error,"bad",debugLevel+1);
-//                    if(callback)callback(new Error("SERVER: "+data.error));
-//                }else{
-//                    //Retorna las transacciones para ser procesadas
-//                    if(callback)callback(false,data.transactions);
-//                }
+                if(data.error){
+                    debug("SERVER: "+data.error,"bad",debugLevel+1);
+                    if(callback)callback(new Error("SERVER: "+data.error));
+                }else{
+                    if(callback)callback(false,data.transactions);
+                }
             }catch(e){
                 if(callback)callback(new Error("Transactions: Error parsing server data"));
             }
