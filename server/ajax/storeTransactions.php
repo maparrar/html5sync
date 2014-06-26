@@ -37,6 +37,12 @@ if($user->getId()<=0){
             $table=$businessDB->getTableData($tableName);
             $row=$transaction["row"];
             $operation=filter_var($transaction["transaction"],FILTER_SANITIZE_STRING);
+            //Si la operación es DELETE y $row=false, solo se necesita la clave para eliminar el registro
+            if($operation==="DELETE"&&(!$row||$row==="false")){
+                $row=array();
+                $key=filter_var($transaction["key"],FILTER_SANITIZE_NUMBER_INT);
+                $row[$table->getPk()->getName()]=$key;
+            }
             //Si no hay error, se almacena en la BusinessDB
             $txError=$businessDB->processRegister($table,$row,$operation);
             //Actualiza la fecha de actualización para evitar que se vuelva a cargar

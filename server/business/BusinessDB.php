@@ -281,28 +281,32 @@ class BusinessDB{
         $error=false;
         //Verifica todas las columnas del registro contra las de la tabla
         $register=false;
-        foreach ($table->getColumns() as $column){
-            //Si el id es autoincrement, lo elimina para que se genere automáticamente en la BusinessDB
-            if(!$column->isAI()){
-                if($column->getType()==="int"){
-                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
-                }elseif($column->getType()==="double"){
-                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_FLOAT);
-                }else{
-                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_STRING);
-                }
-                //Se verifica que los que no deben ser nulos, no sean nulos, sino, retorna error
-                if($column->isNN()){
-                    if($column->getType()==="varchar"&&trim($register[$column->getName()])===""){
-                        $error="Column ".$column->getName()." cannot be empty";
-                    }elseif(!$register[$column->getName()]){
-                        $error="Column ".$column->getName()." must contain a number";
+        if($operation!=="DELETE"){
+            foreach ($table->getColumns() as $column){
+                //Si el id es autoincrement, lo elimina para que se genere automáticamente en la BusinessDB
+                if(!$column->isAI()){
+                    if($column->getType()==="int"){
+                        $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
+                    }elseif($column->getType()==="double"){
+                        $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_FLOAT);
+                    }else{
+                        $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_STRING);
                     }
+                    //Se verifica que los que no deben ser nulos, no sean nulos, sino, retorna error
+                    if($column->isNN()){
+                        if($column->getType()==="varchar"&&trim($register[$column->getName()])===""){
+                            $error="Column ".$column->getName()." cannot be empty";
+                        }elseif(!$register[$column->getName()]){
+                            $error="Column ".$column->getName()." must contain a number";
+                        }
+                    }
+                }else if($operation==="UPDATE"||$operation==="DELETE"){
+                    //Si es update o delete, agrega los autoincrement, pueden ser las PK
+                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
                 }
-            }else if($operation==="UPDATE"||$operation==="DELETE"){
-                //Si es update, agrega los autoincrement, pueden ser las PK
-                $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
             }
+        }else{
+            $register[$table->getPk()->getName()]=filter_var($row[$table->getPk()->getName()],FILTER_SANITIZE_NUMBER_INT);
         }
         //Pasa la Tabla con el registro a almacenar a DaoTable
         if(!$error){

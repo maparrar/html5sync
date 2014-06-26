@@ -233,33 +233,38 @@ var Connector = function(params,callback){
      */
     self.storeTransactions=function(transactions,callback,debugLevel){
         if(!debugLevel)debugLevel=0;
-        debug("Send transactions","info",1);
-        //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
-        if(Object.prototype.toString.call(transactions)!=="[object Array]"){
-            transactions=new Array(transactions);
-        }
-        $.ajax({
-            url: self.params.ajaxFolder+"storeTransactions.php",
-            data:{
-                transactions:transactions
-            },
-            type: "POST"
-        }).done(function(response) {
-            var data=false;
-            try{
-                data=JSON.parse(response);
-                if(data.error){
-                    debug("SERVER: "+data.error,"bad",debugLevel+1);
-                    if(callback)callback(new Error("SERVER: "+data.error));
-                }else{
-                    if(callback)callback(false,data.transactions);
-                }
-            }catch(e){
-                if(callback)callback(new Error("Transactions: Error parsing server data"));
+        if(!self.isBusy("storeTransactions")){
+            self.setToBusy("storeTransactions");
+            debug("Send transactions","info",1);
+            //Si es solo un objeto, se crea un array de un objeto para recorrerlo con un ciclo
+            if(Object.prototype.toString.call(transactions)!=="[object Array]"){
+                transactions=new Array(transactions);
             }
-        }).fail(function(){
-            if(callback)callback(new Error("Could not store transactions in server"));
-        });
+            $.ajax({
+                url: self.params.ajaxFolder+"storeTransactions.php",
+                data:{
+                    transactions:transactions
+                },
+                type: "POST"
+            }).done(function(response) {
+                var data=false;
+                try{
+                    data=JSON.parse(response);
+                    if(data.error){
+                        debug("SERVER: "+data.error,"bad",debugLevel+1);
+                        if(callback)callback(new Error("SERVER: "+data.error));
+                    }else{
+                        if(callback)callback(false,data.transactions);
+                    }
+                }catch(e){
+                    if(callback)callback(new Error("Transactions: Error parsing server data"));
+                }
+                self.setToIdle("storeTransactions");
+            }).fail(function(){
+                if(callback)callback(new Error("Could not store transactions in server"));
+                self.setToIdle("storeTransactions");
+            });
+        }
     };
     /**************************************************************************/
     /***************************** STATUS METHODS *****************************/
