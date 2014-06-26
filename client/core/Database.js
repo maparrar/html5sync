@@ -225,6 +225,12 @@ var Database = function(params,callback){
         }else{
             indexes=new Array();
         }
+        
+        
+        var table=structTable(storeName);
+        console.debug(table);
+        
+        
         for (var i in data) {
             //Se verifica cada campo para establecer su tipo
             for(var columnName in data[i]){
@@ -728,6 +734,8 @@ var Database = function(params,callback){
                         break;
                 };
             }
+        }else{
+            if(callback)callback(false);
         }
     };
 };
