@@ -51,9 +51,6 @@ $transactionsJSON.=']';
 
 //Actualiza la última fecha para el usuario y las tablas
 $stateDB->setUserLastUpdate();
-foreach ($tables as $table) {
-    $stateDB->setTableLastUpdate($table);
-}
 //Se retorna la respuesta en JSON
 $json='{"transactions":'.$transactionsJSON.'}';
 //Si se encuentran errores, se retornan al cliente
