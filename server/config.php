@@ -177,7 +177,7 @@ return array(
         ),
         array(
             "name" => "lote",
-            "mode" => "unlock",
+            "mode" => "lock",
             "roles"=> array(
                 "role1"
             )
