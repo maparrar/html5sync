@@ -228,7 +228,7 @@ var Database = function(params,callback){
         
         
         var table=structTable(storeName);
-        console.debug(table);
+//        console.debug(table);
         
         
         for (var i in data) {
