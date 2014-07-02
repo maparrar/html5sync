@@ -114,8 +114,14 @@ class BusinessDB{
         //Se lee cada tabla
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
-                $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"]);
-                $table->setTotalOfRows($dao->countRows($table));
+                //Verifica si es consulta o tabla
+                if($tableData["type"]==="table"){
+                    $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"]);
+                    $table->setTotalOfRows($dao->countRows($table));
+                }elseif($tableData["type"]==="query"){
+                    $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"],$tableData["type"],$tableData["query"]);
+                    $table->setTotalOfRows($dao->countQueryRows($table));
+                }
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);
             }
@@ -176,8 +182,10 @@ class BusinessDB{
             $dao->createTransactionsTable();
             //Crear los procedimientos y los triggers para las tablas
             foreach ($this->tables as $table) {
-                $dao->createTransactionsProcedures($table);
-                $dao->createTransactionsTriggers($table);
+                if($table->getType()==="table"){
+                    $dao->createTransactionsProcedures($table);
+                    $dao->createTransactionsTriggers($table);
+                }
             }
         }
     }
@@ -194,7 +202,11 @@ class BusinessDB{
         $data=$dao->getRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
         if($data){
             $table->setData($data);
-            $table->setTotalOfRows($dao->countRows($table));
+            if($table->getType()==="table"){
+                $table->setTotalOfRows($dao->countRows($table));
+            }elseif($table->getType()==="query"){
+                $table->setTotalOfRows($dao->countQueryRows($table));
+            }
             $table->setInitialRow($initialRow);
         }
         return $table;
@@ -281,28 +293,32 @@ class BusinessDB{
         $error=false;
         //Verifica todas las columnas del registro contra las de la tabla
         $register=false;
-        foreach ($table->getColumns() as $column){
-            //Si el id es autoincrement, lo elimina para que se genere automáticamente en la BusinessDB
-            if(!$column->isAI()){
-                if($column->getType()==="int"){
-                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
-                }elseif($column->getType()==="double"){
-                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_FLOAT);
-                }else{
-                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_STRING);
-                }
-                //Se verifica que los que no deben ser nulos, no sean nulos, sino, retorna error
-                if($column->isNN()){
-                    if($column->getType()==="varchar"&&trim($register[$column->getName()])===""){
-                        $error="Column ".$column->getName()." cannot be empty";
-                    }elseif(!$register[$column->getName()]){
-                        $error="Column ".$column->getName()." must contain a number";
+        if($operation!=="DELETE"){
+            foreach ($table->getColumns() as $column){
+                //Si el id es autoincrement, lo elimina para que se genere automáticamente en la BusinessDB
+                if(!$column->isAI()){
+                    if($column->getType()==="int"){
+                        $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
+                    }elseif($column->getType()==="double"){
+                        $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_FLOAT);
+                    }else{
+                        $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_STRING);
                     }
+                    //Se verifica que los que no deben ser nulos, no sean nulos, sino, retorna error
+                    if($column->isNN()){
+                        if($column->getType()==="varchar"&&trim($register[$column->getName()])===""){
+                            $error="Column ".$column->getName()." cannot be empty";
+                        }elseif(!$register[$column->getName()]){
+                            $error="Column ".$column->getName()." must contain a number";
+                        }
+                    }
+                }else if($operation==="UPDATE"||$operation==="DELETE"){
+                    //Si es update o delete, agrega los autoincrement, pueden ser las PK
+                    $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
                 }
-            }else if($operation==="UPDATE"||$operation==="DELETE"){
-                //Si es update, agrega los autoincrement, pueden ser las PK
-                $register[$column->getName()]=filter_var($row[$column->getName()],FILTER_SANITIZE_NUMBER_INT);
             }
+        }else{
+            $register[$table->getPk()->getName()]=filter_var($row[$table->getPk()->getName()],FILTER_SANITIZE_NUMBER_INT);
         }
         //Pasa la Tabla con el registro a almacenar a DaoTable
         if(!$error){

@@ -157,6 +157,7 @@ return array(
     "tables" => array(
         array(
             "name" => "agricultor",
+            "type" => "table",
             "mode" => "unlock",
             "roles"=> array(
                 "role1",
@@ -170,6 +171,7 @@ return array(
         ,
         array(
             "name" => "finca",
+            "type" => "table",
             "mode" => "unlock",
             "roles"=> array(
                 "role1"
@@ -177,7 +179,17 @@ return array(
         ),
         array(
             "name" => "lote",
-            "mode" => "unlock",
+            "type" => "table",
+            "mode" => "lock",
+            "roles"=> array(
+                "role1"
+            )
+        ),
+        array(
+            "name" => "agricultor_pepito",
+            "type" => "query",
+            "query" => "select * from agricultor where nombres='Pepito';",
+            "mode" => "lock",
             "roles"=> array(
                 "role1"
             )

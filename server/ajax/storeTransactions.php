@@ -27,6 +27,7 @@ if($user->getId()<=0){
     //Revisa y almacena cada transacción
     foreach ($transactions as $transaction) {
         $txError=false;
+        $txMessage="";
         //Filtra los datos de cada transacción
         $tableName=filter_var($transaction["table"],FILTER_SANITIZE_STRING);
         //Verifica si la tabla puede ser cargada por el usuario
@@ -35,17 +36,30 @@ if($user->getId()<=0){
         }else{
             //Retorna la estructura de la tabla para filtrar los datos de la fila
             $table=$businessDB->getTableData($tableName);
-            $row=$transaction["row"];
             $operation=filter_var($transaction["transaction"],FILTER_SANITIZE_STRING);
-            //Si no hay error, se almacena en la BusinessDB
-            $txError=$businessDB->processRegister($table,$row,$operation);
-            if(!$txError){
-                //Si todo sale bien, actualiza la fecha de actualización para evitar que se vuelva a cargar
+            //Si la tabla está bloqueada, se retorna success, para borrar la transacción de BrowserDB
+            if($table->getMode()==="lock"){
+                $txError=false;
+                $txMessage="Table ".$table->getName()." is locked for the user. Could not ".$operation." transactions";
+            }else{
+                $row=$transaction["row"];
+                //Si la operación es DELETE y $row=false, solo se necesita la clave para eliminar el registro
+                if($operation==="DELETE"&&(!$row||$row==="false")){
+                    $row=array();
+                    $key=filter_var($transaction["key"],FILTER_SANITIZE_NUMBER_INT);
+                    $row[$table->getPk()->getName()]=$key;
+                }
+                //Si no hay error, se almacena en la BusinessDB
+                $txError=$businessDB->processRegister($table,$row,$operation);
+                //Actualiza la fecha de actualización para evitar que se vuelva a cargar
                 $stateDB->setTableLastUpdate($table);
+            }
+            if(!$txError){
                 $txResponse=array(
                     "id"=>$transaction["id"],
                     "success"=>"true",
-                    "error"=>""
+                    "locked"=>"true",
+                    "message"=>$txMessage
                 );
             }else{
                 $txResponse=array(

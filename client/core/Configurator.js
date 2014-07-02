@@ -16,6 +16,8 @@ var Configurator = function(params,callback){
     var self = this;
     self.db;    //Configuration database
     
+    self.busyFunctions=new Array();  //Lista de funciones ocupadas que solo se pueden usar una vez al tiempo
+    
     /**************************************************************************/
     /********************* CONFIGURATION AND CONSTRUCTOR **********************/
     /**************************************************************************/
@@ -280,43 +282,49 @@ var Configurator = function(params,callback){
      */
     self.execTransaction=function(transaction,callback){
         var debugLevel=1;
-        self.db.add("Transactions",transaction,function(err,index){
-            if(err){
-                if(callback)callback(err);
-            }else{
-                transaction.id=index;
-                self.connector.storeTransactions(transaction,function(err,response){
-                    if(err){
-                        debug("Could not save transactions in server","bad",debugLevel);
-                        if(callback)callback(false);
-                    }else{
-                        var transactions=response;
-                        for(var i in transactions){
-                            var tx=transactions[i];
-                            if(tx.success==="true"){
-                                tx.success=true;
-                            }else{
-                                tx.success=false;
-                            }
-                            var id=parseInt(tx.id);
-                            if(tx.success){
-                                debug("Transactions saved in server","good",debugLevel);
-                                self.db.delete("Transactions",id,function(err){
-                                    if(err){
-                                        if(callback)callback(err);
-                                    }else{
-                                        if(callback)callback(false);
-                                    }
-                                });
-                            }else{
-                                debug("Transactions saved in browser","info",debugLevel);
-                                if(callback)callback(false);
+        if(!self.isBusy("execTransaction")){
+            self.setToBusy("execTransaction");
+            self.db.add("Transactions",transaction,function(err,index){
+                if(err){
+                    if(callback)callback(err);
+                }else{
+                    transaction.id=index;
+                    self.connector.storeTransactions(transaction,function(err,response){
+                        if(err){
+                            self.setToIdle("execTransaction");
+                            debug("Could not save transactions in server","bad",debugLevel);
+                            if(callback)callback(false);
+                        }else{
+                            var transactions=response;
+                            for(var i in transactions){
+                                var tx=transactions[i];
+                                if(tx.success==="true"){
+                                    tx.success=true;
+                                }else{
+                                    tx.success=false;
+                                }
+                                var id=parseInt(tx.id);
+                                if(tx.success){
+                                    debug("Transactions saved in server","good",debugLevel);
+                                    self.db.delete("Transactions",id,function(err){
+                                        if(err){
+                                            if(callback)callback(err);
+                                        }else{
+                                            if(callback)callback(false);
+                                        }
+                                        self.setToIdle("execTransaction");
+                                    });
+                                }else{
+                                    self.setToIdle("execTransaction");
+                                    debug("Transactions saved in browser","info",debugLevel);
+                                    if(callback)callback(false);
+                                }
                             }
                         }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
     };
     /**
      * Revisa la tabla de transacciones pendientes y las envía al servidor
@@ -364,5 +372,44 @@ var Configurator = function(params,callback){
                 }
             }
         });
+    };
+    /**************************************************************************/
+    /***************************** STATUS METHODS *****************************/
+    /**************************************************************************/
+    /**
+     * Verifica si una función que no admite repeticiones está ocupada
+     * @param {string} name Nombre de la función
+     * @returns {bool} True si la función está ocupada, false en otro caso
+     */
+    self.isBusy=function(name){
+        var busy=false;
+        for(var i in self.busyFunctions){
+            if(self.busyFunctions[i]===name){
+                busy=true;
+            }
+        }
+        return busy;
+    };
+    /**
+     * Agrega el nombre de una función al array de funciones ocupadas que no se
+     * pueden usar hasta que no se desocupen
+     * @param {string} name Nombre de la función
+     */
+    self.setToBusy=function(name){
+        if(!self.isBusy(name)){
+            self.busyFunctions.push(name);
+        }
+    };
+    /**
+     * Elimina el nombre de una función del array de funciones ocupadas que no se
+     * pueden usar hasta que no se desocupen.
+     * @param {string} name Nombre de la función
+     */
+    self.setToIdle=function(name){
+        for(var i in self.busyFunctions){
+            if(self.busyFunctions[i]===name){
+                self.busyFunctions.splice(i,1);
+            }
+        }
     };
 };
