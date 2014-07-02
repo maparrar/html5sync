@@ -114,8 +114,14 @@ class BusinessDB{
         //Se lee cada tabla
         foreach ($tablesData as $tableData) {
             if($this->checkIfAccessibleTable($tableData)){
-                $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"]);
-                $table->setTotalOfRows($dao->countRows($table));
+                //Verifica si es consulta o tabla
+                if($tableData["type"]==="table"){
+                    $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"]);
+                    $table->setTotalOfRows($dao->countRows($table));
+                }elseif($tableData["type"]==="query"){
+                    $table=$dao->loadTable($schema,$tableData["name"],$tableData["mode"],$tableData["type"],$tableData["query"]);
+                    $table->setTotalOfRows($dao->countQueryRows($table));
+                }
                 $table->setInitialRow(0);
                 array_push($this->tables,$table);
             }
@@ -176,8 +182,10 @@ class BusinessDB{
             $dao->createTransactionsTable();
             //Crear los procedimientos y los triggers para las tablas
             foreach ($this->tables as $table) {
-                $dao->createTransactionsProcedures($table);
-                $dao->createTransactionsTriggers($table);
+                if($table->getType()==="table"){
+                    $dao->createTransactionsProcedures($table);
+                    $dao->createTransactionsTriggers($table);
+                }
             }
         }
     }
@@ -194,7 +202,11 @@ class BusinessDB{
         $data=$dao->getRows($table,$initialRow,$this->parameter("main","rowsPerPage"));
         if($data){
             $table->setData($data);
-            $table->setTotalOfRows($dao->countRows($table));
+            if($table->getType()==="table"){
+                $table->setTotalOfRows($dao->countRows($table));
+            }elseif($table->getType()==="query"){
+                $table->setTotalOfRows($dao->countQueryRows($table));
+            }
             $table->setInitialRow($initialRow);
         }
         return $table;

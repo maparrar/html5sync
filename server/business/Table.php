@@ -18,6 +18,12 @@ class Table extends Object{
      */
     protected $name;
     /** 
+     * Tipo de tabla, "table" si es una tabla completa, "query" si es una consulta, en este caso queda automáticamente en mode="lock" 
+     * 
+     * @var string
+     */
+    protected $type;
+    /** 
      * Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete) 
      * 
      * @var string
@@ -51,6 +57,11 @@ class Table extends Object{
      * @var int
      */
     protected $initialRow;
+    /** 
+     * Almacena la consulta si type="query"
+     * @var string
+     */
+    private $query;
     /**
     * Constructor
     * @param string $name Nombre de la tabla        
@@ -58,13 +69,15 @@ class Table extends Object{
     * @param Column[] $columns Array con los objetos columnas        
     * @param array $data Array con los datos de la tabla
     */
-    function __construct($name="",$mode="",$columns=array(),$data=array()){ 
+    function __construct($name="",$mode="lock",$columns=array(),$data=array()){ 
         $this->name=$name;
+        $this->type="table";
         $this->mode=$mode;
         $this->columns=$columns;
         $this->data=$data;
         $this->numberOfRows=0;
         $this->initialRow=0;
+        $this->query="";
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
@@ -74,6 +87,17 @@ class Table extends Object{
     */
     public function setName($value) {
         $this->name=$value;
+    }
+    /**
+    * Setter type
+    * @param string $value Tipo de tabla, "table" si es una tabla completa, "query" si es una consulta, en este caso queda automáticamente en mode="lock" 
+    * @return void
+    */
+    public function setType($value) {
+        if($value==="query"){
+            $this->setMode("lock");
+        }
+        $this->type=$value;
     }
     /**
     * Setter mode
@@ -116,6 +140,14 @@ class Table extends Object{
     public function setInitialRow($value) {
         $this->initialRow=$value;
     }
+    /**
+    * Setter query
+    * @param string $value Almacena la consulta si type="query"
+    * @return void
+    */
+    public function setQuery($value) {
+        $this->query=$value;
+    }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   SETTERS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**
     * Getter: name
@@ -123,6 +155,13 @@ class Table extends Object{
     */
     public function getName() {
         return $this->name;
+    }
+    /**
+    * Getter: type
+    * @return string
+    */
+    public function getType() {
+        return $this->type;
     }
     /**
     * Getter: mode
@@ -158,6 +197,13 @@ class Table extends Object{
     */
     public function getInitialRow() {
         return $this->initialRow;
+    }
+    /**
+    * Getter: query
+    * @return string
+    */
+    public function getQuery() {
+        return $this->query;
     }
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>   METHODS   <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     /**

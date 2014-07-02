@@ -36,13 +36,21 @@ class DaoTable{
      * @param string $schema Nombre de la base de datos
      * @param string $tableName Nombre de la tabla que se quiere cargar
      * @param string $mode Modo de uso de la tabla: ('unlock': Para operaciones insert+read), ('lock': Para operaciones update+delete)
+     * @param string $type Tipo de tabla, "table" si es una tabla completa, "query" si es una consulta, en este caso queda automáticamente en mode="lock" 
+     * @param string $query Consulta si es de type="query"
      * @return Table
      */
-    function loadTable($schema,$tableName,$mode){
+    function loadTable($schema,$tableName,$mode,$type="table",$query=""){
         $table=new Table($tableName);
         $table->setMode($mode);
-        $table->setColumns($this->loadColumns($schema,$table));
-        $this->loadFKs($schema,$table);
+        $table->setType($type);
+        if($table->getType()==="table"){
+            $table->setColumns($this->loadColumns($schema,$table));
+            $this->loadFKs($schema,$table);
+        }elseif($table->getType()==="query"){
+            $table->setQuery($query);
+            $table->setColumns($this->loadQueryColumns($schema,$table));
+        }
         return $table;
     }
     /**
@@ -139,6 +147,44 @@ class DaoTable{
         return $list;
     }
     /**
+     * Retorna la lista de campos de una Tabla de tipo="query"
+     * @param string $schema Nombre de la base de datos
+     * @param Table $table Tabla con nombre en la base de datos
+     * @return Column[] Lista de campos de la tabla
+     */
+    private function loadQueryColumns($schema,$table){
+        $list=array();
+        $handler=$this->db->connect("all");
+        //Se procesa la consulta para retornar solo los títulos
+        $sql=str_replace(";","",$table->getQuery());
+        $sql.=" LIMIT 1 ";
+        $stmt = $handler->prepare($sql);
+        $order=1;
+        if ($stmt->execute()) {
+            $row = $stmt->fetchAll(PDO::FETCH_ASSOC)[0];
+            foreach ($row as $colName => $colValue) {
+                //Se detecta el tipo de datos
+                $type="varchar";
+                if (is_numeric($colValue)){
+                    if(strpos($colValue,'.')!==false) {
+                        $type="double";
+                    }else{
+                        $type="int";
+                    }
+                }
+                $column=new Column($colName,$type);
+                $column->setOrder($order);
+                $column->setType($type);
+                array_push($list,$column);
+                $order++;
+            }
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+        }
+        return $list;
+    }
+    /**
      * Carga la tabla con los datos de las FK
      * @param string $schema Nombre de la base de datos
      * @param Table $table Tabla con nombre en la base de datos
@@ -209,6 +255,25 @@ class DaoTable{
         return $total;
     }
     /**
+     * Retorna la cantidad de filas de una tabla de tipo "query".
+     * @param string $table Nombre de la tabla que se quiere verificar
+     * @return int Cantidad de filas que tiene una consulta
+     */
+    public function countQueryRows($table){
+        $total=0;
+        $handler=$this->db->connect("all");
+        //Se procesa la consulta para retornar solo los títulos
+        $sql=$table->getQuery();
+        $stmt = $handler->prepare($sql);
+        if ($stmt->execute()) {
+            $total=$stmt->rowCount();
+        }else{
+            $error=$stmt->errorInfo();
+            error_log("[".__FILE__.":".__LINE__."]"."html5sync: ".$error[2]);
+        }
+        return $total;
+    }
+    /**
      * Retorna un array con los datos de la tabla (un array por registro)
      * @param Table $table Tabla con nombre y lista de campos
      * @param int $initialRow [optional] Indica la fila desde la quedebe cargar los registros
@@ -218,10 +283,15 @@ class DaoTable{
     function getRows($table,$initialRow=0,$maxRows=1000){
         $list=array();
         $handler=$this->db->connect("all");
-        if($this->db->getDriver()==="pgsql"){
-            $sql="SELECT * FROM ".$table->getName()." LIMIT ".$maxRows." OFFSET ".$initialRow;
-        }elseif($this->db->getDriver()==="mysql"){
-            $sql="SELECT * FROM ".$table->getName()." LIMIT ".$initialRow.",".$maxRows;
+        
+        if($table->getType()==="table"){
+            if($this->db->getDriver()==="pgsql"){
+                $sql="SELECT * FROM ".$table->getName()." LIMIT ".$maxRows." OFFSET ".$initialRow;
+            }elseif($this->db->getDriver()==="mysql"){
+                $sql="SELECT * FROM ".$table->getName()." LIMIT ".$initialRow.",".$maxRows;
+            }
+        }elseif($table->getType()==="query"){
+            $sql=$table->getQuery();
         }
         $stmt = $handler->prepare($sql);
         if ($stmt->execute()) {
